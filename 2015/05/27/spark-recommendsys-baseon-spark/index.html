@@ -1,0 +1,828 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="本文测试的Spark版本是1.3.1
+本文将在Spark集群上搭建一个简单的小型的电影推荐系统，以为之后的完整项目做铺垫和知识积累
+整个系统的工作流程描述如下：1.某电影网站拥有可观的电影资源和用户数，通过各个用户对各个电影的评分，汇总得到了海量的用户-电影-评分数据2.我在一个电影网站上看了几部电影，并都为其做了评分操作（0-5分）3.该电影网站的推荐系统根据我对那几部电影的评分，要预测出在该网">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Spark Mllib，SparkSQL的电影推荐系统">
+<meta property="og:url" content="http://xiaohei.info/2015/05/27/spark-recommendsys-baseon-spark/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="本文测试的Spark版本是1.3.1
+本文将在Spark集群上搭建一个简单的小型的电影推荐系统，以为之后的完整项目做铺垫和知识积累
+整个系统的工作流程描述如下：1.某电影网站拥有可观的电影资源和用户数，通过各个用户对各个电影的评分，汇总得到了海量的用户-电影-评分数据2.我在一个电影网站上看了几部电影，并都为其做了评分操作（0-5分）3.该电影网站的推荐系统根据我对那几部电影的评分，要预测出在该网">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527194754495">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527194925259">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527194935889">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527194945474">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527204129714">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527204142243">
+<meta property="og:updated_time" content="2016-07-15T02:44:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于Spark Mllib，SparkSQL的电影推荐系统">
+<meta name="twitter:description" content="本文测试的Spark版本是1.3.1
+本文将在Spark集群上搭建一个简单的小型的电影推荐系统，以为之后的完整项目做铺垫和知识积累
+整个系统的工作流程描述如下：1.某电影网站拥有可观的电影资源和用户数，通过各个用户对各个电影的评分，汇总得到了海量的用户-电影-评分数据2.我在一个电影网站上看了几部电影，并都为其做了评分操作（0-5分）3.该电影网站的推荐系统根据我对那几部电影的评分，要预测出在该网">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150527194754495">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/27/spark-recommendsys-baseon-spark/"/>
+
+  <title> 基于Spark Mllib，SparkSQL的电影推荐系统 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于Spark Mllib，SparkSQL的电影推荐系统
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-27T10:43:49+08:00" content="2015-05-27">
+              2015-05-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/27/spark-recommendsys-baseon-spark/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/27/spark-recommendsys-baseon-spark/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/27/spark-recommendsys-baseon-spark/" class="leancloud_visitors" data-flag-title="基于Spark Mllib，SparkSQL的电影推荐系统">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文测试的Spark版本是1.3.1</p>
+<p>本文将在Spark集群上搭建一个简单的小型的电影推荐系统，以为之后的完整项目做铺垫和知识积累</p>
+<p>整个系统的工作流程描述如下：<br>1.某电影网站拥有可观的电影资源和用户数，通过各个用户对各个电影的评分，汇总得到了海量的用户-电影-评分数据<br>2.我在一个电影网站上看了几部电影，并都为其做了评分操作（0-5分）<br>3.该电影网站的推荐系统根据我对那几部电影的评分，要预测出在该网站的电影资源库中，有哪些电影是适合我的，并推荐给我看<br>4.根据我的观影习惯和用户的一个个人信息，预测该网站用户库中，哪些人和我的兴趣爱好是差不多的，并推荐给我认识</p>
+<p>使用到的数据集有4个：</p>
+<p>test.dat（我的评分数据），格式如下：<br>0-我的用户Id::电影Id::对该电影的评分::评分的时间戳</p>
+<p><img src="http://img.blog.csdn.net/20150527194754495" alt="这里写图片描述"></p>
+<p>users.dat（用户数据），格式如下：<br>用户Id::性别::年龄::工作类型::ZIP-CODE</p>
+<p><img src="http://img.blog.csdn.net/20150527194925259" alt="这里写图片描述"></p>
+<p>movies.dat（电影资源数据），格式如下：<br>电影Id::电影名::电影类型</p>
+<p><img src="http://img.blog.csdn.net/20150527194935889" alt="这里写图片描述"></p>
+<p>ratings.dat（用户-电影-评分数据），格式如下：<br>用户Id::电影Id::该用户对该电影的评分<br>（这个数据集中不包含我的评分数据，也就是用户Id为0的数据）</p>
+<p><img src="http://img.blog.csdn.net/20150527194945474" alt="这里写图片描述"></p>
+<p><a href="http://download.csdn.net/detail/qq1010885678/8745621" target="_blank" rel="external">推荐系统数据集下载地址</a></p>
+<p>大概拥有6000+个用户，3800+部电影，100多万的评分数据<br>具体的数据格式请看完整数据集中的README，其中有详细介绍<br>下载数据集之后注意检查一下有没有漏空的行，如果有请删除它，因为它会在读取数据的时候产生异常</p>
+<p>在开始动手之前，最好先理清一下思路，之后再进行coding会有所向睥睨的一种感觉~</p>
+<p>在本系统中，我们要使用的是ALS算法来做协同过滤<br>该算法建立模型需要一个训练数据集</p>
+<p>那么，首先我们要明确的是<br>1.ALS算法要拿什么样的数据进行训练？<br>2.训练之后得到的模型要对什么样的数据进行预测？<br>3.预测之后的数据是什么样子的？</p>
+<p>训练数据集很明显就是ratings.dat，因为这是用户-电影-评分数据<br>但是，单单ratings.dat是不够的，为什么？<br>因为在本系统中，功能很简单，只对一个用户（也就是我，用户Id为0）进行电影推荐，但是ratings.dat中并没有包含我的评分数据，没有我的评分数据，算法怎么能根据我的喜好来推荐电影呢？<br>所以作为训练的数据应该是ratings.dat+test.dat</p>
+<p>ALS算法根据这些数据，来训练出一个模型<br>之后就可以使用这个模型对电影列表中，我没看过的电影进行预测打分，在从中筛选出10个评分最高的电影推荐</p>
+<p>so，得到答案：<br>1.训练数据集是ratings.dat+test.dat<br>2.要进行预测的是movies.dat-我已经看过的那些电影<br>3.模型的预测结果就是，一个带评分的movies列表（该评分是针对我而言）</p>
+<p>当然，上面描述的是系统的一个主线任务，还有一些其他的支线任务如：计算方差啊，打印输出啊，我们看代码说话~</p>
+<p>关于在Mllib中协同过滤算法的基本使用，请先看：<br><a href="http://blog.csdn.net/qq1010885678/article/details/46050875" target="_blank" rel="external">Spark（十一） – Mllib API编程 线性回归、KMeans、协同过滤演示</a></p>
+<p>废话不说，上代码：</p>
+<p>为了方便理解数据的格式和意义，规定变量/常量名命名方式如下：<br>数据名_数据类型</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div></pre></td><td class="code"><pre><div class="line">object MoviesRecommond &#123;</div><div class="line">  def main(args: Array[String]) &#123;</div><div class="line">    if (args.length &lt; 2) &#123;</div><div class="line">      System.err.println(&quot;Usage : &lt;master&gt; &lt;hdfs dir path&gt;&quot;)</div><div class="line">      System.exit(1)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //屏蔽日志，由于结果是打印在控制台上的，为了方便查看结果，将spark日志输出关掉</div><div class="line">    Logger.getLogger(&quot;org.apache.spark&quot;).setLevel(Level.WARN)</div><div class="line">    Logger.getLogger(&quot;org.eclipse.jetty.server&quot;).setLevel(Level.OFF)</div><div class="line"></div><div class="line">    //创建入口对象</div><div class="line">    val conf = new SparkConf().setMaster(args(0)).setAppName(&quot;Collaborative Filtering&quot;)</div><div class="line">    val sc = new SparkContext(conf)</div><div class="line"></div><div class="line">    //评分训练总数据集，元组格式</div><div class="line">    val ratingsList_Tuple = sc.textFile(args(1) + &quot;/ratings.dat&quot;).map &#123; lines =&gt;</div><div class="line">      val fields = lines.split(&quot;::&quot;)</div><div class="line">      (fields(0).toInt, fields(1).toInt, fields(2).toDouble, fields(3).toLong % 10)//这里将timespan这列对10做取余操作，这样一来个评分数据的这一列都是一个0-9的数字，做什么用？接着看下面</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //评分训练总数据集，模拟键值对形式，键是0-9中的一个数字，值是Rating类型</div><div class="line">    val ratingsTrain_KV = ratingsList_Tuple.map(x =&gt;</div><div class="line">      (x._4, Rating(x._1, x._2, x._3)))</div><div class="line">	//打印出从ratings.dat中，我们从多少个用户和电影之中得到了多少条评分记录</div><div class="line">    println(&quot;get &quot; + ratingsTrain_KV.count()</div><div class="line">      + &quot; ratings from &quot; + ratingsTrain_KV.map(_._2.user).distinct().count()</div><div class="line">      + &quot;users on &quot; + ratingsTrain_KV.map(_._2.product).distinct().count() + &quot;movies&quot;)</div><div class="line"></div><div class="line">    //我的评分数据，RDD[Rating]格式</div><div class="line">    val myRatedData_Rating = sc.textFile(args(2)).map &#123; lines =&gt;</div><div class="line">      val fields = lines.split(&quot;::&quot;)</div><div class="line">      Rating(fields(0).toInt, fields(1).toInt, fields(2).toDouble)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //从训练总数据总分出80%作为训练集，20%作为验证数据集，20%作为测试数据集，前面的将timespan对10做取余操作的作用就是为了从总数据集中分出三部分</div><div class="line">    //设置分区数</div><div class="line">    val numPartitions = 3</div><div class="line">    //将键的数值小于8的作为训练数据</div><div class="line">    val traningData_Rating = ratingsTrain_KV.filter(_._1 &lt; 8)</div><div class="line">      .values//注意，由于原本的数据集是伪键值对形式的，而当做训练数据只需要RDD[Rating]类型的数据，即values集合</div><div class="line">      .union(myRatedData_Rating)//使用union操作将我的评分数据加入训练集中，以做为训练的基准</div><div class="line">      .repartition(numPartitions)</div><div class="line">      .cache()</div><div class="line">    </div><div class="line">    //格式和意义和上面的类似，由于是验证数据，并不需要我的评分数据，所以不用union</div><div class="line">    val validateData_Rating = ratingsTrain_KV.filter(x =&gt; x._1 &gt;= 6 &amp;&amp; x._1 &lt; 8)</div><div class="line">      .values</div><div class="line">      .repartition(numPartitions)</div><div class="line">      .cache()</div><div class="line">    val testData_Rating = ratingsTrain_KV.filter(_._1 &gt;= 8)</div><div class="line">      .values</div><div class="line">      .cache()</div><div class="line">	</div><div class="line">	//打印出用于训练，验证和测试的数据集分别是多少条记录</div><div class="line">    println(&quot;training data&apos;s num : &quot; + traningData_Rating.count()</div><div class="line">      + &quot; validate data&apos;s num : &quot; + validateData_Rating.count()</div><div class="line">      + &quot; test data&apos;s num : &quot; + testData_Rating.count())</div><div class="line"></div><div class="line">    //开始模型训练，根据方差选择最佳模型</div><div class="line">    val ranks = List(8, 22)</div><div class="line">    val lambdas = List(0.1, 10.0)</div><div class="line">    val iters = List(5, 7)//这里的迭代次数要根据各自集群机器的硬件来选择，由于我的机器不行最多只能迭代7次，再多就会内存溢出</div><div class="line">    var bestModel: MatrixFactorizationModel = null</div><div class="line">    var bestValidateRnse = Double.MaxValue</div><div class="line">    var bestRank = 0</div><div class="line">    var bestLambda = -1.0</div><div class="line">    var bestIter = -1</div><div class="line">    //一个三层嵌套循环，会产生8个ranks ，lambdas ，iters 的组合，每个组合都会产生一个模型，计算8个模型的方差，最小的那个记为最佳模型</div><div class="line">    for (rank &lt;- ranks; lam &lt;- lambdas; iter &lt;- iters) &#123;</div><div class="line">      val model = ALS.train(traningData_Rating, rank, iter, lam)</div><div class="line">      //rnse为计算方差的函数，定义在最下方</div><div class="line">      val validateRnse = rnse(model, validateData_Rating, validateData_Rating.count())</div><div class="line">      println(&quot;validation = &quot; + validateRnse</div><div class="line">        + &quot; for the model trained with rank = &quot; + rank</div><div class="line">        + &quot; lambda = &quot; + lam</div><div class="line">        + &quot; and numIter&quot; + iter)</div><div class="line">      if (validateRnse &lt; bestValidateRnse) &#123;</div><div class="line">        bestModel = model</div><div class="line">        bestValidateRnse = validateRnse</div><div class="line">        bestRank = rank</div><div class="line">        bestLambda = lam</div><div class="line">        bestIter = iter</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //将最佳模型运用在测试数据集上</div><div class="line">    val testDataRnse = rnse(bestModel, testData_Rating, testData_Rating.count())</div><div class="line">    println(&quot;the best model was trained with rank = &quot; + bestRank + &quot; and lambda = &quot; + bestLambda</div><div class="line">      + &quot; and numIter = &quot; + bestIter + &quot; and Rnse on the test data is &quot; + testDataRnse)</div><div class="line"></div><div class="line">	//计算和原先基础的相比其提升了多少</div><div class="line">    val meanRating = traningData_Rating.union(validateData_Rating).map(_.rating).mean()</div><div class="line">    val baseLineRnse = math.sqrt(testData_Rating.map(x =&gt; (meanRating - x.rating) * (meanRating - x.rating)).mean())</div><div class="line">    val improvent = (baseLineRnse - testDataRnse) / baseLineRnse * 100</div><div class="line">    println(&quot;the best model improves the baseline by &quot; + &quot;%2.2f&quot;.format(improvent) + &quot;%&quot;)</div><div class="line"></div><div class="line">    //电影列表总数据，元组格式</div><div class="line">    val movieList_Tuple = sc.textFile(args(1) + &quot;/movies.dat&quot;).map &#123; lines =&gt;</div><div class="line">      val fields = lines.split(&quot;::&quot;)</div><div class="line">      (fields(0).toInt, fields(1), fields(2))</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //电影名称总数据，Map类型，键为id，值为name</div><div class="line">    val movies_Map = movieList_Tuple.map(x =&gt;</div><div class="line">      (x._1, x._2)).collect().toMap</div><div class="line"></div><div class="line">    //电影类型总数据，Map类型，键为id，值为type</div><div class="line">    val moviesType_Map = movieList_Tuple.map(x =&gt;</div><div class="line">      (x._1, x._3)).collect().toMap</div><div class="line"></div><div class="line">    var i = 1</div><div class="line">    println(&quot;movies recommond for you:&quot;)</div><div class="line">    //得到我已经看过的电影的id</div><div class="line">    val myRatedMovieIds = myRatedData_Rating.map(_.product).collect().toSet</div><div class="line">    //从电影列表中将这些电影过滤掉，剩下的电影列表将被送到模型中预测每部电影我可能做出的评分</div><div class="line">    val recommondList = sc.parallelize(movies_Map.keys.filter(myRatedMovieIds.contains(_)).toSeq)</div><div class="line">    //将结果数据按评分从大小小排序，选出评分最高的10条记录输出</div><div class="line">    bestModel.predict(recommondList.map((0, _))).collect().sortBy(-_.rating).take(10).foreach &#123; r =&gt;</div><div class="line">      println(&quot;%2d&quot;.format(i) + &quot;----------&gt; : \nmovie name --&gt; &quot;</div><div class="line">        + movies_Map(r.product) + &quot; \nmovie type --&gt; &quot;</div><div class="line">        + moviesType_Map(r.product))</div><div class="line">      i += 1</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    //计算可能感兴趣的人</div><div class="line">    println(&quot;you may be interested in these people : &quot;)</div><div class="line">    val sqlContext = new SQLContext(sc)</div><div class="line">    import sqlContext.implicits._</div><div class="line">    //将电影，用户，评分数据转换成为DataFrame，进行SparkSQL操作</div><div class="line">    val movies = movieList_Tuple</div><div class="line">      .map(m =&gt; Movies(m._1.toInt, m._2, m._3))</div><div class="line">      .toDF()</div><div class="line"></div><div class="line">    val ratings = ratingsList_Tuple</div><div class="line">      .map(r =&gt; Ratings(r._1.toInt, r._2.toInt, r._3.toInt))</div><div class="line">      .toDF()</div><div class="line"></div><div class="line">    val users = sc.textFile(args(1) + &quot;/users.dat&quot;).map &#123; lines =&gt;</div><div class="line">      val fields = lines.split(&quot;::&quot;)</div><div class="line">      Users(fields(0).toInt, fields(2).toInt, fields(3).toInt)</div><div class="line">    &#125;.toDF()</div><div class="line"></div><div class="line">    ratings.filter(&apos;rating &gt;= 5)//过滤出评分列表中评分为5的记录</div><div class="line">      .join(movies, ratings(&quot;movieId&quot;) === movies(&quot;id&quot;))//和电影DataFrame进行join操作</div><div class="line">      .filter(movies(&quot;mType&quot;) === &quot;Drama&quot;)//筛选出评分为5，且电影类型为Drama的记录（本来应该根据我的评分数据中电影的类型来进行筛选操作，由于数据格式的限制，这里草草的以一个Drama作为代表）</div><div class="line">      .join(users, ratings(&quot;userId&quot;) === users(&quot;id&quot;))//对用户DataFrame进行join</div><div class="line">      .filter(users(&quot;age&quot;) === 18)//筛选出年龄=18（和我的信息一致）的记录</div><div class="line">      .filter(users(&quot;occupation&quot;) === 15)//筛选出工作类型=18（和我的信息一致）的记录</div><div class="line">      .select(users(&quot;id&quot;))//只保存用户id，得到的结果为和我的个人信息差不多的，而且喜欢看的电影类型也和我差不多 的用户集合</div><div class="line">      .take(10)</div><div class="line">      .foreach(println)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  //计算方差函数</div><div class="line">  def rnse(model: MatrixFactorizationModel, predictionData: RDD[Rating], n: Long): Double = &#123;</div><div class="line">    //根据参数model，来对验证数据集进行预测</div><div class="line">    val prediction = model.predict(predictionData.map(x =&gt; (x.user, x.product)))</div><div class="line">    //将预测结果和验证数据集join之后计算评分的方差并返回</div><div class="line">    val predictionAndOldRatings = prediction.map(x =&gt; ((x.user, x.product), x.rating))</div><div class="line">      .join(predictionData.map(x =&gt; ((x.user, x.product), x.rating))).values</div><div class="line">    math.sqrt(predictionAndOldRatings.map(x =&gt; (x._1 - x._2) * (x._1 - x._2)).reduce(_ - _) / n)</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  //样例类，用作SparkSQL隐式转换</div><div class="line">  case class Ratings(userId: Int, movieId: Int, rating: Int)</div><div class="line"></div><div class="line">  case class Movies(id: Int, name: String, mType: String)</div><div class="line"></div><div class="line">  case class Users(id: Int, age: Int, occupation: Int)</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>系统在Spark集群上运行的结果如下图：</p>
+<p><img src="http://img.blog.csdn.net/20150527204129714" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20150527204142243" alt="这里写图片描述"></p>
+<p>关于SparkSQL的一些基本操作请看：<br><a href="http://blog.csdn.net/qq1010885678/article/details/45957991" target="_blank" rel="external">Spark（九） – SparkSQL API编程</a></p>
+<p>如果本文有中任何不足或者错误之处，万请指出~<br>如果你有任何疑问，欢迎联系交流~</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/27/spark-11-mllib/" rel="next" title="Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示">
+                <i class="fa fa-chevron-left"></i> Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/29/spark-others/" rel="prev" title="Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon">
+                Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/27/spark-recommendsys-baseon-spark/"
+           data-title="基于Spark Mllib，SparkSQL的电影推荐系统" data-url="http://xiaohei.info/2015/05/27/spark-recommendsys-baseon-spark/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

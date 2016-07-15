@@ -1,0 +1,849 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="1、MySQL安装：EC2直接使用yum安装mysql很方便：
+yum install mysql mysql-server mysql-libs此处安装了三个包
+完事之后可以直接使用service mysqld start启动mysql服务
+修改root密码：mysqladmin -u root -p password “root”
+2、使用mysqld_multi安装多实例mysql：vim">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Amazon EC2安装mysql多实例并配置主从复制">
+<meta property="og:url" content="http://xiaohei.info/2015/08/24/linux-ec2-mysql-multi-master-slave/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="1、MySQL安装：EC2直接使用yum安装mysql很方便：
+yum install mysql mysql-server mysql-libs此处安装了三个包
+完事之后可以直接使用service mysqld start启动mysql服务
+修改root密码：mysqladmin -u root -p password “root”
+2、使用mysqld_multi安装多实例mysql：vim">
+<meta property="og:updated_time" content="2016-07-15T02:33:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Amazon EC2安装mysql多实例并配置主从复制">
+<meta name="twitter:description" content="1、MySQL安装：EC2直接使用yum安装mysql很方便：
+yum install mysql mysql-server mysql-libs此处安装了三个包
+完事之后可以直接使用service mysqld start启动mysql服务
+修改root密码：mysqladmin -u root -p password “root”
+2、使用mysqld_multi安装多实例mysql：vim">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/08/24/linux-ec2-mysql-multi-master-slave/"/>
+
+  <title> Amazon EC2安装mysql多实例并配置主从复制 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Amazon EC2安装mysql多实例并配置主从复制
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-08-24T10:32:35+08:00" content="2015-08-24">
+              2015-08-24
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/08/24/linux-ec2-mysql-multi-master-slave/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/08/24/linux-ec2-mysql-multi-master-slave/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/08/24/linux-ec2-mysql-multi-master-slave/" class="leancloud_visitors" data-flag-title="Amazon EC2安装mysql多实例并配置主从复制">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1、MySQL安装："><a href="#1、MySQL安装：" class="headerlink" title="1、MySQL安装："></a><strong>1、MySQL安装：</strong></h2><p>EC2直接使用yum安装mysql很方便：</p>
+<p>yum install mysql mysql-server mysql-libs<br>此处安装了三个包</p>
+<p>完事之后可以直接使用<br>service mysqld start<br>启动mysql服务</p>
+<p>修改root密码：<br>mysqladmin -u root -p password “root”</p>
+<h2 id="2、使用mysqld-multi安装多实例mysql："><a href="#2、使用mysqld-multi安装多实例mysql：" class="headerlink" title="2、使用mysqld_multi安装多实例mysql："></a>2、使用mysqld_multi安装多实例mysql：</h2><p>vim /etc/my.cnf<br>添加实例的配置信息</p>
+<p>[mysqld]<br>datadir=/var/lib/mysql<br>socket=/var/lib/mysql/mysql.sock<br>symbolic-links=0</p>
+<p>[mysqld_safe]<br>log-error=/var/log/mysqld.log<br>pid-file=/var/run/mysqld/mysqld.pid</p>
+<p>以上是默认的配置信息，在mysqld下添加如下配置：</p>
+<h5 id="开启慢查询日志，-记录查询过长的-sql-语句，以便于优化"><a href="#开启慢查询日志，-记录查询过长的-sql-语句，以便于优化" class="headerlink" title="#开启慢查询日志， 记录查询过长的 sql 语句，以便于优化"></a>#开启慢查询日志， 记录查询过长的 sql 语句，以便于优化</h5><p>log_slow_queries=/var/log/mysql/mysql-slow.log</p>
+<h5 id="开启-bin-log-日志，不用log-bin-xxx，试验时这样子无法启动mysql服务，不知为何"><a href="#开启-bin-log-日志，不用log-bin-xxx，试验时这样子无法启动mysql服务，不知为何" class="headerlink" title="#开启 bin-log 日志，不用log-bin=xxx，试验时这样子无法启动mysql服务，不知为何"></a>#开启 bin-log 日志，不用log-bin=xxx，试验时这样子无法启动mysql服务，不知为何</h5><p>log-bin</p>
+<h5 id="分配serverid，不要和下面的从服务器冲突即可"><a href="#分配serverid，不要和下面的从服务器冲突即可" class="headerlink" title="#分配serverid，不要和下面的从服务器冲突即可"></a>#分配serverid，不要和下面的从服务器冲突即可</h5><p>server-id=1</p>
+<p>在文件最后方添加：</p>
+<p>[mysqld_multi]<br>mysqld     = /usr/bin/mysqld_safe<br>mysqladmin = /usr/bin/mysqladmin<br>user       = root<br>password   = root</p>
+<h5 id="第二个mysql实例的配置"><a href="#第二个mysql实例的配置" class="headerlink" title="#第二个mysql实例的配置"></a>#第二个mysql实例的配置</h5><p>[mysqld1]<br>socket     = /tmp/mysql1.sock<br>port       = 3311<br>pid-file   = /var/run/mysqld/mysqld1.pid<br>log-slow-queries = /var/log/mysql1/slow-query-log   ## mysql slow log<br>relay-log        = /var/spool/mysqld1/mysqld-relay-bin   ## relay for replication<br>datadir    = /var/lib/mysql1    ## mysql data file folder<br>user       = mysql<br>log-bin<br>server-id=2</p>
+<p>保存退出之后执行<br>mysql_install_db –user=mysql –datadir=/var/lib/mysql1<br>完成第二个实例的初始化</p>
+<p>启动该实例服务的方式为：<br>mysqld_multi start 1</p>
+<p>使用命令查看3311端口是否开启<br>netstat -tunlp<br>如果有则启动成功</p>
+<p>登陆改实例<br>mysql -S /tmp/mysql1.sock -uroot -p</p>
+<p>修改root密码也要指定sock文件：<br>mysqladmin -S/tmp/mysql1.sock -u root -p password “root”</p>
+<p>这里用mysql -uroot -p -P3311登陆进去的还是默认的3306端口，所以使用上面的方式登陆</p>
+<p>进去之后可以使用<br>show variables like ‘%datadir%’;<br>查看datadir是否是配置文件中的路径</p>
+<h2 id="3、配置主从复制"><a href="#3、配置主从复制" class="headerlink" title="3、配置主从复制"></a><strong>3、配置主从复制</strong></h2><p>进入主数据库（默认的3306端口）<br>mysql -uroot -proot</p>
+<p>查看用户登陆信息<br>select user,host from mysql.user;</p>
+<p>设置root用户可以从任何地方登陆访问任何表<br>grant all on <em>.</em> to root@’%’ identified by ‘root’ with grant option;、</p>
+<p>新建一个用户backup用来给从数据库登陆，获取主数据库信息，密码也是backup（这里设置的登陆地址为localhost，如果从数据库在别的机器上需要修改为对应的IP）<br>GRANT REPLICATION SLAVE ON <em>.</em> to ‘backup’@’localhost’ identified by ‘backup’; </p>
+<p>使用<br>show variables like “%log_%”;<br>查看二进制日志是否开启（配置文件中的log-bin），要使用主从复制一定要开启这个</p>
+<p>使用<br>show master status;<br>查看主数据库信息<br>File和Position<br>这两个信息会在配置从数据库的时候用到</p>
+<p>进入从库，执行下列命令进行主库信息配置</p>
+<p>change master to master_host=’localhost’,master_user=’backup’,master_password=’backup’,master_log_file=’mysqld-bin.000003’,master_log_pos=107; </p>
+<p>master_host：主库地址（如果不是默认的3306可以使用master_port指定端口信息）<br>master_user：上面配置的从库登陆主库的用户<br>master_log_file：即主库show master status;中File的值<br>master_log_pos：即主库show master status;中Position的值</p>
+<p>出现下列错误信息：<br>ERROR 1201 (HY000): Could not initialize master info structure; more error messages can be found in the MySQL error log</p>
+<p>解决方法：</p>
+<p>stop slave;<br>reset slave;<br>再次错误：<br>ERROR 29 (HY000): File ‘/var/spool/mysqld1/mysqld-relay-bin.index’ not found (Errcode: 13)</p>
+<p>创建对应的文件并修改权限<br>sudo mkdir var/spool/mysqld1<br>sudo touch /var/spool/mysqld1/mysqld-relay-bin.index<br>sudo chown -R mysql:mysql   /var/spool/mysqld1/</p>
+<p>再次reset slave即可</p>
+<p>开启从库<br>start slave; </p>
+<p>查看状态信息<br>show slave status\G</p>
+<p>其中的<br>Slave_IO_Running: Yes<br>Slave_SQL_Running: Yes<br>两个必须都为Yes才是成功</p>
+<p>若其中提示错误：<br>Fatal error: The slave I/O thread stops because master and slave have equal MySQL server ids</p>
+<p>则是serverid没配好，可以直接用命令改正</p>
+<p>查看当前的server_id<br>show variables like ‘server_id’;<br>重新设置为其他值<br>set global server_id=2; </p>
+<p>在重新启动slave即可</p>
+<p>接下来就可以做一些测试工作了，在主库上建立新数据库或者新表或者添加修改记录都会同步到从库中</p>
+<h2 id="4、mysql其他一些异常的解决方法"><a href="#4、mysql其他一些异常的解决方法" class="headerlink" title="4、mysql其他一些异常的解决方法"></a><strong>4、mysql其他一些异常的解决方法</strong></h2><p>使用mysql出现以下错误：<br>mysqladmin: Can’t turn off logging; error: ‘Access denied; you need the SUPER privilege for this operation’的错误</p>
+<p>解决方法：<br>vim /etc/my.cnf</p>
+<p>加入<br>skip-grant-tables<br>重启服务</p>
+<p>进入mysql</p>
+<p>use mysql;<br>UPDATE user SET Password = password ( ‘pwd’ ) WHERE User = ‘root’ ;<br>flush privileges ;</p>
+<p>退出之后<br>my.cnf改回来<br>重启服务</p>
+<p>如果没有效果的话<br>卸载mysql：</p>
+<p>卸载yum -y remove mysql<em><br>查看是否安装yum list installed mysql</em><br>删除mysql相关目录<br>rm -rf /etc/my.cnf<br>rm -rf /var/lib/mysql</p>
+<p>之后重新安装mysql</p>
+<p>远程登录：<br>出现错误<br>Host ‘117.29.168.34’ is not allowed to connect to this MySQL server</p>
+<p>解决方法：<br>root登陆mysql<br>执行：<br>use mysql;<br>update user set host = ‘%’ where user=’root’;<br> flush privileges; </p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag">#MySQL</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/08/05/kafka-base-info/" rel="next" title="初识Kafka：构架、生产消费模型以及其他相关概念">
+                <i class="fa fa-chevron-left"></i> 初识Kafka：构架、生产消费模型以及其他相关概念
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/08/28/docker-summary/" rel="prev" title="总结对Docker这个东西的想法">
+                总结对Docker这个东西的想法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/08/24/linux-ec2-mysql-multi-master-slave/"
+           data-title="Amazon EC2安装mysql多实例并配置主从复制" data-url="http://xiaohei.info/2015/08/24/linux-ec2-mysql-multi-master-slave/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、MySQL安装："><span class="nav-number">1.</span> <span class="nav-text">1、MySQL安装：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、使用mysqld-multi安装多实例mysql："><span class="nav-number">2.</span> <span class="nav-text">2、使用mysqld_multi安装多实例mysql：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#开启慢查询日志，-记录查询过长的-sql-语句，以便于优化"><span class="nav-number">2.0.0.1.</span> <span class="nav-text">#开启慢查询日志， 记录查询过长的 sql 语句，以便于优化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#开启-bin-log-日志，不用log-bin-xxx，试验时这样子无法启动mysql服务，不知为何"><span class="nav-number">2.0.0.2.</span> <span class="nav-text">#开启 bin-log 日志，不用log-bin=xxx，试验时这样子无法启动mysql服务，不知为何</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分配serverid，不要和下面的从服务器冲突即可"><span class="nav-number">2.0.0.3.</span> <span class="nav-text">#分配serverid，不要和下面的从服务器冲突即可</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第二个mysql实例的配置"><span class="nav-number">2.0.0.4.</span> <span class="nav-text">#第二个mysql实例的配置</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、配置主从复制"><span class="nav-number">3.</span> <span class="nav-text">3、配置主从复制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、mysql其他一些异常的解决方法"><span class="nav-number">4.</span> <span class="nav-text">4、mysql其他一些异常的解决方法</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

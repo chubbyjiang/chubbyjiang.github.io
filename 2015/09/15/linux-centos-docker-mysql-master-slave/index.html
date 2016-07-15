@@ -1,0 +1,854 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Docker,MySQL," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="（0）一些准备操作：Centos安装好之后（这里使用的是vm虚拟机）
+将当前用户添加到sudoers中：su rootvim /etc/sudoers找到root       ALL=(ALL)       ALL在之后添加一行${user}  ALL=(ALL)       ALL保存切换用户即可
+本地ssh免密码登陆Centos虚拟机本地系统为Mac，使用自带的终端工具ssh连接虚拟机ssh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在Centos7中使用Docker搭建MySQL异地双向复制环境">
+<meta property="og:url" content="http://xiaohei.info/2015/09/15/linux-centos-docker-mysql-master-slave/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="（0）一些准备操作：Centos安装好之后（这里使用的是vm虚拟机）
+将当前用户添加到sudoers中：su rootvim /etc/sudoers找到root       ALL=(ALL)       ALL在之后添加一行${user}  ALL=(ALL)       ALL保存切换用户即可
+本地ssh免密码登陆Centos虚拟机本地系统为Mac，使用自带的终端工具ssh连接虚拟机ssh">
+<meta property="og:updated_time" content="2016-07-15T02:30:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在Centos7中使用Docker搭建MySQL异地双向复制环境">
+<meta name="twitter:description" content="（0）一些准备操作：Centos安装好之后（这里使用的是vm虚拟机）
+将当前用户添加到sudoers中：su rootvim /etc/sudoers找到root       ALL=(ALL)       ALL在之后添加一行${user}  ALL=(ALL)       ALL保存切换用户即可
+本地ssh免密码登陆Centos虚拟机本地系统为Mac，使用自带的终端工具ssh连接虚拟机ssh">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/09/15/linux-centos-docker-mysql-master-slave/"/>
+
+  <title> 在Centos7中使用Docker搭建MySQL异地双向复制环境 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                在Centos7中使用Docker搭建MySQL异地双向复制环境
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-09-15T10:29:50+08:00" content="2015-09-15">
+              2015-09-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/09/15/linux-centos-docker-mysql-master-slave/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/09/15/linux-centos-docker-mysql-master-slave/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/09/15/linux-centos-docker-mysql-master-slave/" class="leancloud_visitors" data-flag-title="在Centos7中使用Docker搭建MySQL异地双向复制环境">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="（0）一些准备操作："><a href="#（0）一些准备操作：" class="headerlink" title="（0）一些准备操作："></a><strong>（0）一些准备操作：</strong></h2><p>Centos安装好之后（这里使用的是vm虚拟机）</p>
+<p>将当前用户添加到sudoers中：<br>su root<br>vim /etc/sudoers<br>找到<br>root       ALL=(ALL)       ALL<br>在之后添加一行<br>${user}  ALL=(ALL)       ALL<br>保存切换用户即可</p>
+<p>本地ssh免密码登陆Centos虚拟机<br>本地系统为Mac，使用自带的终端工具ssh连接虚拟机<br>ssh \${user}@${ip}<br>会要求输入密码</p>
+<p>使用scp复制本地的rsa公钥到虚拟机中<br>scp ~/.ssh/id_rsa.pub \${user}@\${ip}:/home/${user}/.ssh<br>进入虚拟机中的.ssh目录<br>cat id_rsa.pub &gt;&gt; authorized_keys<br>修改authorized_keys文件的权限<br>chmod 600 authorized_keys<br>没有修改权限的话可能没办法成功</p>
+<p>之后即可直接使用ssh \${user}@\${ip}登陆虚拟机<br>方便起见，可以将该命令写入/etc/profile中<br>alias centos=’ssh \${user}@${ip}’</p>
+<p>之后直接执行centos就可以连接到虚拟机</p>
+<h2 id="（1）Docker安装："><a href="#（1）Docker安装：" class="headerlink" title="（1）Docker安装："></a><strong>（1）Docker安装：</strong></h2><p>sudo yum -y install docker</p>
+<p>启动Docker服务：<br>sudo systemctl start docker</p>
+<p>设置开机启动Docker：<br>sudo systemctl enable docker</p>
+<p>设置免sudo执行Docker命令：<br>sudo groupadd docker<br>sudo gpasswd -a ${user} docker<br>sudo systemctl restart docker<br>newgrp - docker</p>
+<p>期间若是出现无法上网的情况请参考：</p>
+<p><strong>Centos7 虚拟机无法上网解决方法：</strong><br>（1）<br>cd /etc/sysconfig/network-scripts/<br>修改该目录下的ifcfg-eno<strong>**</strong><br>vi ifcfg-eno32<br>ONBOOT=”yes” 开启自动启用网络连接<br>重启</p>
+<p>（2）<br>关闭虚拟机，打开虚拟机存储的目录，用记事本打开三台电脑图标的vmx<br>配置文件，加一条进去<br>ethernet0.virtualDev = “e1000”<br>再次开机</p>
+<p>由于直接使用官方的MySQL镜像无法满足此次需求，所以从</p>
+<h2 id="（2）从一个基本的Ubuntu镜像开始重新配置MySQL："><a href="#（2）从一个基本的Ubuntu镜像开始重新配置MySQL：" class="headerlink" title="（2）从一个基本的Ubuntu镜像开始重新配置MySQL："></a><strong>（2）从一个基本的Ubuntu镜像开始重新配置MySQL：</strong></h2><p>docker pull ubuntu</p>
+<p>从该镜像启动容器<br>docker run –name mysql -itd ubuntu<br>进入容器内部bash环境（此时可以像日常操作Linux一样进行操作）<br>docker exec -it mysql bash</p>
+<h2 id="（3）Ubuntu安装MySQL："><a href="#（3）Ubuntu安装MySQL：" class="headerlink" title="（3）Ubuntu安装MySQL："></a><strong>（3）Ubuntu安装MySQL：</strong></h2><p>更新apt-get<br>apt-get update</p>
+<p>安装MySQL<br>apt-get -y install mysql-server</p>
+<p>容器中的vi编辑器不好用，可以顺便下个vim<br>apt-get -y install vim</p>
+<p>root密码修改为自己的，如果在容器中不知道密码可以使用一下命令修改<br>passwd root</p>
+<p>这里可以先将这个容器保存为镜像，免得之后出错了要重新安装这些东西<br>docker commit mysql<br>docker tag ${id} chubby/mysql:0.1</p>
+<h2 id="（4）在Ubuntu容器中配置MySQL多实例启动"><a href="#（4）在Ubuntu容器中配置MySQL多实例启动" class="headerlink" title="（4）在Ubuntu容器中配置MySQL多实例启动"></a><strong>（4）在Ubuntu容器中配置MySQL多实例启动</strong></h2><p>目标：在一个Ubuntu容器中可以启动两个MySQL服务<br>作用：每个容器模拟一个数据库服务器，两个MySQL服务分别准备做异地容灾的主从</p>
+<p>修改mysql配置文件：<br>vim /etc/mysql/my.cnf<br>在[mysqld]的内容中加入：<br>log_slow_queries=/var/log/mysql/mysql-slow.log<br>log-bin<br>server-id=1</p>
+<p>注释一行：<br>bind-address     = 127.0.0.1<br><strong>没有注释的话从节点无法连接到master</strong></p>
+<p>另外加入两个内容：<br>[mysqld_multi]<br>mysqld     = /usr/bin/mysqld_safe<br>mysqladmin = /usr/bin/mysqladmin<br>user       = root<br>password   = root</p>
+<p>[mysqld1]<br>socket     = /var/run/mysqld/mysqld1.sock<br>port       = 3307<br>pid-file   = /var/run/mysqld/mysqld1.pid<br>log-slow-queries = /var/log/mysql1/mysql-slow.log   ## mysql slow log<br>relay-log        = /var/spool/mysqld1/mysqld-relay-bin   ## relay for replication<br>datadir    = /var/lib/mysql1    ## mysql data file folder<br>user       = mysql<br>log-bin<br>server-id=2</p>
+<p>以上的配置具体看情况设置</p>
+<p>启动MySQL：<br>service mysql start<br>修改root密码：<br>mysqladmin -u root -p password “root”</p>
+<p>初始化第二个MySQL实例：<br>mysql_install_db –user=mysql –datadir=/var/lib/mysql1</p>
+<p>启动该MySQL实例：<br>mysqld_multi start 1</p>
+<p>使用命令查看3306、3307端口是否开启<br>netstat -tunlp<br>如果有则启动成功</p>
+<p>登陆该实例时需要制定sock文件<br>修改该实例的root密码：<br>mysqladmin -S /var/run/mysqld/mysqld1.sock -u root -p password “root”</p>
+<p>登陆该实例：<br>mysql -S /var/run/mysqld/mysqld1.sock -uroot -proot</p>
+<p>进去之后可以使用<br>show variables like ‘%datadir%’;<br>查看datadir是否是配置文件中的路径</p>
+<h2 id="（5）配置主从双向复制"><a href="#（5）配置主从双向复制" class="headerlink" title="（5）配置主从双向复制"></a><strong>（5）配置主从双向复制</strong></h2><p>将这个容器提交成镜像<br>docker commit mysql<br>docker tag ${id} chubby/mysql:1.0</p>
+<p>使用这个镜像启动两个容器<br>docker run –name mysql1 -itd chubby/mysql:1.0<br>docker run –name mysql2 -itd chubby/mysql:1.0</p>
+<p>进入bash环境<br>docker exec -it mysql1 bash<br>docker exec -it mysql2 bash</p>
+<p>分别启动两个容器中的两个mysql实例</p>
+<p>进入主数据库（默认的3306端口，两个容器相同的操作）<br>mysql -uroot -proot</p>
+<p>查看用户登陆信息<br>select user,host from mysql.user;</p>
+<p>设置root用户可以从任何地方登陆访问任何表<br>grant all on *.* to root@’%’ identified by ‘root’ with grant option;</p>
+<p>新建一个用户backup用来<br>给从数据库登陆，获取主数据库信息，密码也是backup（这里设置的登陆地址为localhost，如果从数据库在别的机器上需要修改为对应的IP）<br>GRANT REPLICATION SLAVE ON *.* to ‘backup’@’%’ identified by ‘backup’;<br>刷新<br>flush privileges;</p>
+<p>查看用户登陆信息<br>select user,host from mysql.user;<br>可以看到相关用户的登录权限已经设置好了</p>
+<p>使用<br>show variables like “%log_%”;<br>查看二进制日志是否开启（配置文件中的log-bin），要使用主从复制一定要开启这个</p>
+<p>使用<br>show master status;<br>查看主数据库信息<br>File和Position<br>这两个信息会在配置从数据库的时候用到</p>
+<p>进入从库，执行下列命令进行主库信息配置</p>
+<p>change master to master_host=’localhost’,master_user=’backup’,master_password=’backup’,master_log_file=’mysqld-bin.000003’,master_log_pos=107;</p>
+<p>master_host：主库地址（如果不是默认的3306可以使用master_port指定端口信息）<br>master_user：上面配置的从库登陆主库的用户<br>master_log_file：即主库show master status;中File的值<br>master_log_pos：即主库show master status;中Position的值</p>
+<p>开启从库<br>start slave; </p>
+<p>查看状态信息<br>show slave status\G</p>
+<p>其中的<br>Slave_IO_Running: Yes<br>Slave_SQL_Running: Yes<br>两个必须都为Yes才是成功</p>
+<p>此时为Slave单向复制Master，若要变为双向复制则将Master和Slave节点的角色互换然后分别做各自角色的配置即可</p>
+<p>若是Slave同步的时候出现问题：<br>Last_IO_Error: Got fatal error 1236 from master when reading data from binary log: ‘Could not find first log file name in binary log index file’</p>
+<p>在对应的Master中<br>flush logs;<br>show master status;</p>
+<p>记下File, Position</p>
+<p>重新执行<br>change master to master_host=’localhost’,master_user=’backup’,master_password=’backup’,master_log_file=’mysqld-bin.000003’,master_log_pos=107;<br>即可</p>
+<p><strong>一些其他的资料：</strong></p>
+<p>(1)使用Docker官方的MySQL镜像</p>
+<p>docker pull busybox<br>docker pull docker.io/mysql</p>
+<p>使用busybox启动镜像作为挂载数据的容器<br>docker run –name mysql_data -v /var/lib/mysql -d busybox echo “MySQL data”<br>使用MySQL镜像连接到数据容器的volume中<br>docker run –name=mysql_server –volumes-from mysql_data -e MYSQL_ROOT_PASSWORD=root -d docker.io/mysql</p>
+<p>Docker容器挂载磁盘路径无法访问的问题解决方法，添加selinux规则，将要挂载的目录添加到白名单：<br>chcon -Rt svirt_sandbox_file_t /home/docs</p>
+<p>(2)Centos 7缺乏yum源安装mysql：<br>wget <a href="http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm" target="_blank" rel="external">http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm</a><br>sudo rpm -ivh mysql-community-release-el7-5.noarch.rpml<br>安装这个包后，会获得两个mysql的yum repo源：<br>/etc/yum.repos.d/mysql-community.repo<br>/etc/yum.repos.d/mysql-community-source.repo。</p>
+<p>安装mysql：<br>sudo yum install mysql-server</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Docker/" rel="tag">#Docker</a>
+          
+            <a href="/tags/MySQL/" rel="tag">#MySQL</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/08/29/mysql-sharding/" rel="next" title="MySQL数据库分片技术调研">
+                <i class="fa fa-chevron-left"></i> MySQL数据库分片技术调研
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/09/17/spark-12-tuning/" rel="prev" title="Spark（十二）--性能调优篇">
+                Spark（十二）--性能调优篇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/09/15/linux-centos-docker-mysql-master-slave/"
+           data-title="在Centos7中使用Docker搭建MySQL异地双向复制环境" data-url="http://xiaohei.info/2015/09/15/linux-centos-docker-mysql-master-slave/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#（0）一些准备操作："><span class="nav-number">1.</span> <span class="nav-text">（0）一些准备操作：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（1）Docker安装："><span class="nav-number">2.</span> <span class="nav-text">（1）Docker安装：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（2）从一个基本的Ubuntu镜像开始重新配置MySQL："><span class="nav-number">3.</span> <span class="nav-text">（2）从一个基本的Ubuntu镜像开始重新配置MySQL：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（3）Ubuntu安装MySQL："><span class="nav-number">4.</span> <span class="nav-text">（3）Ubuntu安装MySQL：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（4）在Ubuntu容器中配置MySQL多实例启动"><span class="nav-number">5.</span> <span class="nav-text">（4）在Ubuntu容器中配置MySQL多实例启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（5）配置主从双向复制"><span class="nav-number">6.</span> <span class="nav-text">（5）配置主从双向复制</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

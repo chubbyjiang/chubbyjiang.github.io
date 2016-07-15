@@ -1,0 +1,942 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="本篇将会介绍几种hbase集群迁移方式，以备不时之需~
+bulkloadblukload是一种将数据文件（可能是普通的文本文件）导入到hbase中的一种工具其运作流程是：
+
+1.读取数据文件，格式为Rowkey+\t+col1数据+\t+col2数据…2.将数据文件转换为hfile文件3.读取hfile文件导入hbase
+
+使用方式1
+数据文件可以是由程序生成的
+使用
+1hadoop jar hb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase进阶学习（三）--集群迁移">
+<meta property="og:url" content="http://xiaohei.info/2016/03/28/hbase-removal/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="本篇将会介绍几种hbase集群迁移方式，以备不时之需~
+bulkloadblukload是一种将数据文件（可能是普通的文本文件）导入到hbase中的一种工具其运作流程是：
+
+1.读取数据文件，格式为Rowkey+\t+col1数据+\t+col2数据…2.将数据文件转换为hfile文件3.读取hfile文件导入hbase
+
+使用方式1
+数据文件可以是由程序生成的
+使用
+1hadoop jar hb">
+<meta property="og:updated_time" content="2016-07-14T04:40:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase进阶学习（三）--集群迁移">
+<meta name="twitter:description" content="本篇将会介绍几种hbase集群迁移方式，以备不时之需~
+bulkloadblukload是一种将数据文件（可能是普通的文本文件）导入到hbase中的一种工具其运作流程是：
+
+1.读取数据文件，格式为Rowkey+\t+col1数据+\t+col2数据…2.将数据文件转换为hfile文件3.读取hfile文件导入hbase
+
+使用方式1
+数据文件可以是由程序生成的
+使用
+1hadoop jar hb">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/03/28/hbase-removal/"/>
+
+  <title> HBase进阶学习（三）--集群迁移 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase进阶学习（三）--集群迁移
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-28T09:57:41+08:00" content="2016-03-28">
+              2016-03-28
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/28/hbase-removal/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/28/hbase-removal/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/28/hbase-removal/" class="leancloud_visitors" data-flag-title="HBase进阶学习（三）--集群迁移">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本篇将会介绍几种hbase集群迁移方式，以备不时之需~</p>
+<h2 id="bulkload"><a href="#bulkload" class="headerlink" title="bulkload"></a>bulkload</h2><p>blukload是一种将数据文件（可能是普通的文本文件）导入到hbase中的一种工具<br>其运作流程是：</p>
+<blockquote>
+<p>1.读取数据文件，格式为Rowkey+\t+col1数据+\t+col2数据…<br>2.将数据文件转换为hfile文件<br>3.读取hfile文件导入hbase</p>
+</blockquote>
+<p><strong>使用方式1</strong></p>
+<p>数据文件可以是由程序生成的</p>
+<p>使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar importtsv 列名参数 表名 数据文件位置</div></pre></td></tr></table></figure>
+<p>直接将数据文件导入hbase，其中列名参数具体为<strong>-Dimporttsv.columns=HBASE_ROW_KEY,”列族名:列名”…</strong></p>
+<p><strong>使用方式2</strong></p>
+<p>编写mr程序读源hbase库，生成hfile文件，OutputFormat要设置为HFileOutputFormat类</p>
+<p>之后使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar completebulkload mr结果文件目录 表名</div></pre></td></tr></table></figure>
+<p>将hfile文件导入目标hbase数据库<br>注意，该mr程序可以只有mapper过程，输出的<key,value>类型为ImmutableBytesWritable和KeyValue</key,value></p>
+<h2 id="distcp"><a href="#distcp" class="headerlink" title="distcp"></a>distcp</h2><p>distcp是hadoop用于集群迁移的工具，由于hbase是建立在hdfs上的，所以使用该工具将hbase对应的目录拷贝到目标集群上也可以做到hbase迁移的工作<br>将源目录拷贝到目标目录之后需要使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hbase hbck -repair</div></pre></td></tr></table></figure>
+<p>导入表数据</p>
+<p>在老版本的hbase中需要使用如下的方式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hbase org.jruby.Main add_table.rb /hbase根目录/表名</div></pre></td></tr></table></figure>
+<h2 id="export-import"><a href="#export-import" class="headerlink" title="export+import"></a>export+import</h2><p>hbase自身提供了export和import工具用于数据的导出和导入</p>
+<h3 id="export"><a href="#export" class="headerlink" title="export"></a>export</h3><p>将hbase表导出到hdfs或本地，使用方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar export -D &lt;property=value&gt;* 表名 生成文件路径</div></pre></td></tr></table></figure>
+<p>其中-D后面的参数为TableInputFormat类所提供的参数，可以有多个</p>
+<h3 id="import"><a href="#import" class="headerlink" title="import"></a>import</h3><p>将export导出的文件数据导入到hbase中，使用方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar import -D &lt;property=value&gt;* 表名 生成文件路径</div></pre></td></tr></table></figure>
+<p>其中-D后面的参数包括但不限于为以下几个</p>
+<blockquote>
+<ul>
+<li>HBASE_IMPORTER_RENAME_CFS：重命名列族，格式为”旧列族名:新列族名”   </li>
+<li>import.filter.class：指定过滤器类型，在数据写入前进行过滤   </li>
+<li>import.filter.args：指定过滤器之后提供的参数   </li>
+<li>import.bulk.output：指定了该参数之后不会直接写入数据，而是生成hfile文件用于bulkload</li>
+</ul>
+</blockquote>
+<h2 id="copytable"><a href="#copytable" class="headerlink" title="copytable"></a>copytable</h2><p>hbase也提供了一个copytable的工具直接用于表拷贝，其是通过mr程序将数据逐条put到目标表中的（TableInputFormat和TableOutputFormat）</p>
+<p>使用方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar copytable -D &lt;property=value&gt;*</div></pre></td></tr></table></figure>
+<p>-D的参数涵括但不限于以下几个</p>
+<blockquote>
+<ul>
+<li>–startrow=起始Rowkey</li>
+<li>–stoprow=终止Rowkey</li>
+<li>–starttime=起始时间戳</li>
+<li>–endtime=终止时间戳</li>
+<li>–versions=保留的版本数</li>
+<li>–all.cells=是否拷贝删除标记的数据</li>
+<li>–new.name=目标表名</li>
+<li>–peer.adr=目标zk-ip:zk-port:hbase在zk中的根目录，<strong>必须指定</strong></li>
+<li>–families=旧列族名:新列族名，如果一致则指定一个即可</li>
+<li>表名</li>
+</ul>
+</blockquote>
+<h2 id="replication"><a href="#replication" class="headerlink" title="replication"></a>replication</h2><p>hbase中的replication相当于mysql中的主从同步技术，RegionServer会在后台启动一个进程不断put或者delete到同步的集群上<br><strong>比较适合小集群的热备</strong></p>
+<p>使用replication需要在hbase-site.xml文件中配置以下选项：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hbase.replication</td>
+<td>true</td>
+<td>开启hbase replication功能，从集群中也要开启</td>
+</tr>
+<tr>
+<td>replication.source.nb.capacity</td>
+<td>5000</td>
+<td>主机群每次向从集群发送entry的最大个数，如果slave较多，可以适当调大</td>
+</tr>
+<tr>
+<td>replication.source.size.capacity</td>
+<td>4194304</td>
+<td>每次发送entry包的最大大小，不推荐太大</td>
+</tr>
+<tr>
+<td>replication.source.ratio</td>
+<td>1</td>
+<td>主机群中使用slave服务器的百分比</td>
+</tr>
+<tr>
+<td>hbase.regionserver.wal.enablecompression</td>
+<td>false</td>
+<td>主机群关闭hlog压缩</td>
+</tr>
+<tr>
+<td>replication.sleep.before.failover</td>
+<td>5000</td>
+<td>主机群RegionServer在当机后多少毫秒开启failover</td>
+</tr>
+</tbody>
+</table>
+<p>配置完毕之后在hbase shell中设置replication的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">add_peer &apos;1&apos;,&apos;目标zk-ip:zk-port:hbase在zk中的根目录&apos;</div></pre></td></tr></table></figure>
+<p>之后可以通过list_peer命令查看设置的replication</p>
+<h2 id="集群迁移方法对比"><a href="#集群迁移方法对比" class="headerlink" title="集群迁移方法对比"></a>集群迁移方法对比</h2><table>
+<thead>
+<tr>
+<th>方式</th>
+<th>使用场景</th>
+<th>注意事项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bulkload</td>
+<td>从异构数据库中导入/程序生成的数据文件导入</td>
+<td></td>
+</tr>
+<tr>
+<td>distcp</td>
+<td>整库导入</td>
+<td>原库需要停止写入，两边版本需要一致</td>
+</tr>
+<tr>
+<td>export+import</td>
+<td>不同版本之间导入/只迁移部分数据/导入导出分时段进行</td>
+<td>会占用较多磁盘空间，export受数据写入的影响，import会造成局部热点</td>
+</tr>
+<tr>
+<td>copytable</td>
+<td>导入导出同时进行，比上面一条少了一次文件读写</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>replication</td>
+<td>主从同步/主主同步</td>
+<td>短暂延迟，目标表必须存在</td>
+</tr>
+</tbody>
+</table>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/27/hbase-api/" rel="next" title="HBase进阶学习（二）--API使用">
+                <i class="fa fa-chevron-left"></i> HBase进阶学习（二）--API使用
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/28/drools-develop-env/" rel="prev" title="搭建Drools开发环境">
+                搭建Drools开发环境 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/03/28/hbase-removal/"
+           data-title="HBase进阶学习（三）--集群迁移" data-url="http://xiaohei.info/2016/03/28/hbase-removal/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#bulkload"><span class="nav-number">1.</span> <span class="nav-text">bulkload</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#distcp"><span class="nav-number">2.</span> <span class="nav-text">distcp</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#export-import"><span class="nav-number">3.</span> <span class="nav-text">export+import</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#export"><span class="nav-number">3.1.</span> <span class="nav-text">export</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#import"><span class="nav-number">3.2.</span> <span class="nav-text">import</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#copytable"><span class="nav-number">4.</span> <span class="nav-text">copytable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#replication"><span class="nav-number">5.</span> <span class="nav-text">replication</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集群迁移方法对比"><span class="nav-number">6.</span> <span class="nav-text">集群迁移方法对比</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

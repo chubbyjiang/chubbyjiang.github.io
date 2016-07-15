@@ -1,0 +1,887 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="HDFS进程目录结构对于一个集群管理员来说，理解HDFS各个进程存储在磁盘上的数据含义是十分有用的，可以帮助你诊断和排查一些集群问题
+Namenode的目录结构HDFS进行初次格式化之后将会在$dfs.namenode.name.dir/current目录下生成一些列文件：   
+12345678910111213141516$&amp;#123;dfs.namenode.name.dir&amp;#125;/├">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop集群管理">
+<meta property="og:url" content="http://xiaohei.info/2016/07/13/hadoop-administering/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="HDFS进程目录结构对于一个集群管理员来说，理解HDFS各个进程存储在磁盘上的数据含义是十分有用的，可以帮助你诊断和排查一些集群问题
+Namenode的目录结构HDFS进行初次格式化之后将会在$dfs.namenode.name.dir/current目录下生成一些列文件：   
+12345678910111213141516$&amp;#123;dfs.namenode.name.dir&amp;#125;/├">
+<meta property="og:updated_time" content="2016-07-13T11:27:54.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop集群管理">
+<meta name="twitter:description" content="HDFS进程目录结构对于一个集群管理员来说，理解HDFS各个进程存储在磁盘上的数据含义是十分有用的，可以帮助你诊断和排查一些集群问题
+Namenode的目录结构HDFS进行初次格式化之后将会在$dfs.namenode.name.dir/current目录下生成一些列文件：   
+12345678910111213141516$&amp;#123;dfs.namenode.name.dir&amp;#125;/├">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/07/13/hadoop-administering/"/>
+
+  <title> Hadoop集群管理 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hadoop集群管理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-13T19:27:11+08:00" content="2016-07-13">
+              2016-07-13
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/07/13/hadoop-administering/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/07/13/hadoop-administering/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/07/13/hadoop-administering/" class="leancloud_visitors" data-flag-title="Hadoop集群管理">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="HDFS进程目录结构"><a href="#HDFS进程目录结构" class="headerlink" title="HDFS进程目录结构"></a>HDFS进程目录结构</h2><p>对于一个集群管理员来说，理解HDFS各个进程存储在磁盘上的数据含义是十分有用的，可以帮助你诊断和排查一些集群问题</p>
+<h3 id="Namenode的目录结构"><a href="#Namenode的目录结构" class="headerlink" title="Namenode的目录结构"></a>Namenode的目录结构</h3><p>HDFS进行初次格式化之后将会在$dfs.namenode.name.dir/current目录下生成一些列文件：   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">$&#123;dfs.namenode.name.dir&#125;/</div><div class="line">├── current  </div><div class="line">│ ├── VERSION  </div><div class="line">│ ├── edits_0000000000000000001-0000000000000000007  </div><div class="line">│ ├── edits_0000000000000000008-0000000000000000015  </div><div class="line">│ ├── edits_0000000000000000016-0000000000000000022  </div><div class="line">│ ├── edits_0000000000000000023-0000000000000000029  </div><div class="line">│ ├── edits_0000000000000000030-0000000000000000030  </div><div class="line">│ ├── edits_0000000000000000031-0000000000000000031  </div><div class="line">│ ├── edits_inprogress_0000000000000000032  </div><div class="line">│ ├── fsimage_0000000000000000030  </div><div class="line">│ ├── fsimage_0000000000000000030.md5  </div><div class="line">│ ├── fsimage_0000000000000000031  </div><div class="line">│ ├── fsimage_0000000000000000031.md5  </div><div class="line">│ └── seen_txid  </div><div class="line">└── in_use.lock</div></pre></td></tr></table></figure>
+<p>VERSION文件的内容是一些HDFS的ID信息，比较重要的是<strong>fsimage、edits和seen_txid</strong>   </p>
+<p>fsimage中存储的是HDFS的<strong>元数据信息</strong>，包括文件系统上的文件目录和相关序列化的信息。<br>edits文件保存的是HDFS上的更新操作信息。<br>seen<em>txid文件保存的是一个数字，就是最后一个edits</em>的数字。</p>
+<p>每次Namenode启动的时候都会将fsimage文件读入内存，并从00001开始到seen_txid中记录的数字依次执行每个edits里面的更新操作，<br>保证内存中的元数据信息是最新的、同步的，可以看成Namenode启动的时候就将fsimage和edits文件进行了合并。   </p>
+<p>集群启动的之后，每次对HDFS的更新操作都会写入edits文件。<br>对于客户端来说，<strong>每次写操作都会先记录到edits文件中</strong>，之后更新Namenode内存中的元数据信息。</p>
+<p>对于一个长期运行中的集群来说，edits文件会一直增大，<strong>SecondaryNamenode会在运行的时候定期将edits文件合并到fsimage中</strong><br>否则一旦集群重新启动，Namenode合并fsimage和edits使用的时间将会非常久</p>
+<p>SecondaryNamenode会运行一个checkpoint进程来进行合并操作：</p>
+<blockquote>
+<p>1.SecondaryNamenode告知Namenode停止当前edits文件的读写，并将操作写入一个新的edits文件，同时更新seen_txid文件<br>2.通过HTTP Get请求从Namenode中获得fsimage和edits文件<br>3.加载fsimage文件到内存（和Namenode内存一致的原因），并执行edits文件中的每个操作，产生一个新的fsimage<br>4.通过HTTP Put将新的fsimage文件发送到Namenode中，保存为一个.ckpt文件<br>5.Namenode重命名.ckpt文件使其生效</p>
+</blockquote>
+<p>默认情况下，SecondaryNamenode每隔一个小时就会进行以上的操作，通过<strong>dfs.namenode.checkpoint.period</strong>以秒为单位来配置<br>另外，如果未到达配置的时间而edits文件大小达到<strong>dfs.namenode.checkpoint.txns</strong>配置的值时也会进行合并操作<br>每隔<strong>dfs.namenode.checkpoint.check.period</strong>指定的时间检查一个edits文件的大小</p>
+<h3 id="SecondaryNamenode的目录结构"><a href="#SecondaryNamenode的目录结构" class="headerlink" title="SecondaryNamenode的目录结构"></a>SecondaryNamenode的目录结构</h3><p>SecondaryNamenode的current目录和Namenode是类似的，但是其还保留着一个previous.checkpoint目录<br>数据存储的目录由<strong>dfs.namenode.checkpoint.dir</strong>指定<br>顾名思义，就是上一个检查点的目录，其结构是和current目录一致的<br>如此一来当Namenode挂了之后可以从SecondaryNamenode上启动一个新的Namenode（即使可能不是最新的元数据）<br>有两种方式可以实现：</p>
+<blockquote>
+<p>1.将相关的存储目录复制到新Namenode指定目录中<br>2.在SecondaryNamenode上使用-importCheckpoint选项来启动Namenode进程</p>
+</blockquote>
+<p>第二种方式会将指定目录下的元数据加载到内存中从而成为一个新的Namenode<br>该目录由<strong>dfs.namenode.checkpoint.dir</strong>指定（前提是<strong>dfs.namenode.name.dir</strong>目录下找不到元数据信息）</p>
+<h3 id="Datanode的目录结构"><a href="#Datanode的目录结构" class="headerlink" title="Datanode的目录结构"></a>Datanode的目录结构</h3><p>和Namenode不一样的是，Datanode的目录并不需要进行格式化来创建，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">$&#123;dfs.datanode.data.dir&#125;/</div><div class="line">├── current  </div><div class="line">│ ├── BP-1079595417-192.168.2.45-1412613236271  </div><div class="line">│ │ ├── current  </div><div class="line">│ │ │ ├── VERSION  </div><div class="line">│ │ │ ├── finalized  </div><div class="line">│ │ │ │ └── subdir0  </div><div class="line">│ │ │ │ └── subdir1  </div><div class="line">│ │ │ │ ├── blk_1073741825  </div><div class="line">│ │ │ │ └── blk_1073741825_1001.meta  </div><div class="line">│ │ │ │── lazyPersist  </div><div class="line">│ │ │ └── rbw  </div><div class="line">│ │ ├── dncp_block_verification.log.curr  </div><div class="line">│ │ ├── dncp_block_verification.log.prev  </div><div class="line">│ │ └── tmp  </div><div class="line">│ └── VERSION  </div><div class="line">└── in_use.lock</div></pre></td></tr></table></figure>
+<p>blk开头的文件就是存储HDFS block的数据块</p>
+<blockquote>
+<ul>
+<li>VERSION：与Namenode类似   </li>
+<li>finalized/rbw目录：于实际存储HDFS BLOCK的数据，里面包含许多block_xx文件以及相应的.meta文件，.meta文件包含了checksum信息   </li>
+<li>dncp_block_verification.log：用于追踪每个block最后修改后的checksum值   </li>
+<li>in_use.lock：防止一台机器同时启动多个Datanode进程导致目录数据不一致</li>
+</ul>
+</blockquote>
+<h2 id="安全模式"><a href="#安全模式" class="headerlink" title="安全模式"></a>安全模式</h2><p>安全模式是指Namenode在刚启动的时候，加载fsimage合并edits文件的过程，<strong>一旦加载完毕将会在磁盘中为自己创建一个新的fsimage和空的edits文件</strong><br>该过程中无法对文件系统进行写操作</p>
+<p>关于安全模式的一些命令：</p>
+<blockquote>
+<ul>
+<li>hadoop dfsadmin -safemode get：查询是够处于安全模式   </li>
+<li>hadoop dfsadmin -safemode wait：执行某命令以前先退出安全模式   </li>
+<li>hadoop dfsadmin -safemode enter：进入安全模式   </li>
+<li>hadoop dfsadmin -safemode leave：退出安全模式  </li>
+</ul>
+</blockquote>
+<h2 id="管理工具"><a href="#管理工具" class="headerlink" title="管理工具"></a>管理工具</h2><h3 id="dfsadmin"><a href="#dfsadmin" class="headerlink" title="dfsadmin"></a>dfsadmin</h3><p>hadoop dfsadmin既可以查询HDFS状态信息，也可以进行HDFS管理操作，用途较广<br>该命令参数较多，可以使用-help选项来查看使用帮助</p>
+<h3 id="fsck"><a href="#fsck" class="headerlink" title="fsck"></a>fsck</h3><p>即为Filesystem check，文件系统检查，可以得到HDFS指定目录的健康状态信息<br>该工具可以找出HDFS上缺失、过多、过少或者损坏的数据块<br>fsck将从Namenode中获得所有信息，而不会去Datanode获取真实的block数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop fsck /user/heybiiiiii/part-00007 -files -blocks -racks</div></pre></td></tr></table></figure>
+<p>以上命令演示了如何通过fsck工具来为一个文件查找其block信息</p>
+<blockquote>
+<ul>
+<li>-files：显示该文件的文件名、大小、block数量和健康状态   </li>
+<li>-blocks：显示该文件每个block信息，每行一条信息   </li>
+<li>-racks：显示每个block所在的Datanode和机架位置信息</li>
+</ul>
+</blockquote>
+<h3 id="Datanode的块扫描器"><a href="#Datanode的块扫描器" class="headerlink" title="Datanode的块扫描器"></a>Datanode的块扫描器</h3><p>每个Datanode都运行着一个块扫描器定期检测节点上的所有块<br>从而在客户端读到损坏的数据块之前及时的检车和修复<br>默认情况下每个504个小时（三周）会自动检查一个，该值可以通过<strong>dfs.datanode.scan.period.hours</strong>选项来配置<br>用户可以通过访问<br><a href="http://datanode:50075/blockScanerReport" target="_blank" rel="external">http://datanode:50075/blockScanerReport</a><br>来查看该Datanode的块检测报告</p>
+<h3 id="Balancer"><a href="#Balancer" class="headerlink" title="Balancer"></a>Balancer</h3><p>随着时间的推移，各个Datanode上的数据的分布会越来越不均衡，这样会降低MapReduce的数据本地性导致性能降低，部分Datanode相对繁忙<br>balancer能够将数据从繁忙的Datanode中迁移到较为空闲的Datanode，从而从新分配数据块，<strong>在迁移数据的过程中也会始终坚持HDFS的副本存放策略</strong></p>
+<p>balancer一旦启动，将会不断地移动数据，直至集群中的数据达到一个平衡的状态<br>该状态通过<strong>该节点已用空间和整个集群可用空间之比</strong>和<strong>集群中已用空间和整个集群可用空间之比</strong>来判断<br>一个集群中只能运行一个balancer程序，命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">start-balancer.sh</div></pre></td></tr></table></figure>
+<p>通过-threshold选型来指定一个阈值以判断集群是否平衡，默认为10%</p>
+<h2 id="日常运维"><a href="#日常运维" class="headerlink" title="日常运维"></a>日常运维</h2><h3 id="元数据备份"><a href="#元数据备份" class="headerlink" title="元数据备份"></a>元数据备份</h3><p>一旦元数据出现损坏，整个集群将无法工作，所以元数据的备份是非常重要的<br>可以在系统中分别保存不同时间点的备份（一小时、一天、一周或者一个月）以保护元数据</p>
+<p>一个最直接的方法就是使用dfsadmin命令来下载一个Namenode最新的元数据副本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hdfs dfsadmin -fetchImage fsimage.backup</div></pre></td></tr></table></figure>
+<p>可以通过一个脚本定时在异地站点存储元数据信息</p>
+<h3 id="数据备份"><a href="#数据备份" class="headerlink" title="数据备份"></a>数据备份</h3><p>尽管HDFS的数据容错性做的很好，但是我们仍然不能够保证其永远不会出错<br>HDFS上的数据备份可以通过<strong>distcp</strong>工具来实现集群数据的复制<br>具体使用方法请参考：</p>
+<h3 id="文件系统检查"><a href="#文件系统检查" class="headerlink" title="文件系统检查"></a>文件系统检查</h3><p>建议定期使用fsck工具对HDFS上的数据块进行检查，主动查找丢失或者损坏的数据块</p>
+<h3 id="文件系统均衡"><a href="#文件系统均衡" class="headerlink" title="文件系统均衡"></a>文件系统均衡</h3><p>定期运行balancer程序以保证各个Datanode的数据平衡</p>
+<h2 id="添加和删除节点"><a href="#添加和删除节点" class="headerlink" title="添加和删除节点"></a>添加和删除节点</h2><p>hdfs-site.xml和yarn-site.xml文件中分别有以下属性：</p>
+<blockquote>
+<ul>
+<li>dfs.hosts：运行连接的Datanode列表   </li>
+<li>dfs.hosts.exclude：不允许连接的Datanode列表</li>
+<li>yarn.resourcemanager.nodes.include-path：允许连接的NodeManager列表   </li>
+<li>yarn.resourcemanager.nodes.exclude-path：不允许连接的NodeManager列表</li>
+</ul>
+</blockquote>
+<h3 id="添加节点"><a href="#添加节点" class="headerlink" title="添加节点"></a>添加节点</h3><p>过程如下：</p>
+<blockquote>
+<p>1.将新机器的地址加入以上<strong>允许连接</strong>的列表中<br>2.使用hdfs dfsadmin -refreshNodes/yarn rmadmin -refreshNodes命令重新读取配置<br>3.在slaves文件中添加该节点信息，<strong>使得hadoop脚本文件可以读取到</strong><br>4.在新节点配置完之后启动Datanode和NodeManager进程<br>5.可以在We界面查看该节点是否上线</p>
+</blockquote>
+<p><strong>注意：HDFS不会自动将数据迁移到新节点，需要手动启动balancer进程</strong></p>
+<h3 id="删除节点"><a href="#删除节点" class="headerlink" title="删除节点"></a>删除节点</h3><p>过程如下：</p>
+<blockquote>
+<p>1.将新机器的地址加入以上<strong>不允许连接</strong>的列表中<br>2.使用hdfs dfsadmin -refreshNodes/yarn rmadmin -refreshNodes命令重新读取配置<br>3.在Web界面可以看到该节点处于Decommission in progress状态，节点上的数据将会被迁移到其他节点中<br>4.当节点处于Decommissioned状态时表示数据块复制完毕，关闭该节点上的进程<br>5.从<strong>允许连接</strong>的列表中移除该节点并重新执行命令刷新配置<br>6.在slaves文件中移除该节点</p>
+</blockquote>
+<p><strong>注意，副本数量要小于或者等于正常节点的数量，否则删除失败</strong></p>
+<p><strong>【已解决】删除节点时，该节点长期处于Decommission Status : Decommission in progress状态，由于数据量太大，导致复制的时间很久，使用新集群测试时瞬间下线该节点</strong></p>
+<h2 id="集群升级"><a href="#集群升级" class="headerlink" title="集群升级"></a>集群升级</h2><p>在升级集群之前可以现在一个测试集群上进行测试确保升级无误之后再在生产集群上进行升级</p>
+<p>仅当文件系统健康时才能进行升级，所以在升级之前使用fsck工具对文件系统进行检查<br>最好保留检查结果，对比升级前和升级后的信息</p>
+<p>升级之前最好清空临时文件，包括HDFS、MapReduce系统目录和本地临时文件</p>
+<p>升级步骤如下：</p>
+<blockquote>
+<p>1.升级之前确保前一升级已经定妥<br>2.关闭Yarn和MapReduce进程<br>3.关闭HDFS进程并备份元数据目录<br>4.在集群中安装新版本的Hadoop<br>5.使用-upgrade选项来启动HDFS<br>6.等待等级完成<br>7.检查HDFS是否运行正常<br>8.启动Yarn和MapReduce进程<br>9.回滚（可选操作）</p>
+</blockquote>
+<p>步骤5中使用的命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&#123;NEW_HADOOP&#125;/bin/start-dfs.sh -upgrade</div></pre></td></tr></table></figure>
+<p>该命令的结果是让Namenode升级元数据，并将前一版本放在名为previous目录下，Datanode的操作类似</p>
+<p>步骤6中，可以使用dfsadmin工具来查看升级进度：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&#123;NEW_HADOOP&#125;/bin/hdfs dfsadmin -upgradeProgress status</div></pre></td></tr></table></figure>
+<p>如果需要对升级进行回滚，则进行步骤9的操作：</p>
+<p>首先关闭HDFS进程<br>使用-rollback选项来启动旧版本的Hadoop进程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$&#123;OLD_HADOOP&#125;/in/start-dfs.sh -rollback</div></pre></td></tr></table></figure>
+<p>该命令会让Namenode和Datanode使用升级之前的副本替换当前存储目录，文件系统恢复之前的状态ghe</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/07/13/hbase-introduction/" rel="next" title="HBase概览">
+                <i class="fa fa-chevron-left"></i> HBase概览
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/07/14/hbase-advenced-usage/" rel="prev" title="HBase高级用法">
+                HBase高级用法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/07/13/hadoop-administering/"
+           data-title="Hadoop集群管理" data-url="http://xiaohei.info/2016/07/13/hadoop-administering/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS进程目录结构"><span class="nav-number">1.</span> <span class="nav-text">HDFS进程目录结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Namenode的目录结构"><span class="nav-number">1.1.</span> <span class="nav-text">Namenode的目录结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SecondaryNamenode的目录结构"><span class="nav-number">1.2.</span> <span class="nav-text">SecondaryNamenode的目录结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Datanode的目录结构"><span class="nav-number">1.3.</span> <span class="nav-text">Datanode的目录结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安全模式"><span class="nav-number">2.</span> <span class="nav-text">安全模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#管理工具"><span class="nav-number">3.</span> <span class="nav-text">管理工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#dfsadmin"><span class="nav-number">3.1.</span> <span class="nav-text">dfsadmin</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fsck"><span class="nav-number">3.2.</span> <span class="nav-text">fsck</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Datanode的块扫描器"><span class="nav-number">3.3.</span> <span class="nav-text">Datanode的块扫描器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Balancer"><span class="nav-number">3.4.</span> <span class="nav-text">Balancer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日常运维"><span class="nav-number">4.</span> <span class="nav-text">日常运维</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#元数据备份"><span class="nav-number">4.1.</span> <span class="nav-text">元数据备份</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据备份"><span class="nav-number">4.2.</span> <span class="nav-text">数据备份</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#文件系统检查"><span class="nav-number">4.3.</span> <span class="nav-text">文件系统检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#文件系统均衡"><span class="nav-number">4.4.</span> <span class="nav-text">文件系统均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#添加和删除节点"><span class="nav-number">5.</span> <span class="nav-text">添加和删除节点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加节点"><span class="nav-number">5.1.</span> <span class="nav-text">添加节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除节点"><span class="nav-number">5.2.</span> <span class="nav-text">删除节点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集群升级"><span class="nav-number">6.</span> <span class="nav-text">集群升级</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

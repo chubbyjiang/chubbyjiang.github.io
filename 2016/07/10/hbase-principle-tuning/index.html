@@ -1,0 +1,827 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="存储原理
+如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的 
+HRegionServerHBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
+HLogHBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中错误的地方在于H">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase进阶学习（四）--调优方式">
+<meta property="og:url" content="http://xiaohei.info/2016/07/10/hbase-principle-tuning/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="存储原理
+如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的 
+HRegionServerHBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
+HLogHBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中错误的地方在于H">
+<meta property="og:image" content="http://xiaohei.info/images/hbase-framework.png">
+<meta property="og:updated_time" content="2016-07-13T11:23:52.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase进阶学习（四）--调优方式">
+<meta name="twitter:description" content="存储原理
+如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的 
+HRegionServerHBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
+HLogHBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中错误的地方在于H">
+<meta name="twitter:image" content="http://xiaohei.info/images/hbase-framework.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/07/10/hbase-principle-tuning/"/>
+
+  <title> HBase进阶学习（四）--调优方式 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase进阶学习（四）--调优方式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-10T19:19:49+08:00" content="2016-07-10">
+              2016-07-10
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/07/10/hbase-principle-tuning/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/07/10/hbase-principle-tuning/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/07/10/hbase-principle-tuning/" class="leancloud_visitors" data-flag-title="HBase进阶学习（四）--调优方式">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="存储原理"><a href="#存储原理" class="headerlink" title="存储原理"></a>存储原理</h2><p><img src="/images/hbase-framework.png" alt="HBase构架"></p>
+<p>如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的 </p>
+<h3 id="HRegionServer"><a href="#HRegionServer" class="headerlink" title="HRegionServer"></a>HRegionServer</h3><p>HBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上</p>
+<h3 id="HLog"><a href="#HLog" class="headerlink" title="HLog"></a>HLog</h3><p>HBase将数据存储在各个HRegionServer上，每个HRegionServer<strong>都有一个HLog文件记录该节点上数据的CRUD操作记录</strong><br>图中错误的地方在于HLog是和HRegionServer一个级别的，而不是里面的HRegion<br>HLog是Hadoop上的sequence file文件，key为HLogKey对象，记录了hbase读写操作的日志，value是hbase的key-value对象</p>
+<h3 id="HRegion"><a href="#HRegion" class="headerlink" title="HRegion"></a>HRegion</h3><p>按照Rowkey横向切分的多个块，保存着表中某段连续的数据<br>当某个RegionServer上的<strong>HRegion过大时会进行水平切分</strong><br>如果HRegion数过多，HBase会选择一个比较空闲的RegionServer来保存一部分的HRegion<br>这样一来一个表的数据就被保存在不同RegionServer上的不同HRegion中</p>
+<h3 id="Store"><a href="#Store" class="headerlink" title="Store"></a>Store</h3><p>HRegion中包含多个Store，每个Store对应HBase表中的一个列族，有几个列族就有几个Store<br>Store分为两种：</p>
+<blockquote>
+<p>1.MemStore<br>2.StoreFile</p>
+</blockquote>
+<p>向表中写数据的时候先写入内存的MemStore中，MemStore达到一个阈值的时候会产生<strong>溢写</strong>，写数据到磁盘中形成StoreFile<br>读表数据时也是<strong>先查MemStore中</strong>有没有该数据，没有才去找StoreFile</p>
+<h3 id="HFile"><a href="#HFile" class="headerlink" title="HFile"></a>HFile</h3><p>HBase数据最后存储在HDFS上的形式，HFile中保存的是真正的数据，之前提到的<strong>Store文件中存储的其实是HFile的元数据信息</strong>，包含了HFile到HDFS的映射关系<br>每个StoreFile都对应一个HFile文件<br>找到了Store文件就可以在HDFS上找到HFile</p>
+<h2 id="调优方式"><a href="#调优方式" class="headerlink" title="调优方式"></a>调优方式</h2><p>只有理解了HBase的存储原理才能通过其对HBase进行相关的调优设置</p>
+<h3 id="合并"><a href="#合并" class="headerlink" title="合并"></a>合并</h3><p>之前说过，Store中的MemStore会溢写产生StoreFile<br>当MemStore溢写次数过多的时候会产生多个StoreFile，导致HDFS上有大量HFile小文件，所以当StoreFile数量大小达到一个阈值的时候HBase会对其进行合并（Compaction）</p>
+<p>Compaction分为两种：</p>
+<blockquote>
+<p>1.major compaction<br>2.mirror compaction</p>
+</blockquote>
+<p>major默认24小时执行一次，会将全部的StoreFile合并起来，消耗大量的io，最好手动写程序控制执行的时间，放在闲时处理   </p>
+<p>mirror可以通过配置文件设定当StoreFile文件大小、数量达到设定的值的时候，对指定的多少个StoreFile文件进行合并<br>相关配置项如下：</p>
+<blockquote>
+<ul>
+<li>hbase.hstore.compaction.min :默认值为 3，表示至少需要三个满足条件的StoreFile时，minor compaction才会启动</li>
+<li>hbase.hstore.compaction.max :默认值为10，表示一次minor compaction中最多选取10个StoreFile</li>
+<li>hbase.hstore.compaction.min.size :表示文件大小小于该值的StoreFile 一定会加入到minor compaction的StoreFile中</li>
+<li>hbase.hstore.compaction.max.size :表示文件大小大于该值的StoreFile 一定会被minor compaction排除</li>
+<li>hbase.hstore.compaction.ratio :将StoreFile 按照文件年龄排序（older to younger），minor compaction总是从older StoreFile开始选择，如果该文件的size 小于它后面hbase.hstore.compaction.max 个StoreFile size 之和乘以 该ratio，则该StoreFile 也将加入到minor compaction 中。</li>
+</ul>
+</blockquote>
+<h3 id="预分区"><a href="#预分区" class="headerlink" title="预分区"></a>预分区</h3><p>HBase建表时默认只在一个HRegionServer上建一个HRegion，写数据全部往该HRegion写<br>当这个HRegion达到一定大小的时候进行水平切割为多个HRegion，自动进行负载均衡   </p>
+<p>在这个环节，我们可以通过预先创建一个空的HRegion，并规定好每个HRegion存储的Rowkey范围<br>这样一来，指定范围内的数据就会被写入到指定的HRegion中，可以省略很多IO操作   </p>
+<p>通过对数据的特性进行分析预先创建分区可以有效的解决HBase中的数据倾斜问题</p>
+<p>以存储日志访问的记录为例<br>根据数据量和每个HRegion的大小，预先创建空的HRegion，每个HRegion都设定了其RowKey的范围，插入数据时直接写入指定的HRegion中<br>或者根据数据的访问特性（28原则，进行抽样调查，得到数据频繁的情况），将经常访问的ip断分割为几个HRegion，其他为一个或者几个HRegion<br>根据具体需求确定预分区是预估还是抽样，预分区的时候尽可能的想到各种各样的情况</p>
+<h3 id="Rowkey"><a href="#Rowkey" class="headerlink" title="Rowkey"></a>Rowkey</h3><p>HBase设计的要点在Rowkey上<br>例如定长10-100字节等，Rowkey的设计实例可以参考：<a href="http://www.xiaohei.info/2016/01/12/hbase-oracle-2-hbase/" target="_blank" rel="external">Oracle数据迁移至HBase操作记录</a><br>另外，可以利用Rowkey字典排序的特性，例如，最近写入的数据最常被访问，那么Rowkey可以为Long.MAX_VALUE-timestamp作为Rowkey，最近的数据会排在最前面加快访问速度</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/07/10/hbase-framework/" rel="next" title="HBase构架">
+                <i class="fa fa-chevron-left"></i> HBase构架
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/07/13/hbase-introduction/" rel="prev" title="HBase概览">
+                HBase概览 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/07/10/hbase-principle-tuning/"
+           data-title="HBase进阶学习（四）--调优方式" data-url="http://xiaohei.info/2016/07/10/hbase-principle-tuning/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#存储原理"><span class="nav-number">1.</span> <span class="nav-text">存储原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HRegionServer"><span class="nav-number">1.1.</span> <span class="nav-text">HRegionServer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HLog"><span class="nav-number">1.2.</span> <span class="nav-text">HLog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HRegion"><span class="nav-number">1.3.</span> <span class="nav-text">HRegion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Store"><span class="nav-number">1.4.</span> <span class="nav-text">Store</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HFile"><span class="nav-number">1.5.</span> <span class="nav-text">HFile</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调优方式"><span class="nav-number">2.</span> <span class="nav-text">调优方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#合并"><span class="nav-number">2.1.</span> <span class="nav-text">合并</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预分区"><span class="nav-number">2.2.</span> <span class="nav-text">预分区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rowkey"><span class="nav-number">2.3.</span> <span class="nav-text">Rowkey</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

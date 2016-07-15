@@ -1,0 +1,942 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="一、应用执行机制一个应用的生命周期即，用户提交自定义的作业之后，Spark框架进行处理的一系列过程。
+在这个过程中，不同的时间段里，应用会被拆分为不同的形态来执行。
+1、应用执行过程中的基本组件和形态
+Driver：运行在客户端或者集群中，执行Application的main方法并创建SparkContext，调控整个应用的执行。
+Application：用户自定义并提交的Spark程序。
+Job">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（四） -- Spark工作机制">
+<meta property="og:url" content="http://xiaohei.info/2015/05/14/spark-4-working-mechanism/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="一、应用执行机制一个应用的生命周期即，用户提交自定义的作业之后，Spark框架进行处理的一系列过程。
+在这个过程中，不同的时间段里，应用会被拆分为不同的形态来执行。
+1、应用执行过程中的基本组件和形态
+Driver：运行在客户端或者集群中，执行Application的main方法并创建SparkContext，调控整个应用的执行。
+Application：用户自定义并提交的Spark程序。
+Job">
+<meta property="og:updated_time" content="2016-07-15T02:50:01.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（四） -- Spark工作机制">
+<meta name="twitter:description" content="一、应用执行机制一个应用的生命周期即，用户提交自定义的作业之后，Spark框架进行处理的一系列过程。
+在这个过程中，不同的时间段里，应用会被拆分为不同的形态来执行。
+1、应用执行过程中的基本组件和形态
+Driver：运行在客户端或者集群中，执行Application的main方法并创建SparkContext，调控整个应用的执行。
+Application：用户自定义并提交的Spark程序。
+Job">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/14/spark-4-working-mechanism/"/>
+
+  <title> Spark（四） -- Spark工作机制 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（四） -- Spark工作机制
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-14T10:49:36+08:00" content="2015-05-14">
+              2015-05-14
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/14/spark-4-working-mechanism/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/14/spark-4-working-mechanism/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/14/spark-4-working-mechanism/" class="leancloud_visitors" data-flag-title="Spark（四） -- Spark工作机制">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="一、应用执行机制"><a href="#一、应用执行机制" class="headerlink" title="一、应用执行机制"></a><strong>一、应用执行机制</strong></h2><p>一个应用的生命周期即，用户提交自定义的作业之后，Spark框架进行处理的一系列过程。</p>
+<p>在这个过程中，不同的时间段里，应用会被拆分为不同的形态来执行。</p>
+<p><strong>1、应用执行过程中的基本组件和形态</strong></p>
+<p><strong>Driver：</strong><br>运行在客户端或者集群中，执行Application的main方法并创建SparkContext，调控整个应用的执行。</p>
+<p><strong>Application：</strong><br>用户自定义并提交的Spark程序。</p>
+<p><strong>Job：</strong><br>一个Application可以包含多个Job，每个Job由Action操作触发。</p>
+<p><strong>Stage：</strong><br>比Job更小的单位，一个Job会根据RDD之间的依赖关系被划分为多个Stage，每个Stage中只存有RDD之间的窄依赖，即Transformation算子。</p>
+<p><strong>TaskSet：</strong><br>每个Stage中包含的一组相同的Task。</p>
+<p><strong>Task：</strong><br>最后被分发到Executor中执行的具体任务，执行Stage中包含的算子。</p>
+<p>明确了一个应用的生命周期中会有哪些组件参与之后，再来看看用户是怎么提交Spark程序的。</p>
+<p><strong>2、应用的两种提交方式</strong></p>
+<p><strong>Driver进程运行在客户端（Client模式）：</strong></p>
+<p>即用户在客户端直接运行程序。<br>程序的提交过程大致会经过以下阶段：</p>
+<ol>
+<li>用户运行程序。</li>
+<li>启动Driver进行（包括DriverRunner和SchedulerBackend），并向集群的Master注册。</li>
+<li>Driver在客户端初始化DAGScheduler等组件。</li>
+<li>Woker节点向Master节点注册并启动Executor（包括ExecutorRunner和ExecutorBackend）。</li>
+<li>ExecutorBackend启动后，向Driver内部的SchedulerBackend注册，使得Driver可以找到计算节点。</li>
+<li>Driver中的DAGScheduler解析RDD生成Stage等操作。</li>
+<li>Driver将Task分配到各个Executor中并行执行。</li>
+</ol>
+<p><strong>Driver进程运行在集群中（某个Worker节点，Cluster模式）：</strong></p>
+<p>即用户将Spark程序提交给Master分配执行。<br>大致会经过一下流程：</p>
+<ol>
+<li>用户启动客户端，提交Spark程序给Master。</li>
+<li>Master针对每个应用分发给指定的Worker启动Driver进行。</li>
+<li>Worker收到命令之后启动Driver进程（即DriverRunner和其中的SchedulerBackend），并向Master注册。</li>
+<li>Master指定其他Worker启动Executor（即ExecutorRunner和其内部的ExecutorBackend）。</li>
+<li>ExecutorBackend向Driver中的SchedulerBackend注册。</li>
+<li>Driver中的DAGScheduler解析RDD生产Stage等。</li>
+<li>Executor内部启动线程池并行化执行Task。</li>
+</ol>
+<p>可以看到，两种程序的提交方式在处理过程中，仅仅是在哪个地方启动Driver进程的区别而已。<br>为Client模式中时（使用Spark Shell直接执行的程序），Driver就在客户端上。<br>为Cluster模式时（提交Spark程序到Master），Driver运行与集群中的某个Worker节点。</p>
+<h2 id="二、调度与任务分配模块"><a href="#二、调度与任务分配模块" class="headerlink" title="二、调度与任务分配模块"></a><strong>二、调度与任务分配模块</strong></h2><p>Spark框架就像一个操作系统一样，有着自己的作业调度策略，当集群运行在不同的模式下，调度不同级别的单位，使用的策略也是有所不同的。</p>
+<p><strong>1、Application之间的调度</strong></p>
+<p>当有多个用户提交多个Spark程序时，Spark是如何调度这些应用并合理地分配资源呢？</p>
+<p>Standalone模式下，默认使用FIFO，每个app会独占所有资源</p>
+<p>可以通过以下几个参数调整集群相关的资源：</p>
+<ul>
+<li>spark.cores.max：调整app可以在整个集群中申请的CPU core数量</li>
+<li>spark.deploy.defaultCores：默认的CPU core数量</li>
+<li>spark.executor.memory：限制每个Executor可用的内存</li>
+</ul>
+<p>在Mesos模式下，可以使用</p>
+<ul>
+<li>spark.mesos.coarse=true设置静态配置资源的策略</li>
+<li>使用mesos://URL且不配置spark.mesos.coarse=true（每个app会有独立固定的内存分配，空闲时其他机器可以使用其资源）</li>
+</ul>
+<p>在Yarn模式下，提交作业时可以使用</p>
+<ul>
+<li>通过–num-executors控制分配多少个Executor给app</li>
+<li>–executor-memory和–executor-cores分别控制Executor的内存和CPU core</li>
+</ul>
+<p><strong>2、Application内部的Job调度机制</strong></p>
+<p>一个Application中，由各个Action触发的多个Job之间也是存在调度关系的。</p>
+<p>Action操作实现上是调用了SparkContext的runJob方法提交Job。</p>
+<p>Spark中调度Job有两种策略</p>
+<p><strong>FIFO：</strong></p>
+<ul>
+<li>第一个Job分配其所需的所有资源</li>
+<li>第二个Job如果还有剩余资源的话就分配，否则等待</li>
+</ul>
+<p><strong>FAIR：</strong></p>
+<ul>
+<li>使用轮询的方式调度Job</li>
+</ul>
+<p>可以通过配置spark.scheduler.mode调整Job的调度方式</p>
+<p>另外也可以配置调度池，具体参考官方文档<br>或者参考conf/fairscheduler.xml.template文件。</p>
+<p><strong>3、Job中的Stage调度</strong></p>
+<p>Stage是由DAGScheduler组件生产的，在源码中，有三个比较特殊的变量：</p>
+<ul>
+<li>waitingStages：存储等待执行的Stages</li>
+<li>runningStages：存储正在执行的Stages</li>
+<li>failedStages：存储执行失败的Stage</li>
+</ul>
+<p>Spark会通过广度优先遍历找到最开始的Stage执行，若有父Stage没有执行完则等待。</p>
+<p><strong>4、Stage中的Task调度</strong></p>
+<p>暂未了解。。。</p>
+<h2 id="三、I-O制度"><a href="#三、I-O制度" class="headerlink" title="三、I/O制度"></a><strong>三、I/O制度</strong></h2><p>Spark虽然是基于内存计算的框架，但是不可避免的也会接触到一些存储层，那么在和存储层交互的时候，Spark做了哪些工作？</p>
+<p><strong>1、序列化</strong></p>
+<p><strong>序列化的本质就是将对象转换为字节流</strong>，可以理解为将链表中存储的非连续空间的数据存储转化为连续空间存储的数组中</p>
+<p>Spark为什么要做序列化操作？</p>
+<p>内存或磁盘中RDD会含有对象的存储，而在节点间数据的传输时，序列化之后的数据可以节约空间和提高效率。</p>
+<p><strong>2、压缩</strong></p>
+<p>压缩是日常生活中的一个常见操作，好处显而易见，节约空间，从而就可以获得时间上的效率。</p>
+<p>Spark中序列化之后的数据可以进行压缩以减少空间开销。<br>Spark支持两种压缩算法</p>
+<ul>
+<li>Snappy算法：高压缩速度</li>
+<li>LZF算法：高压缩比</li>
+</ul>
+<p>在不同的场景中选择不同的压缩算法可以有效的提高程序运行的效率。</p>
+<p><strong>压缩配置方式：</strong></p>
+<ol>
+<li>启动前在spark-env.sh中设置：export SPARK_JAVA_OPTS=”-Dspark.broadcast.compress”</li>
+<li>在应用程序中配置<pre><code>conf.getBoolean(&quot;spark.broadcast.compress,true&quot;)
+conf.set(&quot;spark.broadcast.compress&quot;,true)
+</code></pre></li>
+</ol>
+<p><strong>3、块管理</strong></p>
+<p>RDD从物理上看是一个元数据结构，记录着Block和Node之间的映射关系。</p>
+<p>存储RDD是以Block块为单位的，每个分区对应一个块，PartitionID通过元数据信息可以映射到Block。</p>
+<p>BlockManager管理和接口、块读写流程、数据块读写管理等细节待继续深入了解。</p>
+<h2 id="四、通信模块"><a href="#四、通信模块" class="headerlink" title="四、通信模块"></a><strong>四、通信模块</strong></h2><p>Spark中使用Akka作为通信框架</p>
+<ul>
+<li>Actors是一组包含状态和行为的对象</li>
+<li>一个Actor接收到其他Actor的信息之后可以根据需求做出各种反应</li>
+<li>Client、Master、Worker等都是一个Actor</li>
+</ul>
+<p>Spark各个组件的之间协调工作都是基于Akka机制来的，待深入了解的有：</p>
+<ul>
+<li>Client Actor通信代码逻辑</li>
+<li>Master Actor通信代码逻辑</li>
+<li>Worker Actor消息处理逻辑</li>
+</ul>
+<h2 id="五、容错机制"><a href="#五、容错机制" class="headerlink" title="五、容错机制"></a><strong>五、容错机制</strong></h2><p>之前讲过，RDD之间的算子操作会形成DAG图，RDD之间的依赖关系会形成Lineage。</p>
+<p>要理解Lineage机制首先要明确两种依赖的概念：</p>
+<ul>
+<li><p>Shuffle Dependencies（宽依赖）<br> 父分区可以被多个子分区所用<br> 即多对多的关系</p>
+</li>
+<li><p>Narrow Dependencies（窄依赖）<br> 父分区最多被一个子分区所用<br> 即一对一或者多对一的关系</p>
+</li>
+</ul>
+<p>当出现某个节点计算错误的时候，会顺着RDD的操作顺序往回走</p>
+<p>一旦是Narrow Dependencies错误，重新计算父RDD分区即可，因为其不依赖其他节点</p>
+<p>而如果Shuffle Dependencies错误，重算代价较高，因为一旦重新计算其依赖的父RDD分区，会造成冗余计算</p>
+<p>这时候就需要人为的添加检查点来提高容错机制的执行效率</p>
+<p><strong>什么情况下需要加CheckPoint</strong></p>
+<ul>
+<li>DAG中的Lineage过长，如果重算开销太大，故在特定几个Shuffle Dependencies上做CheckPoint是有价值的。</li>
+<li>Checkpoint会产生磁盘开销，因为其就是将数据持久化到磁盘中，所以做检查点的RDD最好是已经在内存中缓存了。</li>
+</ul>
+<h2 id="六、Shuffle机制"><a href="#六、Shuffle机制" class="headerlink" title="六、Shuffle机制"></a><strong>六、Shuffle机制</strong></h2><p><strong>Shuffle的定义：</strong>对无规则的数据进行重组排序等过程</p>
+<p><strong>为什么要Shuffle：</strong>分布式计算中数据是分布在各个节点上计算的，而汇总统计等操作需要在所有数据上执行</p>
+<p><strong>Spark中Shuffle经历的阶段：</strong></p>
+<pre><code>Shuffle Write
+    将各个节点数据写入到指定分区
+        1、根据下一个Stage分区数分成相应的Bucket
+        2、将Bucket写入磁盘
+Shuffle Fetch
+    获取各个分区发送的数据
+        1、在存储有Shuffle数据节点的磁盘Fetch需要的数据
+        2、Fetch到本地之后进行自定义的聚集函数操作
+</code></pre><p>最后记录一下提交Spark作业的方法<br>在spark的bin目录下<br>执行spark-submit脚本<br>./spark-submit \<br>–class 入口函数所在的类名全称 \<br>–master spark master节点的地址（默认端口7077）\<br>–executor-memory 指定worker中Executor的内存 \<br>–total-executor-cores 100 \<br>jar文件所在的目录 \</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/13/spark-2-introduction/" rel="next" title="Spark（二） -- Spark简单介绍">
+                <i class="fa fa-chevron-left"></i> Spark（二） -- Spark简单介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/14/spark-3-shark-sparksql/" rel="prev" title="Spark（三） -- Shark与SparkSQL">
+                Spark（三） -- Shark与SparkSQL <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/14/spark-4-working-mechanism/"
+           data-title="Spark（四） -- Spark工作机制" data-url="http://xiaohei.info/2015/05/14/spark-4-working-mechanism/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、应用执行机制"><span class="nav-number">1.</span> <span class="nav-text">一、应用执行机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、调度与任务分配模块"><span class="nav-number">2.</span> <span class="nav-text">二、调度与任务分配模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、I-O制度"><span class="nav-number">3.</span> <span class="nav-text">三、I/O制度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、通信模块"><span class="nav-number">4.</span> <span class="nav-text">四、通信模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、容错机制"><span class="nav-number">5.</span> <span class="nav-text">五、容错机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、Shuffle机制"><span class="nav-number">6.</span> <span class="nav-text">六、Shuffle机制</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

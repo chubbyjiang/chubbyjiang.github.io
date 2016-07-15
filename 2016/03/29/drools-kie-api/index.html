@@ -1,0 +1,949 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Drools," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="在搭建Drools开发环境中我们接触了几个Drools的API，例如：
+
+
+KieServices   
+KieContainer   
+KieSession
+
+
+还有kmodule.xml文件中的几个选项：   
+
+
+kmodule   
+kbase   
+ksession
+
+
+那么这些东西都是什么概念呢
+Kie是什么KIE是jBoss里面一些相关项目的统称，例如jBPM和Drools这些项目都">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Drools KIE API">
+<meta property="og:url" content="http://xiaohei.info/2016/03/29/drools-kie-api/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="在搭建Drools开发环境中我们接触了几个Drools的API，例如：
+
+
+KieServices   
+KieContainer   
+KieSession
+
+
+还有kmodule.xml文件中的几个选项：   
+
+
+kmodule   
+kbase   
+ksession
+
+
+那么这些东西都是什么概念呢
+Kie是什么KIE是jBoss里面一些相关项目的统称，例如jBPM和Drools这些项目都">
+<meta property="og:updated_time" content="2016-07-14T01:56:24.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Drools KIE API">
+<meta name="twitter:description" content="在搭建Drools开发环境中我们接触了几个Drools的API，例如：
+
+
+KieServices   
+KieContainer   
+KieSession
+
+
+还有kmodule.xml文件中的几个选项：   
+
+
+kmodule   
+kbase   
+ksession
+
+
+那么这些东西都是什么概念呢
+Kie是什么KIE是jBoss里面一些相关项目的统称，例如jBPM和Drools这些项目都">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/03/29/drools-kie-api/"/>
+
+  <title> Drools KIE API | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Drools KIE API
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-29T09:55:48+08:00" content="2016-03-29">
+              2016-03-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/29/drools-kie-api/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/29/drools-kie-api/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/29/drools-kie-api/" class="leancloud_visitors" data-flag-title="Drools KIE API">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在<a href="http://www.xiaohei.info/2016/03/28/drools-develop-env/" target="_blank" rel="external">搭建Drools开发环境</a>中我们接触了几个Drools的API，例如：</p>
+<blockquote>
+<ul>
+<li>KieServices   </li>
+<li>KieContainer   </li>
+<li>KieSession</li>
+</ul>
+</blockquote>
+<p>还有kmodule.xml文件中的几个选项：   </p>
+<blockquote>
+<ul>
+<li>kmodule   </li>
+<li>kbase   </li>
+<li>ksession</li>
+</ul>
+</blockquote>
+<p>那么这些东西都是什么概念呢</p>
+<h2 id="Kie是什么"><a href="#Kie是什么" class="headerlink" title="Kie是什么"></a>Kie是什么</h2><p>KIE是jBoss里面一些相关项目的统称，例如jBPM和Drools<br>这些项目都有一定的关联关系，并且存在一些通用的API，比如说涉及到构建（building）、部署（deploying）和加载（loading）等方面的<br>这些API就都会以KIE作为前缀来表示这些是通用的API<br>前面看到的一些KieServices、KieContainer、KieSession类就都是KIE的公共API</p>
+<h3 id="Kie生命周期"><a href="#Kie生命周期" class="headerlink" title="Kie生命周期"></a>Kie生命周期</h3><p>Kie项目的生命周期都会包含以下几个过程：</p>
+<blockquote>
+<p>1.编写：编写规则文件等<br>2.构建：构建一个可以发布部署的组件（jar文件）<br>3.测试：部署之前对规则进行测试<br>4.部署：利用Maven仓库将jar部署到应用程序<br>5.使用：程序中加载jar文件并通过KieContainer对jar文件进行解析创建KieSession<br>6.执行：通过KieSession对象的API跟Drools引擎进行交互执行规则<br>7.交互：用户通过命令行或者UI跟引擎进行交互<br>8.管理：管理KieSession或者KieContainer对象</p>
+</blockquote>
+<p>使用Kie项目的流程就是以上生命周期的过程，之前的Hello World例子就是生命周期中的测试、使用、执行等部分</p>
+<h2 id="API概述"><a href="#API概述" class="headerlink" title="API概述"></a>API概述</h2><p>了解了Kie是什么之后，现在回头看看我们用到的API</p>
+<p><strong>KieServices</strong></p>
+<p>通过KieServices.Factory.get()方式获得，是一个单例的、线程安全的，为其他Kie工具提供服务<br>KieServices是Kie项目的中心，通过其可以获取的各种对象来完成规则构建、管理和执行等操作<br>其中有的方法分为两大类：getX()和newX()，其中，get只会返回一个对应单例对象的引用，new则会重新创建一个对象</p>
+<p><strong>KieRepository</strong></p>
+<p>是一个单例的存放所有KieModule的仓库，无论KieModule是存放在Maven仓库中还是动态配置的<br>KieModule由kmodule.xml文件定义，也可以由代码来定义</p>
+<p><strong>KieContainer</strong></p>
+<p>从KieServices中获得，其会借助KieProject来<strong>初始化、构造</strong>KieModule并将放入KieRepository中<br>是一个给定的KieModule中所有KieBase的存放容器</p>
+<p><strong>KieProject</strong></p>
+<p>KieContainer可以通过KieProject来<strong>查找</strong>KieModule定义的信息，并根据这些信息构造KieBase和KieSession</p>
+<p><strong>ClasspathKieProject</strong></p>
+<p>ClasspathKieProject实现了KieProject接口，它提供了根据类路径中的META-INF/kmodule.xml文件构造KieModule的能力</p>
+<p><strong>KieBase</strong></p>
+<p>KieBase就是一个知识仓库，包含了若干的规则、流程、方法等，但是不包含运行时的数据</p>
+<p><strong>KieSession</strong></p>
+<p>KieSession就是一个跟Drools引擎打交道的会话，其基于KieBase创建<br>KieContainer创建KieSession是一种较为方便的做法，其实他本质上是从KieBase中创建出来</p>
+<p>为了理解方便，我们可以将整个Kie项目看成是一个KieProject<br>这个KieProject包含了一个kmodule.xml文件<br>其中定义了kmodule、kbase和ksession等选项，可以将其看成API中对应的KieModule等工具   </p>
+<p>要使用这个Kie项目，首先创建KieServices<br>通过getKieClasspathContainer方法获得KieContainer<br>KieContainer通过KieProject加载kmodule文件（ClasspathKieProject实现的）<br>创建KieModule放入KieRepository<br>KieContainer又可以通过KieProject到KieRepository中找到对应的KieModule创建KieBase知识库（也就是各个规则文件中的规则）<br>通过KieBase创建KieSession规则会话到规则引擎（KieContainer创建KieSession其实是通过KieBase）</p>
+<h2 id="kmodule-xml中的属性"><a href="#kmodule-xml中的属性" class="headerlink" title="kmodule.xml中的属性"></a>kmodule.xml中的属性</h2><p>该文件中的每个选项都有很多属性，列出几个常用属性作为参考</p>
+<h3 id="kbase的属性"><a href="#kbase的属性" class="headerlink" title="kbase的属性"></a>kbase的属性</h3><table>
+<thead>
+<tr>
+<th>属性名</th>
+<th>默认值</th>
+<th>合法的值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>none</td>
+<td>any</td>
+<td>KieBase的名称，必须设置</td>
+</tr>
+<tr>
+<td>includes</td>
+<td>none</td>
+<td>逗号分隔的KieBase名称列表</td>
+<td>意味着该KieBase会包含所有include的KieBase的rule等文件</td>
+</tr>
+<tr>
+<td>packages</td>
+<td>all</td>
+<td>逗号分隔的字符串列表</td>
+<td>默认情况下将包含resources目录下面（子目录）的所有规则文件，也可以指定具体目录下面的规则文件</td>
+</tr>
+<tr>
+<td>default</td>
+<td>false</td>
+<td>true, false</td>
+<td>表示当前KieBase是不是默认的，如果是默认的话，不用名称就可以查找到该KieBase，但是每一个module最多只能有一个KieBase</td>
+</tr>
+<tr>
+<td>equalsBehavior</td>
+<td>identity</td>
+<td>identity, equality</td>
+<td>判断Working Memory中对象相等的依据，identity可以理解为用==判断；equality就是通过Fact对象的equals方法来判断</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ksession的属性"><a href="#ksession的属性" class="headerlink" title="ksession的属性"></a>ksession的属性</h3><table>
+<thead>
+<tr>
+<th>属性名</th>
+<th>默认值</th>
+<th>合法的值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>none</td>
+<td>any</td>
+<td>KieSession的名称，该值必须唯一，必须设置</td>
+</tr>
+<tr>
+<td>type</td>
+<td>stateful</td>
+<td>stateful, stateless</td>
+<td>定义该session到底是有状态的还是无状态的，有状态的session可以利用Working Memory执行多次，而无状态的则只能执行一次</td>
+</tr>
+<tr>
+<td>default</td>
+<td>false</td>
+<td>true, false</td>
+<td>定义该session是否是默认的，如果是默认的话则可以不用通过session的name来创建session，在同一个module中最多只能有一个默认的session</td>
+</tr>
+</tbody>
+</table>
+<p>参考：   </p>
+<p><a href="http://docs.jboss.org/drools/release/6.3.0.Final/drools-docs/html/index.html" target="_blank" rel="external">Drools官方文档</a><br><a href="http://docs.jboss.org/drools/release/6.3.0.Final/kie-api-javadoc/index.html" target="_blank" rel="external">KIE JAVA API</a><br><a href="http://www.tuicool.com/search?kw=Drools%E5%85%A5%E9%97%A8%E7%B3%BB%E5%88%97" target="_blank" rel="external">Drools入门系列</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Drools/" rel="tag">#Drools</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/28/drools-develop-env/" rel="next" title="搭建Drools开发环境">
+                <i class="fa fa-chevron-left"></i> 搭建Drools开发环境
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/08/mapreduce-weibo-ad/" rel="prev" title="MapReduce广告精准营销案例">
+                MapReduce广告精准营销案例 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/03/29/drools-kie-api/"
+           data-title="Drools KIE API" data-url="http://xiaohei.info/2016/03/29/drools-kie-api/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Kie是什么"><span class="nav-number">1.</span> <span class="nav-text">Kie是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Kie生命周期"><span class="nav-number">1.1.</span> <span class="nav-text">Kie生命周期</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#API概述"><span class="nav-number">2.</span> <span class="nav-text">API概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kmodule-xml中的属性"><span class="nav-number">3.</span> <span class="nav-text">kmodule.xml中的属性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#kbase的属性"><span class="nav-number">3.1.</span> <span class="nav-text">kbase的属性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ksession的属性"><span class="nav-number">3.2.</span> <span class="nav-text">ksession的属性</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

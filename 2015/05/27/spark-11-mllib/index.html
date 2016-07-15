@@ -1,0 +1,849 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="本文测试的Spark版本是1.3.1
+在使用Spark的机器学习算法库之前，需要先了解Mllib中几个基础的概念和专门用于机器学习的数据类型
+特征向量Vector：
+Vector的概念是和数学中的向量是一样的，通俗的看其实就是一个装着Double数据的数组Vector分为两种，分别是密集型和稀疏型 创建方式如下：
+123val array:Array[Double] = ...val vector">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示">
+<meta property="og:url" content="http://xiaohei.info/2015/05/27/spark-11-mllib/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="本文测试的Spark版本是1.3.1
+在使用Spark的机器学习算法库之前，需要先了解Mllib中几个基础的概念和专门用于机器学习的数据类型
+特征向量Vector：
+Vector的概念是和数学中的向量是一样的，通俗的看其实就是一个装着Double数据的数组Vector分为两种，分别是密集型和稀疏型 创建方式如下：
+123val array:Array[Double] = ...val vector">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527190519346">
+<meta property="og:image" content="http://img.blog.csdn.net/20150527192352073">
+<meta property="og:updated_time" content="2016-07-15T02:43:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示">
+<meta name="twitter:description" content="本文测试的Spark版本是1.3.1
+在使用Spark的机器学习算法库之前，需要先了解Mllib中几个基础的概念和专门用于机器学习的数据类型
+特征向量Vector：
+Vector的概念是和数学中的向量是一样的，通俗的看其实就是一个装着Double数据的数组Vector分为两种，分别是密集型和稀疏型 创建方式如下：
+123val array:Array[Double] = ...val vector">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150527190519346">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/27/spark-11-mllib/"/>
+
+  <title> Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-27T10:42:54+08:00" content="2015-05-27">
+              2015-05-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/27/spark-11-mllib/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/27/spark-11-mllib/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/27/spark-11-mllib/" class="leancloud_visitors" data-flag-title="Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文测试的Spark版本是1.3.1</p>
+<p>在使用Spark的机器学习算法库之前，需要先了解Mllib中几个基础的概念和专门用于机器学习的数据类型</p>
+<p><strong>特征向量Vector：</strong></p>
+<p>Vector的概念是和数学中的向量是一样的，通俗的看其实就是一个装着Double数据的数组<br>Vector分为两种，分别是密集型和稀疏型<br> 创建方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val array:Array[Double] = ...</div><div class="line">val vector = Vector.dense(array)//创建密集向量</div><div class="line">val vector = Vector.sparse(array)// 创建稀疏向量</div></pre></td></tr></table></figure>
+<p> 注意：Scala默认引用的是scala.collection.immutable.Vector，为了使用Mllib中的Vector，必须显示引入org.apache.spark.mllib.linalg.Vector</p>
+<p>密集向量和稀疏向量的却别：<br>密集向量的值就是一个普通的Double数组<br>而稀疏向量由两个并列的 数组indices和values组成<br>例如：向量(1.0,0.0,3.0)用密集格式表示为[1.0,0.0,3.0]，用稀疏格式表示为(3,[0,2],[1.0,3.0])<br>第一个3表示向量的长度，[0,2]就是indices数组，[1.0,3.0]是values数组<br>表示向量0的位置的值是1.0，而2的位置的值是3.0</p>
+<p><strong>含类标签的点 LabeledPoint：</strong></p>
+<p>一个含类标签的点由一个类标签（Double型）和一个向量（密集或者稀疏）组成<br>在Mllib中，监督学习算法会用到LabeledPoint，比如：回归和分类等</p>
+<p>LabeledPoint通过case class LabeledPoint来创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val pos = LabeledPoint(1.0,Vector.dense(1.0,0.0,3.0))</div><div class="line">val neg = LabeledPoint(1.0,Vector.sparse(3,Array(0,2),Array(1.0,3.0)))</div></pre></td></tr></table></figure>
+<p><strong>矩阵 Matrix：</strong></p>
+<p>矩阵分为本地矩阵和分布式矩阵两种<br>本地矩阵创建方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">val dm:Matrix = Matrices.dense(3,2,Array(1.0,3.0,5.0,2.0,4.0,6.0))//创建一个3*2的密集矩阵</div></pre></td></tr></table></figure>
+<p>可以看到，其存储的方式是一个矩阵大小(3,2)和一维数组[1.0,3.0,5.0,2.0,4.0,6.0]</p>
+<p>分布式矩阵：<br>一个分布式的矩阵由一个Long型的行列索引和Double型的数据组成，分布式存储在一个或多个RDD中</p>
+<p>最基本的RowMatrix：面向行的分布式矩阵，其行索引是没有具体含义的，其通过一个RDD来代表所有的行，每个行都是一个本地向量</p>
+<p>RowMatrix创建方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">val rows:RDD[Vector] = ...//RowMatrix可以从一个RDD[Vector]类型创建出来</div><div class="line">val mat:RowMatrix = new RowMatrix(rows)</div><div class="line">//获得RowMatrix的size</div><div class="line">val r = mat.numRows()</div><div class="line">val c = mat.numCols()</div></pre></td></tr></table></figure>
+<p>行索引矩阵IndexedRowMatrix：和RowMatrix类似，但是其行索引是有含义的，可以通过其来检索信息</p>
+<p>创建方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">val rows:RDD[IndexedRow] = ...//IndexedRowMatrix可以从一个RDD[IndexedRow]中创建，IndexedRow其实就是一个(Long,Vector)的封装类，就是比创建RowMatrix时多需要了一个Long类型的行索引</div><div class="line"></div><div class="line">val mat:IndexedRowMatrix = new IndexedRowMatrix(rows)</div><div class="line">//获得IndexedRowMatrix 的size</div><div class="line">val r = mat.numRows()</div><div class="line">val c = mat.numCols()</div><div class="line">//如果剔除掉IndexedRowMatrix 的行索引，就会变为一个RowMatrix</div><div class="line">val rowMatrix = mat.toRowMatrix()</div></pre></td></tr></table></figure>
+<p>三元组矩阵 CoordinateMatrix：其实体集合是一个RDD，每个实体是一个(i:Long,j:Long,value:Double)三元组，其中i表示行索引，j为列索引，value为对应的数据。一般只有当矩阵很大，而且很稀疏时才使用</p>
+<p>CoordinateMatrix创建方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">val enties:RDD[MatrixEntry] = ...//CoordinateMatrix可以从一个RDD[MatrixEntry]中创建，MatrixEntry其实就是一个(Long,Long,Double)的封装类</div><div class="line">val mat:CoordinateMatrix = new CoordinateMatrix(enties)</div><div class="line">//获得mat:CoordinateMatrix 的size</div><div class="line">val r = mat.numRows()</div><div class="line">val c = mat.numCols()</div><div class="line">//将其转换成IndexedRowMatrix，但是这个IndexedRowMatrix的行是稀疏的</div><div class="line">val indexedRowMatrix = mat.toIndexedRowMatrix()</div></pre></td></tr></table></figure>
+<p>其实从RowMatrix，IndexedRowMatrix到CoordinateMatrix，是一步一步的升级的，三者都是有一个RDD来表示所有的实体，只是其中的实体不同而已<br>RowMatrix的每个实体是本地向量<br>IndexedRowMatrix的每个实体都是Long类型的行索引加+本地向量<br>CoordinateMatrix的每个实体是两个Long类型的行列索引+本地向量</p>
+<p>三者的创建方式也都是类似的<br>RowMatrix通过一个RDD[Vector]来创建，而一个Vector其实就是表示一个Double型的数组而已，在将其转换成RDD即可</p>
+<p>IndexedRowMatrix通过一个RDD[IndexedRow]来创建，IndexedRow就是封装好了的(Long,Vector)类型，相信能够通过Vector来创建RowMatrix的，使用IndexedRow创建IndexedRowMatrix也不是什么难事</p>
+<p>CoordinateMatrix通过一个RDD[MatrixEntry]来创建，MatrixEntry就更简单了，直接就是一个(Long,Long,Double)的封装类，连Vector都不需要了</p>
+<p>三者的概念的联系就是如此而已，不要被他们的名字吓到了</p>
+<p>以上是Mllib中几个基本概念和数据类型介绍，更多相关的操作如：对矩阵的汇总统计和相关性计算，分层抽样，假设检验，随机数据生成等请参考官方文档（其实就是提供了一个类似静态的工具类，调用其方法即可）</p>
+<p>下面例举Mllib中线性回归，KMeans和协同过滤三种算法的来演示</p>
+<p><strong>线性回归：</strong></p>
+<p>在本例中使用到的Mllib专用数据类型为LabelPoint</p>
+<p>测试数据如下：</p>
+<p><img src="http://img.blog.csdn.net/20150527190519346" alt="这里写图片描述"></p>
+<p><a href="http://download.csdn.net/detail/qq1010885678/8745535" target="_blank" rel="external">测试数据下载地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">object LinearRegression &#123;</div><div class="line">  def main(args: Array[String]) &#123;</div><div class="line">    if (args.length &lt; 2) &#123;</div><div class="line">      System.err.println(&quot;Usage : &lt;master&gt; &lt;hdfs path&gt;&quot;)</div><div class="line">      System.exit(1)</div><div class="line">    &#125;</div><div class="line">    val conf = new SparkConf().setMaster(args(0)).setAppName(&quot;LinearRegression&quot;)</div><div class="line">    val sc = new SparkContext(conf)</div><div class="line">    //读取hdfs上的测试数据，并将其转化为LabeledPoint类型</div><div class="line">    val data = sc.textFile(args(1)).map &#123; lines =&gt;</div><div class="line">      val parts = lines.split(&quot;,&quot;)</div><div class="line">      LabeledPoint(parts(0).toDouble, Vectors.dense(parts(1).split(&quot; &quot;).map(_.toDouble)))</div><div class="line">    &#125;</div><div class="line">    //设置算法的迭代次数</div><div class="line">    val numIterations = 100</div><div class="line">    //使用LinearRegressionWithSGD类的train，将数据（LabeledPoint）传进去进行模型训练，得到一个评估模型</div><div class="line">    val model = LinearRegressionWithSGD.train(data, numIterations)</div><div class="line">    //使用模型的predict方法来进行预测，将LabeledPoint的features（也就是value部分）当做预测数据，并将预测结果和LabeledPoint的label（类标签）部分，组成一个元组返回</div><div class="line">    val result = data.map &#123; point =&gt;</div><div class="line">      val prediction = model.predict(point.features)</div><div class="line">      (point.label, prediction)</div><div class="line">    &#125;</div><div class="line">    //输出元组内容</div><div class="line">    result.foreach(println)</div><div class="line">    //计算模型评分星级MSE </div><div class="line">    val MSE = result.map &#123; case (v, p) =&gt; math.pow((v - p), 2) &#125;.mean()</div><div class="line">    println(&quot;train result MSE:&quot; + MSE)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>KMeans算法：</strong></p>
+<p>KMeans算法中用到的Mllib专用数据类型有：Vector</p>
+<p><a href="http://download.csdn.net/detail/qq1010885678/8745553" target="_blank" rel="external">测试数据下载地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line">object KMeans &#123;</div><div class="line">  def main(args: Array[String]) &#123;</div><div class="line">    if (args.length &lt; 3) &#123;</div><div class="line">      System.err.println(&quot;Usage : &lt;master&gt; &lt;hdfs path&gt; &lt;file save path&gt;&quot;)</div><div class="line">      System.exit(1)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    val conf = new SparkConf().setMaster(args(0)).setAppName(&quot;KMeans&quot;)</div><div class="line">    val sc = new SparkContext(conf)</div><div class="line">    //读取数据，并转化成密集向量</div><div class="line">    val data = sc.textFile(args(1)).map &#123; lines =&gt;</div><div class="line">      Vectors.dense(lines.split(&quot; &quot;).map(_.toDouble))</div><div class="line">    &#125;</div><div class="line">    //实例化KMeans类，该类用来做算法的一些设置和运行算法</div><div class="line">    val km = new KMeans()</div><div class="line">    //设置聚类中心点个数为2，最大迭代次数为20，run方法开始运算，传入测试数据集</div><div class="line">    val model = km.setK(2).setMaxIterations(20).run(data)</div><div class="line">    //输出得到的模型的聚类中心</div><div class="line">    println(&quot;cluster num :&quot; + model.k)</div><div class="line">    for (i &lt;- model.clusterCenters) &#123;</div><div class="line">      println(i.toString)</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    println(&quot;----------------------------------------&quot;)</div><div class="line"></div><div class="line">	//使用自定义的数据对模型进行测试，让其判断这些向量分别属于哪个聚类中心</div><div class="line">    println(&quot;Vector 0.2 0.2 0.2 is closing to : &quot; + model.predict(Vectors.dense(&quot;0.2 0.2 0.2&quot;.split(&quot; &quot;).map(_.toDouble))))</div><div class="line">    println(&quot;Vector 0.25 0.25 0.25 is closing to : &quot; + model.predict(Vectors.dense(&quot;0.25 0.25 0.25&quot;.split(&quot; &quot;).map(_.toDouble))))</div><div class="line">    println(&quot;Vector 8 8 8 is closing to : &quot; + model.predict(Vectors.dense(&quot;8 8 8&quot;.split(&quot; &quot;).map(_.toDouble))))</div><div class="line"></div><div class="line">    println(&quot;----------------------------------------&quot;)</div><div class="line"></div><div class="line">	//将测试数据再次作为预测数据传入模型中进行预测</div><div class="line">    val result0 = model.predict(data).collect().foreach(println)</div><div class="line"></div><div class="line">    println(&quot;----------------------------------------&quot;)</div><div class="line"></div><div class="line">	//数据得到的结果，保存在hdfs中（直接打印也可以）</div><div class="line">    val result = data.map &#123; lines =&gt;</div><div class="line">      val res = model.predict(lines)</div><div class="line">      lines + &quot; clustingCenter: &quot; + res</div><div class="line">    &#125;.saveAsTextFile(args(2))</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>协同过滤：</strong></p>
+<p>在此算法中有一个Rating数据类型是专门用来运算协同过滤的<br>Rating的定义如下：Rating(user:Int,product:Int,rating:Double)<br>user：用户id<br>product：产品id（可以是电影，商品等各种各样）<br>rating：该用户对该产品的评分</p>
+<p>测试数据如下：</p>
+<p><img src="http://img.blog.csdn.net/20150527192352073" alt="这里写图片描述"></p>
+<p><a href="http://download.csdn.net/detail/qq1010885678/8745587" target="_blank" rel="external">测试数据下载地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">object CF &#123;</div><div class="line">  def main(args: Array[String]) &#123;</div><div class="line">    if (args.length &lt; 2) &#123;</div><div class="line">      System.err.println(&quot;Usage : &lt;master&gt; &lt;hdfs path&gt;&quot;)</div><div class="line">      System.exit(1)</div><div class="line">    &#125;</div><div class="line">    val conf = new SparkConf().setMaster(args(0)).setAppName(&quot;Collaborative Filtering&quot;)</div><div class="line">    val sc = new SparkContext(conf)</div><div class="line">    //读取文件，并转化为Rating类型</div><div class="line">    val ratings = sc.textFile(args(1)).map(_.split(&quot;::&quot;) match &#123; case Array(user, item, rate) =&gt; Rating(user.toInt, item.toInt, rate.toDouble) &#125;)</div><div class="line">    //设置隐形因子个数，迭代次数</div><div class="line">    val rank = 10</div><div class="line">    val numIterations = 5</div><div class="line">    //调用ALS类的train方法，传入要训练的数据等进行模型训练</div><div class="line">    val model = ALS.train(ratings, rank, numIterations, 0.01)</div><div class="line">    //将训练数据转换成(user,item)格式，以作为测试模型预测的数据（协同过滤的模型预测时是传入(user,item)，然后预测出每个user-item对应的评分）</div><div class="line">    val usersProducts = ratings.map &#123; case Rating(user, item, rate) =&gt; (user, item) &#125;</div><div class="line">    //调用model的predict，传入(user, item)格式的测试数据进行预测，得到的结果为（user，item，rating）</div><div class="line">    val prediction = model.predict(usersProducts).map &#123; case Rating(user, item, rate) =&gt; ((user, item), rate) &#125;</div><div class="line">    //将得到的预测评分结果和原先的数据进行join操作，以便观察预测的准确度</div><div class="line">    val result = ratings.map &#123; case Rating(user, item, rate) =&gt; ((user, item), rate) &#125;.join(prediction)</div><div class="line">    result.collect().foreach(println)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>其实通过官方文档的example照葫芦画瓢，调用Mllib中各个算法就可以很方便快速的进行机器学习，但是这仅仅是会调用算法库而已，机器学习中的各种算法原理还是需要深入了解和掌握的。不然使用Mllib可以如此简单的调用机器学习的算法，那么和别人相比，怎么能够突出你的优势所在呢？</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/25/spark-10-sparkstreaming/" rel="next" title="Spark（十） -- Spark Streaming API编程">
+                <i class="fa fa-chevron-left"></i> Spark（十） -- Spark Streaming API编程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/27/spark-recommendsys-baseon-spark/" rel="prev" title="基于Spark Mllib，SparkSQL的电影推荐系统">
+                基于Spark Mllib，SparkSQL的电影推荐系统 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/27/spark-11-mllib/"
+           data-title="Spark（十一） -- Mllib API编程 线性回归、KMeans、协同过滤演示" data-url="http://xiaohei.info/2015/05/27/spark-11-mllib/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

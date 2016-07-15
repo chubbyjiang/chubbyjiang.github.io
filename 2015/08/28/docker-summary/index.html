@@ -1,0 +1,842 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Docker," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="记得一开始的时候，还只能在一些网站上看到关于Docker零星的一些消息，之后的不久，有关Docker消息就遍布网络。
+是什么因素让Docker火起来的？或者说什么原因促使大家都对Docker感兴趣并且开始运用的？
+本文记录一下自己对Docker的一点见解，关于Docker是什么以及基本的操作网络上有大把大把的文献，或者参考这里：
+Docker初步介绍系列文章
+这里就不再累述了。
+首先需要明确的一点">
+<meta property="og:type" content="article">
+<meta property="og:title" content="总结对Docker这个东西的想法">
+<meta property="og:url" content="http://xiaohei.info/2015/08/28/docker-summary/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="记得一开始的时候，还只能在一些网站上看到关于Docker零星的一些消息，之后的不久，有关Docker消息就遍布网络。
+是什么因素让Docker火起来的？或者说什么原因促使大家都对Docker感兴趣并且开始运用的？
+本文记录一下自己对Docker的一点见解，关于Docker是什么以及基本的操作网络上有大把大把的文献，或者参考这里：
+Docker初步介绍系列文章
+这里就不再累述了。
+首先需要明确的一点">
+<meta property="og:updated_time" content="2016-07-15T02:32:15.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="总结对Docker这个东西的想法">
+<meta name="twitter:description" content="记得一开始的时候，还只能在一些网站上看到关于Docker零星的一些消息，之后的不久，有关Docker消息就遍布网络。
+是什么因素让Docker火起来的？或者说什么原因促使大家都对Docker感兴趣并且开始运用的？
+本文记录一下自己对Docker的一点见解，关于Docker是什么以及基本的操作网络上有大把大把的文献，或者参考这里：
+Docker初步介绍系列文章
+这里就不再累述了。
+首先需要明确的一点">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/08/28/docker-summary/"/>
+
+  <title> 总结对Docker这个东西的想法 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                总结对Docker这个东西的想法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-08-28T10:31:45+08:00" content="2015-08-28">
+              2015-08-28
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/08/28/docker-summary/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/08/28/docker-summary/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/08/28/docker-summary/" class="leancloud_visitors" data-flag-title="总结对Docker这个东西的想法">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>记得一开始的时候，还只能在一些网站上看到关于Docker零星的一些消息，之后的不久，有关Docker消息就遍布网络。</p>
+<p>是什么因素让Docker火起来的？<br>或者说什么原因促使大家都对Docker感兴趣并且开始运用的？</p>
+<p>本文记录一下自己对Docker的一点见解，关于Docker是什么以及基本的操作网络上有大把大把的文献，或者参考这里：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/46290985" target="_blank" rel="external">Docker初步介绍系列文章</a></p>
+<p>这里就不再累述了。</p>
+<p>首先需要明确的一点是，一个技术从诞生到流行，必定有其原因所在</p>
+<p>并不是因为某种技术听起来叼叼的样子，或者说大家都在用我不用就跟不上时代</p>
+<p>能被大众所认可，并广泛使用的，一定是解决了大部分人所烦恼的问题，或者改善了大部分人的应用现状的</p>
+<p>而Docker正是如此，那么它到底解决了大家的哪些烦恼，如何让大家在用Docker的过程中感到有质的改善呢？</p>
+<p>举一个简单的例子，相信很多开发人员都遇到过这样的问题：<br>要开发应用，那肯定要写代码的啊<br>要写代码，那肯定要配置某个语言的运行环境啊<br>再搞个好用的IDE，或者可以再装几个插件啥七七八八的</p>
+<p>于是噼里啪啦的好不容易装好了，可以开始愉快地撸代码了<br>也许一段时间之内并没有什么问题出现</p>
+<p>但是就在某一天（也许是很久很久之后的事情了），电脑好卡啊，想重新装个系统清静清静，或者来个更直接的，我要换一台更高配置的机器</p>
+<p>那么问题就来了<br>是不是还要继续写程序咯<br>那是不是还要继续搭环境咯<br>那是不是还要继续装各种需要的软件咯<br>重新装？可以啊，下次再换系统再换电脑，每次都重新装过咯~<br>虽然现在很多图形化的工具可以帮人备份、还原、复制系统，但是这一般都是给个人PC机用的，如果是服务器要进行迁移什么的，怎么破？</p>
+<p><strong>这是第一个问题，环境配置的重复工作和繁杂性</strong></p>
+<p>接下来看看第二个问题</p>
+<p>我在服务器上挂着一个tomcat，里面跑着一个java web程序在读着mysql数据库，原本是好好的没啥问题是吧</p>
+<p>现在问题又来了我要对mysql升级一下，升级就升级吧，但是问题是我这个东西是已经在跑着了，有人用着呢，难道不顾用户的死活直接就升了吗，而且升级完敢百分百保证一点问题都没有吗</p>
+<p>有人就会问了，好好的没事升级啥啊<br>= =有时候偏偏就有这种需求，新版本性能更好啊，支持的功能更多啊，巴拉巴拉的。。。</p>
+<p><strong>这是第二个问题，局部部件升级或更改的隐患</strong></p>
+<p>上面两个问题是比较切实而且确实是不好解决的<br>就以这两个问题为例，开始聊聊Docker是怎么做的</p>
+<p>了解过Docker的人应该都知道Image和Container的概念，简单的说可以把Image看成是一个压缩包（生活中很常见的把，rar、zip、gz神马的）</p>
+<p>你要用的时候呢，就解压缩，很简单，然后就开始愉快的使用里面的文档资料啥的<br>可能你觉得光看很不爽，因为这个文档写的太糟糕，所以你就发挥才华狠狠地修改了一通，然后又压缩变成另外一个压缩包</p>
+<p>so，Image就是压缩包，Container就是解压缩出来的文档，修改之后还可以再次变成Image，然后Image又可以再次使用。。。此处无限循环自行脑补~</p>
+<p>那么第一个问题就解决了啊<br>啥？没看懂？</p>
+<p>对于第一个问题，Docker是这么干的：<br>你拉一个最基本的Image嘛，run一个Container出来，爱装啥装啥，跟自己的服务器一样操作，装好了再保存为一个Image不就完事了嘛<br>服务器要迁移？<br>你把这个Image拷过去再run一个Container不就是一个一模一样的环境了嘛</p>
+<p>OK，搞定一个</p>
+<p>还是看mysql升级的问题<br>之前我可能是这么干的：<br>搞一台Linux服务器，搭个tomcat、装个mysql，然后把java web程序部署到tomcat上面去，搞定走你~</p>
+<p>再来看看Docker是怎么做的：<br>还是整一台服务器是吧，这是必须的<br>但是我不直接装tomcat、mysql啥的了</p>
+<p>我先装Docker！<br>run一个Container是吧，关键的时刻来了，哎呀，一个Container也，那我就可以在里面装各种各样的东西了，跟自己的服务器操作一样嘛~</p>
+<p>真这么干就完了，那你还是直接装在服务器上面吧= =</p>
+<p>我要run出三个Container出来！</p>
+<p><strong>Container1：</strong><br>搭tomcat，把webapps（放网站程序的地方）挂载在服务器上的某个路径（放程序的地方）<br>为何这么做？<br>首先，直接把程序放到Container中也不是不行，但是程序是会经常变化的，而Docker提供了可以直接将物理路径映射到Container中的方法，将会变化的程序放在物理路径上，Container再去访问岂不更好？</p>
+<p><strong>Container2：</strong><br>安装mysql，其他啥都不做了</p>
+<p><strong>Container3：</strong><br>这个更彻底了，我就挂载mysql的数据库文件的那个路径，啥都没有了</p>
+<p>Container1中的tomcat跑着java web程序<br>java web程序通过Container之间互相暴露的IP和端口访问Container2中的mysql<br>Container2中的mysql的数据库文件是读Container3中的<br>Container3其实又是挂载着服务器的物理路径的（存放mysql数据库文件的真实路径）</p>
+<p>那么看起来很复杂的一个流程，现在关键点来了，mysql要升级了<br>呵呵，我直接升级Container2中的mysql<br>我在run一个跟Container2一样的Container，我对这个新的Container里面的mysql升级！升级完连Container3中的数据库文件！</p>
+<p>原来的mysql没有受到任何影响，数据库文件也不会因为升级受到牵连，<br>升级完事之后，Container1连到新版本mysql所在的Container，万事大吉~就算真的真的新版本出毛病了，重新切回去Container2就是了呗~</p>
+<p>Docker就是这么被用来解决问题的，处理方式和传统的方式大有区别，但是确实能够带来方便和快捷</p>
+<p>想想这样一个应用场景：<br>一个分布式集群不够用了，原本我需要在搞几台机器或者虚拟机装啊配啊地扩展（而且就算是配置强大的机器，虚拟机起的个数也是少少的，数的过来的）</p>
+<p>现在不用了，我刷地一下起了N个Container！<br>然后就没有然后了…</p>
+<p>再想想这样一个应用场景：<br>开发的时候一个环境，如果测试的人不是你，然后测试人员又要搭一个一样的环境来测试程序，更恐怖的是，发布上线的时候又要保持这个环境的问题</p>
+<p>现在也不用这么干了，一个Image，开发的时候run一个Container，测试的时候、发布上线的时候…</p>
+<p>这里的目的也不是想一下子就成为Docker砖家啊啥的<br>仅仅是作为一个引子，指出Docker为什么会被广泛接受，其应用场景可以是哪些</p>
+<p>至于对Docker的应用<br>反正大家都是是八仙过海各显神通<br>能玩成什么样就看你想玩什么样~</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Docker/" rel="tag">#Docker</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/08/24/linux-ec2-mysql-multi-master-slave/" rel="next" title="Amazon EC2安装mysql多实例并配置主从复制">
+                <i class="fa fa-chevron-left"></i> Amazon EC2安装mysql多实例并配置主从复制
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/08/29/mysql-sharding/" rel="prev" title="MySQL数据库分片技术调研">
+                MySQL数据库分片技术调研 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/08/28/docker-summary/"
+           data-title="总结对Docker这个东西的想法" data-url="http://xiaohei.info/2015/08/28/docker-summary/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

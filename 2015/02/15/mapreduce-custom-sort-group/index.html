@@ -1,0 +1,811 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="现有数据如下：3 33 23 12 22 11 1要求为：先按第一列从小到大排序，如果第一列相同，按第二列从小到大排序
+如果是hadoop默认的排序方式，只能比较key，也就是第一列，而value是无法参与排序的这时候就需要用到自定义的排序规则解决思路：自定义数据类型，将原本的key和value都包装进去将这个数据类型当做key，这样就比较key的时候就可以包含第一列和第二列的值了
+自定义数据类型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop提交作业自定义排序和分组">
+<meta property="og:url" content="http://xiaohei.info/2015/02/15/mapreduce-custom-sort-group/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="现有数据如下：3 33 23 12 22 11 1要求为：先按第一列从小到大排序，如果第一列相同，按第二列从小到大排序
+如果是hadoop默认的排序方式，只能比较key，也就是第一列，而value是无法参与排序的这时候就需要用到自定义的排序规则解决思路：自定义数据类型，将原本的key和value都包装进去将这个数据类型当做key，这样就比较key的时候就可以包含第一列和第二列的值了
+自定义数据类型">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211181629063?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211183156890?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:updated_time" content="2016-07-15T03:09:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop提交作业自定义排序和分组">
+<meta name="twitter:description" content="现有数据如下：3 33 23 12 22 11 1要求为：先按第一列从小到大排序，如果第一列相同，按第二列从小到大排序
+如果是hadoop默认的排序方式，只能比较key，也就是第一列，而value是无法参与排序的这时候就需要用到自定义的排序规则解决思路：自定义数据类型，将原本的key和value都包装进去将这个数据类型当做key，这样就比较key的时候就可以包含第一列和第二列的值了
+自定义数据类型">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150211181629063?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/02/15/mapreduce-custom-sort-group/"/>
+
+  <title> Hadoop提交作业自定义排序和分组 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hadoop提交作业自定义排序和分组
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-02-15T11:06:31+08:00" content="2015-02-15">
+              2015-02-15
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/02/15/mapreduce-custom-sort-group/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/02/15/mapreduce-custom-sort-group/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/02/15/mapreduce-custom-sort-group/" class="leancloud_visitors" data-flag-title="Hadoop提交作业自定义排序和分组">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>现有数据如下：<br>3 3<br>3 2<br>3 1<br>2 2<br>2 1<br>1 1<br>要求为：<br>先按第一列从小到大排序，如果第一列相同，按第二列从小到大排序</p>
+<p>如果是hadoop默认的排序方式，只能比较key，也就是第一列，而value是无法参与排序的<br>这时候就需要用到自定义的排序规则<br>解决思路：<br>自定义数据类型，将原本的key和value都包装进去<br>将这个数据类型当做key，这样就比较key的时候就可以包含第一列和第二列的值了</p>
+<p>自定义数据类型NewK2如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//要实现自定义的排序规则必须实现WritableComparable接口，泛型参数为类本身  </span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NewK2</span> <span class="keyword">implements</span> <span class="title">WritableComparable</span>&lt;<span class="title">NewK2</span>&gt; </span>&#123;  </div><div class="line">    <span class="comment">//代表第一列和第二列的数据  </span></div><div class="line">    Long first;  </div><div class="line">    Long second;  </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewK2</span><span class="params">()</span> </span>&#123;  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewK2</span><span class="params">(<span class="keyword">long</span> first, <span class="keyword">long</span> second)</span> </span>&#123;  </div><div class="line">        <span class="keyword">this</span>.first = first;  </div><div class="line">        <span class="keyword">this</span>.second = second;  </div><div class="line">    &#125;  </div><div class="line">      </div><div class="line">    <span class="comment">//重写序列化和反序列化方法  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">readFields</span><span class="params">(DataInput in)</span> <span class="keyword">throws</span> IOException </span>&#123;  </div><div class="line">        <span class="keyword">this</span>.first = in.readLong();  </div><div class="line">        <span class="keyword">this</span>.second = in.readLong();  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(DataOutput out)</span> <span class="keyword">throws</span> IOException </span>&#123;  </div><div class="line">        out.writeLong(first);  </div><div class="line">        out.writeLong(second);  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="comment">//当k2进行排序时，会自动调用该方法. 当第一列不同时，升序；当第一列相同时，第二列升序  </span></div><div class="line">    <span class="comment">//如果希望降序排列，那么只需要对调this对象和o对象的顺序  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(NewK2 o)</span> </span>&#123;  </div><div class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.first != o.first)  </div><div class="line">        &#123;  </div><div class="line">        <span class="keyword">return</span> (<span class="keyword">int</span>)(<span class="keyword">this</span>.first - o.first);  </div><div class="line">        &#125;  </div><div class="line">        <span class="keyword">else</span>  </div><div class="line">        &#123;  </div><div class="line">            <span class="keyword">return</span> (<span class="keyword">int</span>) (<span class="keyword">this</span>.second - o.second);  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">      </div><div class="line">    <span class="comment">//重写hashCode和equals方法  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">()</span> </span>&#123;  </div><div class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.first.hashCode() + <span class="keyword">this</span>.second.hashCode();  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object obj)</span> </span>&#123;  </div><div class="line">        <span class="keyword">if</span> (!(obj <span class="keyword">instanceof</span> NewK2)) &#123;  </div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;  </div><div class="line">        &#125;  </div><div class="line">        NewK2 oK2 = (NewK2) obj;  </div><div class="line">        <span class="keyword">return</span> (<span class="keyword">this</span>.first == oK2.first) &amp;&amp; (<span class="keyword">this</span>.second == oK2.second);  </div><div class="line">    &#125;  </div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.first + <span class="string">'\t'</span> + <span class="keyword">this</span>.second;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>MyMapper类代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyMapper</span> <span class="keyword">extends</span>  </span></div><div class="line">            <span class="title">Mapper</span>&lt;<span class="title">LongWritable</span>, <span class="title">Text</span>, <span class="title">NewK2</span>, <span class="title">LongWritable</span>&gt; &#123;  </div><div class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(  </span></span></div><div class="line">                LongWritable key,  </div><div class="line">                Text value,  </div><div class="line">                org.apache.hadoop.mapreduce.Mapper&lt;LongWritable, Text, NewK2, LongWritable&gt;.Context context)  </div><div class="line">                <span class="keyword">throws</span> java.io.IOException, InterruptedException &#123;  </div><div class="line">            <span class="keyword">final</span> String[] splited = value.toString().split(<span class="string">"\t"</span>);  </div><div class="line">            <span class="comment">//分割完成之后的数据如：3,1  分别赋值给k2对象的first和second属性  </span></div><div class="line">            <span class="keyword">final</span> NewK2 k2 = <span class="keyword">new</span> NewK2(Long.parseLong(splited[<span class="number">0</span>]),  </div><div class="line">                    Long.parseLong(splited[<span class="number">1</span>]));  </div><div class="line">            <span class="keyword">final</span> LongWritable v2 = <span class="keyword">new</span> LongWritable(Long.parseLong(splited[<span class="number">1</span>]));  </div><div class="line">            <span class="comment">//将k2当做key输出，这样在排序的时候就会调用NewK2的compareTo方法，里面写的是我们自己的排序规则  </span></div><div class="line">            context.write(k2, v2);  </div><div class="line">        &#125;;  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>MyReducer类代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyReducer</span> <span class="keyword">extends</span>  </span></div><div class="line">            <span class="title">Reducer</span>&lt;<span class="title">NewK2</span>, <span class="title">LongWritable</span>, <span class="title">LongWritable</span>, <span class="title">LongWritable</span>&gt; &#123;  </div><div class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(  </span></span></div><div class="line">                NewK2 k2,  </div><div class="line">                java.lang.Iterable&lt;LongWritable&gt; v2s,  </div><div class="line">                org.apache.hadoop.mapreduce.Reducer&lt;NewK2, LongWritable, LongWritable, LongWritable&gt;.Context context)  </div><div class="line">                <span class="keyword">throws</span> java.io.IOException, InterruptedException &#123;  </div><div class="line">            context.write(<span class="keyword">new</span> LongWritable(k2.first), <span class="keyword">new</span> LongWritable(  </div><div class="line">                    k2.second));  </div><div class="line">        &#125;;  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>MySubmit类的代码和之前的一样无需改动<br>运行可得到结果如下图：</p>
+<p><img src="http://img.blog.csdn.net/20150211181629063?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="图片"></p>
+<p>如果业务需求又发生了改变，如：上图结果中，第一列相同的，只要列出第二列的值最小的那个选项即可<br>那么结果应该为<br>1 1<br>2 1<br>3 1<br>可是我们之前使用的是自定义的数据类型当做key<br>而hadoop默认的分组策略是所有key相同的选项当做一组<br>而两个NewK2对象要相等，就必须要first和second属性都相等才行<br>这时就需要用到自定义的分组策略</p>
+<p>自定义分组类如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//自定义的分组类必须实现RawComparator，泛型参数为类本身  </span></div><div class="line">    <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyGroupingComparator</span> <span class="keyword">implements</span> <span class="title">RawComparator</span>&lt;<span class="title">NewK2</span>&gt; </span>&#123;  </div><div class="line">        <span class="comment">//重写两个比较方法  </span></div><div class="line">          </div><div class="line">        <span class="comment">//按对象进行比较，规定只要两个NewK2对象的first属性相同就视为相等  </span></div><div class="line">        <span class="meta">@Override</span>  </div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(NewK2 o1, NewK2 o2)</span> </span>&#123;  </div><div class="line">            <span class="keyword">return</span> (<span class="keyword">int</span>) (o1.first - o2.first);  </div><div class="line">        &#125;  </div><div class="line">  </div><div class="line">        <span class="comment">/** </span></div><div class="line">         * <span class="doctag">@param</span> arg0 </div><div class="line">         *            表示第一个参与比较的字节数组 </div><div class="line">         * <span class="doctag">@param</span> arg1 </div><div class="line">         *            表示第一个参与比较的字节数组的起始位置 </div><div class="line">         * <span class="doctag">@param</span> arg2 </div><div class="line">         *            表示第一个参与比较的字节数组的偏移量 </div><div class="line">         *  </div><div class="line">         * <span class="doctag">@param</span> arg3 </div><div class="line">         *            表示第二个参与比较的字节数组 </div><div class="line">         * <span class="doctag">@param</span> arg4 </div><div class="line">         *            表示第二个参与比较的字节数组的起始位置 </div><div class="line">         * <span class="doctag">@param</span> arg5 </div><div class="line">         *            表示第二个参与比较的字节数组的偏移量 </div><div class="line">         */  </div><div class="line">        <span class="meta">@Override</span>  </div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(<span class="keyword">byte</span>[] arg0, <span class="keyword">int</span> arg1, <span class="keyword">int</span> arg2, <span class="keyword">byte</span>[] arg3,  </span></span></div><div class="line">                <span class="keyword">int</span> arg4, <span class="keyword">int</span> arg5) &#123;  </div><div class="line">            <span class="keyword">return</span> WritableComparator  </div><div class="line">                    .compareBytes(arg0, arg1, <span class="number">8</span>, arg3, arg4, <span class="number">8</span>);  </div><div class="line">        &#125;  </div><div class="line">  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>在MySubmit代码中加入设置分组策略</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 1.4 TODO 排序、分区  </span></div><div class="line">job.setGroupingComparatorClass(MyGroupingComparator.class);</div></pre></td></tr></table></figure>
+<p>再次运行程序可得到如下图的结果：</p>
+<p><img src="http://img.blog.csdn.net/20150211183156890?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="图片"></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/02/15/mapreduce-custom-partitioner-combiner/" rel="next" title="Hadoop作业中自定义分区和归约">
+                <i class="fa fa-chevron-left"></i> Hadoop作业中自定义分区和归约
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/03/12/hadoop-220-disguise-install/" rel="prev" title="hadoop2.2.0伪分布式安装">
+                hadoop2.2.0伪分布式安装 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/02/15/mapreduce-custom-sort-group/"
+           data-title="Hadoop提交作业自定义排序和分组" data-url="http://xiaohei.info/2015/02/15/mapreduce-custom-sort-group/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

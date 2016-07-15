@@ -1,0 +1,802 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="使用hadoop版本为2.2.0倒排索引简单的可以理解为全文检索某个词例如：在a.txt 和b.txt两篇文章分别中查找统计hello这个单词出现的次数，出现次数越多，和关键词的吻合度就越高现有a.txt内容如下：hello tomhello jerryhello kittyhello worldhello tomb.txt内容如下：hello jerryhello tomhello world在">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mapreduce实现搜索引擎简单的倒排索引">
+<meta property="og:url" content="http://xiaohei.info/2015/03/19/mapreduce-inverted-index/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="使用hadoop版本为2.2.0倒排索引简单的可以理解为全文检索某个词例如：在a.txt 和b.txt两篇文章分别中查找统计hello这个单词出现的次数，出现次数越多，和关键词的吻合度就越高现有a.txt内容如下：hello tomhello jerryhello kittyhello worldhello tomb.txt内容如下：hello jerryhello tomhello world在">
+<meta property="og:updated_time" content="2016-07-15T03:00:39.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mapreduce实现搜索引擎简单的倒排索引">
+<meta name="twitter:description" content="使用hadoop版本为2.2.0倒排索引简单的可以理解为全文检索某个词例如：在a.txt 和b.txt两篇文章分别中查找统计hello这个单词出现的次数，出现次数越多，和关键词的吻合度就越高现有a.txt内容如下：hello tomhello jerryhello kittyhello worldhello tomb.txt内容如下：hello jerryhello tomhello world在">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/03/19/mapreduce-inverted-index/"/>
+
+  <title> mapreduce实现搜索引擎简单的倒排索引 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                mapreduce实现搜索引擎简单的倒排索引
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-03-19T10:58:58+08:00" content="2015-03-19">
+              2015-03-19
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/03/19/mapreduce-inverted-index/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/03/19/mapreduce-inverted-index/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/03/19/mapreduce-inverted-index/" class="leancloud_visitors" data-flag-title="mapreduce实现搜索引擎简单的倒排索引">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>使用hadoop版本为2.2.0<br>倒排索引简单的可以理解为全文检索某个词<br>例如：在a.txt 和b.txt两篇文章分别中查找统计hello这个单词出现的次数，出现次数越多，和关键词的吻合度就越高<br>现有a.txt内容如下：<br>hello tom<br>hello jerry<br>hello kitty<br>hello world<br>hello tom<br>b.txt内容如下：<br>hello jerry<br>hello tom<br>hello world<br>在hadoop平台上编写mr代码分析统计各个单词在两个文本中出现的次数<br>其实也只是WordCount程序的改版而已~</p>
+<p>将两个文本上传到hdfs根目录的ii文件夹下（mr直接读取ii文件夹，会读取所有没有以_（下划线）开头的文件）<br>编写mr代码<br>首先分析，map输入的格式为</p>
+<p>该行偏移量 该行文本</p>
+<p>如：<br>0 hello</p>
+<p>我们知道，map的输出之后会根据相同的key来进行合并<br>而每个单词都不是唯一的，它可能在两个文本中都出现，使用单词作为key的话无法分辨出该单词属于哪个文本<br>而使用文本名字作为key的话，那么将达到我们原来的目的，因为map的输出就会变成a.txt-&gt;单词..单词..单词<br>这显然不是我们想要的结果</p>
+<p>所以map输出的格式应该为</p>
+<p>单个单词-&gt;所在文本 1</p>
+<p>如：<br>hello-&gt;a.txt 1</p>
+<p>这里用-&gt;作为单词和所在文本的分隔<br>这样就可以在根据key进行合并的时候不会影响到我们的结果</p>
+<p>map代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyMapper</span> <span class="keyword">extends</span> <span class="title">Mapper</span>&lt;<span class="title">LongWritable</span>, <span class="title">Text</span>, <span class="title">Text</span>, <span class="title">Text</span>&gt; </span>&#123;  </div><div class="line">  </div><div class="line">        <span class="keyword">private</span> Text k = <span class="keyword">new</span> Text();  </div><div class="line">        <span class="keyword">private</span> Text v = <span class="keyword">new</span> Text();  </div><div class="line">  </div><div class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(  </span></span></div><div class="line">                LongWritable key,  </div><div class="line">                Text value,  </div><div class="line">                org.apache.hadoop.mapreduce.Mapper&lt;LongWritable, Text, Text, Text&gt;.Context context)  </div><div class="line">                <span class="keyword">throws</span> java.io.IOException, InterruptedException &#123;  </div><div class="line">            String[] data = value.toString().split(<span class="string">" "</span>);  </div><div class="line">            <span class="comment">//FileSplit类从context上下文中得到，可以获得当前读取的文件的路径  </span></div><div class="line">            FileSplit fileSplit = (FileSplit) context.getInputSplit();  </div><div class="line">            <span class="comment">//文件路径为hdfs://hadoop:9000/ii/a.txt  </span></div><div class="line">            <span class="comment">//根据/分割取最后一块即可得到当前的文件名  </span></div><div class="line">            String[] fileNames = fileSplit.getPath().toString().split(<span class="string">"/"</span>);  </div><div class="line">            String fileName = fileNames[fileNames.length - <span class="number">1</span>];  </div><div class="line">            <span class="keyword">for</span> (String d : data) &#123;  </div><div class="line">                k.set(d + <span class="string">"-&gt;"</span> + fileName);  </div><div class="line">                v.set(<span class="string">"1"</span>);  </div><div class="line">                context.write(k, v);  </div><div class="line">            &#125;  </div><div class="line">        &#125;;  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>在map执行完毕之后<br>我们需要一个combiner来帮助完成一些工作<br>注意，combiner的输入格式和输出格式是一致的，也就是map的输出格式，否则会出错<br>再次分析，根据key合并value之后的键值对是这个样子的：<br>(hello-&gt;a.txt,{1,1,1,1,1})<br>combiner要做的工作就是讲values统计累加<br>并将key的单词和文本分隔开，将文本名和统计之后的values组合在一起形成新的value<br>如：<br>(hello,a.txt-&gt;5)<br>为什么要这么做？<br>因为在combiner执行完毕之后<br>还会根据key进行一次value的合并，跟map之后的是一样的<br>将key相同的value组成一个values集合<br>如此一来，在经过combiner执行之后，到达reduce的输入就变成了<br>(hello,{a.txt-&gt;5,b.txt-&gt;3})<br>这样的格式，然后在reduce中循环将values输出不就是我们想要的结果了吗~<br>combiner代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyCombiner</span> <span class="keyword">extends</span> <span class="title">Reducer</span>&lt;<span class="title">Text</span>, <span class="title">Text</span>, <span class="title">Text</span>, <span class="title">Text</span>&gt; </span>&#123;  </div><div class="line">  </div><div class="line">        <span class="keyword">private</span> Text k = <span class="keyword">new</span> Text();  </div><div class="line">        <span class="keyword">private</span> Text v = <span class="keyword">new</span> Text();  </div><div class="line">  </div><div class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(  </span></span></div><div class="line">                Text key,  </div><div class="line">                java.lang.Iterable&lt;Text&gt; values,  </div><div class="line">                org.apache.hadoop.mapreduce.Reducer&lt;Text, Text, Text, Text&gt;.Context context)  </div><div class="line">                <span class="keyword">throws</span> java.io.IOException, InterruptedException &#123;  </div><div class="line">            <span class="comment">//分割文件名和单词  </span></div><div class="line">            String[] wordAndPath = key.toString().split(<span class="string">"-&gt;"</span>);  </div><div class="line">            <span class="comment">//统计出现次数  </span></div><div class="line">            <span class="keyword">int</span> counts = <span class="number">0</span>;  </div><div class="line">            <span class="keyword">for</span> (Text t : values) &#123;  </div><div class="line">                counts += Integer.parseInt(t.toString());  </div><div class="line">            &#125;  </div><div class="line">            <span class="comment">//组成新的key-value输出  </span></div><div class="line">            k.set(wordAndPath[<span class="number">0</span>]);  </div><div class="line">            v.set(wordAndPath[<span class="number">1</span>] + <span class="string">"-&gt;"</span> + counts);  </div><div class="line">            context.write(k, v);  </div><div class="line">        &#125;;  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>接下来reduce的工作就简单了<br>代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MyReducer</span> <span class="keyword">extends</span> <span class="title">Reducer</span>&lt;<span class="title">Text</span>, <span class="title">Text</span>, <span class="title">Text</span>, <span class="title">Text</span>&gt; </span>&#123;  </div><div class="line">  </div><div class="line">        <span class="keyword">private</span> Text v = <span class="keyword">new</span> Text();  </div><div class="line">  </div><div class="line">        <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(  </span></span></div><div class="line">                Text key,  </div><div class="line">                java.lang.Iterable&lt;Text&gt; values,  </div><div class="line">                org.apache.hadoop.mapreduce.Reducer&lt;Text, Text, Text, Text&gt;.Context context)  </div><div class="line">                <span class="keyword">throws</span> java.io.IOException, InterruptedException &#123;  </div><div class="line">            String res = <span class="string">""</span>;  </div><div class="line">            <span class="keyword">for</span> (Text text : values) &#123;  </div><div class="line">                res += text.toString() + <span class="string">"\r"</span>;  </div><div class="line">            &#125;  </div><div class="line">            v.set(res);  </div><div class="line">            context.write(key, v);  </div><div class="line">        &#125;;  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>main方法代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;  </div><div class="line">        Configuration conf = <span class="keyword">new</span> Configuration();  </div><div class="line">        FileSystem fs = FileSystem.get(conf);  </div><div class="line">        Path inPath = <span class="keyword">new</span> Path(<span class="string">"hdfs://hadoop:9000"</span> + args[<span class="number">0</span>]);  </div><div class="line">        Path outPath = <span class="keyword">new</span> Path(<span class="string">"hdfs://hadoop:9000"</span> + args[<span class="number">1</span>]);  </div><div class="line">        <span class="keyword">if</span> (fs.exists(outPath)) &#123;  </div><div class="line">            fs.delete(outPath, <span class="keyword">true</span>);  </div><div class="line">        &#125;  </div><div class="line">        Job job = Job.getInstance(conf);  </div><div class="line">        job.setJarByClass(InverseIndex.class);  </div><div class="line">  </div><div class="line">        FileInputFormat.setInputPaths(job, inPath);  </div><div class="line">        job.setInputFormatClass(TextInputFormat.class);  </div><div class="line">  </div><div class="line">        job.setMapperClass(MyMapper.class);  </div><div class="line">        job.setMapOutputKeyClass(Text.class);  </div><div class="line">        job.setMapOutputValueClass(Text.class);  </div><div class="line">  </div><div class="line">        job.setCombinerClass(MyCombiner.class);  </div><div class="line">  </div><div class="line">        job.setReducerClass(MyReducer.class);  </div><div class="line">        job.setOutputKeyClass(Text.class);  </div><div class="line">        job.setOutputValueClass(Text.class);  </div><div class="line">  </div><div class="line">        FileOutputFormat.setOutputPath(job, outPath);  </div><div class="line">        job.setOutputFormatClass(TextOutputFormat.class);  </div><div class="line">  </div><div class="line">        job.waitForCompletion(<span class="keyword">true</span>);  </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/03/12/hadoop-220-disguise-install/" rel="next" title="hadoop2.2.0伪分布式安装">
+                <i class="fa fa-chevron-left"></i> hadoop2.2.0伪分布式安装
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/03/24/hbase-install-shellopt/" rel="prev" title="HBase集群安装和shell操作">
+                HBase集群安装和shell操作 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/03/19/mapreduce-inverted-index/"
+           data-title="mapreduce实现搜索引擎简单的倒排索引" data-url="http://xiaohei.info/2015/03/19/mapreduce-inverted-index/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

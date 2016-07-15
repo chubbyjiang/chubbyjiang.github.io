@@ -1,0 +1,1084 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,Sqoop," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="##Sqoop常用参命令
+
+
+
+序号
+命令/command
+类
+说明
+
+
+
+
+1
+impor
+ImportTool
+从关系型数据库中导入数据(来自表或者查询语句)到HDFS中
+
+
+2
+export
+ExportTool
+将HDFS中的数据导入到关系型数据库中
+
+
+3
+codegen
+CodeGenTool
+获取数据库中某张表数据生成Java并打成jar包
+
+
+4
+create-hive-table">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sqoop操作实践">
+<meta property="og:url" content="http://xiaohei.info/2015/12/28/hadoop-sqoop-opt-real/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="##Sqoop常用参命令
+
+
+
+序号
+命令/command
+类
+说明
+
+
+
+
+1
+impor
+ImportTool
+从关系型数据库中导入数据(来自表或者查询语句)到HDFS中
+
+
+2
+export
+ExportTool
+将HDFS中的数据导入到关系型数据库中
+
+
+3
+codegen
+CodeGenTool
+获取数据库中某张表数据生成Java并打成jar包
+
+
+4
+create-hive-table">
+<meta property="og:updated_time" content="2016-07-14T03:38:04.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sqoop操作实践">
+<meta name="twitter:description" content="##Sqoop常用参命令
+
+
+
+序号
+命令/command
+类
+说明
+
+
+
+
+1
+impor
+ImportTool
+从关系型数据库中导入数据(来自表或者查询语句)到HDFS中
+
+
+2
+export
+ExportTool
+将HDFS中的数据导入到关系型数据库中
+
+
+3
+codegen
+CodeGenTool
+获取数据库中某张表数据生成Java并打成jar包
+
+
+4
+create-hive-table">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/12/28/hadoop-sqoop-opt-real/"/>
+
+  <title> Sqoop操作实践 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Sqoop操作实践
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-12-28T11:37:26+08:00" content="2015-12-28">
+              2015-12-28
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/12/28/hadoop-sqoop-opt-real/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/12/28/hadoop-sqoop-opt-real/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/12/28/hadoop-sqoop-opt-real/" class="leancloud_visitors" data-flag-title="Sqoop操作实践">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##<strong>Sqoop常用参命令</strong></p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>命令/command</th>
+<th>类</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>impor</td>
+<td>ImportTool</td>
+<td>从关系型数据库中导入数据(来自表或者查询语句)到HDFS中</td>
+</tr>
+<tr>
+<td>2</td>
+<td>export</td>
+<td>ExportTool</td>
+<td>将HDFS中的数据导入到关系型数据库中</td>
+</tr>
+<tr>
+<td>3</td>
+<td>codegen</td>
+<td>CodeGenTool</td>
+<td>获取数据库中某张表数据生成Java并打成jar包</td>
+</tr>
+<tr>
+<td>4</td>
+<td>create-hive-table</td>
+<td>CreateHiveTableTool</td>
+<td>创建Hive表</td>
+</tr>
+<tr>
+<td>5</td>
+<td>eval</td>
+<td>EvalSqlTool</td>
+<td>查看SQL执行结果</td>
+</tr>
+<tr>
+<td>6</td>
+<td>import-all-tables</td>
+<td>ImportAllTablesTool</td>
+<td>导入某个数据库下所有表到HDFS中</td>
+</tr>
+<tr>
+<td>7</td>
+<td>job</td>
+<td>JobTool</td>
+</tr>
+<tr>
+<td>8</td>
+<td>list-databases</td>
+<td>ListDatabasesTool</td>
+<td>列出所有数据库名</td>
+</tr>
+<tr>
+<td>9</td>
+<td>list-tables</td>
+<td>ListTablesTool</td>
+<td>列出某个数据库下所有表</td>
+</tr>
+<tr>
+<td>10</td>
+<td>merge</td>
+<td>MergeTool</td>
+</tr>
+<tr>
+<td>11</td>
+<td>metastore</td>
+<td>MetastoreTool</td>
+</tr>
+<tr>
+<td>12</td>
+<td>help</td>
+<td>HelpTool</td>
+<td>查看帮助</td>
+</tr>
+<tr>
+<td>13</td>
+<td>version</td>
+<td>VersionTool</td>
+<td>查看版本</td>
+</tr>
+</tbody>
+</table>
+<p>##<strong>通用参数</strong></p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>参数</th>
+<th>说明</th>
+<th>样例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>connect</td>
+<td>连接关系型数据库的URL</td>
+<td>jdbc:mysql://localhost/sqoop_datas</td>
+</tr>
+<tr>
+<td>2</td>
+<td>connection-manager</td>
+<td>连接管理类,一般不用</td>
+</tr>
+<tr>
+<td>3</td>
+<td>driver</td>
+<td>连接驱动</td>
+</tr>
+<tr>
+<td>4</td>
+<td>hadoop-home</td>
+<td>hadoop目录</td>
+<td>/home/guoyun/hadoop</td>
+</tr>
+<tr>
+<td>5</td>
+<td>help</td>
+<td>查看帮助信息</td>
+</tr>
+<tr>
+<td>6</td>
+<td>password</td>
+<td>连接关系型数据库的密码</td>
+</tr>
+<tr>
+<td>7</td>
+<td>username</td>
+<td>链接关系型数据库的用户名</td>
+</tr>
+<tr>
+<td>8</td>
+<td>verbose</td>
+<td>查看更多的信息,其实是将日志级别调低</td>
+</tr>
+</tbody>
+</table>
+<p>##–where和–query导入部分表数据</p>
+<p>Sqoop的–import使用–table指定表之后，默认是导入该表的全部数据，有时候我们可能只需要表其中一部分的数据，或者仅仅是导入小部分数据作为测试，那么可以使用–where和–query参数来进行条件限定。</p>
+<p><strong>–where：</strong>例如”id&lt;100”，只导入该表id小于100的数据，和sql的where条件是一样的。</p>
+<p><strong>–query：</strong>引号中的是SQL语句，SQL执行的结果就是要导入的数据，必须和–target-dir一起使用。</p>
+<p>##<strong>增量导入</strong></p>
+<p>以下三个参数必须同时指定：</p>
+<p><strong>–check-column (col)：</strong>检查指定的列，根据此列判断哪些记录是新数据且需要导入的，列不能是字符相关类型（CHAR/NCHAR/VARCHAR/VARNCHAR/ LONGVARCHAR/LONGNVARCHAR），一般为数据库中的关键字。<br><strong>–incremental (mode)：</strong>指定增量模式，mode包含两种方式，append和lastmodified。</p>
+<blockquote>
+<ul>
+<li>当表中的记录是以id持续增加导入新的记录的时候，可以使用append模式，–check-column id 用于检查id。</li>
+<li>lastmodified： 表有时候也会执行更新操作，此时可以使用lastmodified导入。</li>
+</ul>
+</blockquote>
+<p><strong>–last-value (value)：</strong>  –check-column的某个值，将大于该值的检查列记录导入，以确定仅将新的或者更新后的记录导入新的文件系统。</p>
+<p><strong>和–append参数的区别：</strong><br>–append导入的时候不会再次创建新的HDFS目录（使用普通命令的话，会创建一个新的HDFS目录，如果该目录已存在则会失败），该命令会直接在已存在的目录下继续导入数据，但是不管数据是否重复。</p>
+<p>##-import-all-tables导入多表</p>
+<p>导入的每个表数据被分别存储在以表名命名的HDFS上的不同目录中。<br>使用该命令以下三个条件必须同时满足：</p>
+<blockquote>
+<ul>
+<li>1、每个表必须都只有一个列作为主键；</li>
+<li>2、必须将每个表中所有的数据导入，而不是部分；</li>
+<li>3、必须使用默认分隔列，且WHERE子句无任何强加的条件</li>
+</ul>
+</blockquote>
+<p>–table, –split-by, –columns, 和 –where参数在sqoop-import-all-tables命令中是不合法的。</p>
+<p><strong>也就是说，使用-import-all-tables就无法使用增量导入和部分导入了。</strong></p>
+<p><strong>–exclude-tables：</strong>默认是导入该数据库的全部表，如果只想导入部分表，可以使用该参数将不想导入的表排除掉。</p>
+<p>##<strong>map并行任务数</strong></p>
+<p>Sqoop并行导入原理：<br>默认情况下map的任务数是4，假设导入的表主键为id，那么Sqoop会先进行下面这样一个查询。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">select max(id) as max, select min(id) as min from table [where 如果指定了where子句];</div></pre></td></tr></table></figure>
+<p>通过这个查询，获取到需要拆分字段（id）的最大值和最小值，假设分别是1和1000。</p>
+<p>然后，Sqoop会根据需要并行导入的数量，进行拆分查询，比如上面的这个例子，并行导入将拆分为如下4条SQL同时执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">select * from table where 0 &lt;= id &lt; 250;</div><div class="line">select * from table where 250 &lt;= id &lt; 500;</div><div class="line">select * from table where 500 &lt;= id &lt; 750;</div><div class="line">select * from table where 750 &lt;= id &lt; 1000;</div></pre></td></tr></table></figure>
+<p>注意，这个拆分的字段需要是整数，使用–split-by参数进行指定。<br>从上面的例子可以看出，如果需要导入的表没有主键，我们应该如何手动选取一个合适的拆分字段，以及选择合适的并行数。</p>
+<p>map的任务数不超过集群可以用的mr并行度（节点数），不超过数据库能性能影响的极值。</p>
+<p>##<strong>测试</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">#测试增量导入</div><div class="line">#第一次导入RECORD_NO&lt;100的数据</div><div class="line">sqoop import --connect jdbc:oracle:thin:@ip:port:database --username uid --password pwd --target-dir /oracle/$database -m 1 --table tableName  --fields-terminated-by &apos;\001&apos; --where &quot;RECORD_NO&lt;100&quot;</div><div class="line"></div><div class="line">#第二次增量导入RECORD_NO&lt;200的数据，从RECORD_NO=99开始</div><div class="line">sqoop import --check-column RECORD_NO --incremental append --last-value 99 --connect jdbc:oracle:thin:@ip:port:database --username uid --password pwd --target-dir /oracle/$database -m 1 --table tableName  --fields-terminated-by &apos;\001&apos; --where &quot;RECORD_NO&lt;200&quot;</div><div class="line"></div><div class="line">#第三次增量导入全部数据，从RECORD_NO=199开始</div><div class="line">sqoop import --check-column RECORD_NO --incremental append --last-value 199 --connect jdbc:oracle:thin:@ip:port:database --username uid --password pwd --target-dir /oracle/$database -m 1 --table tableName  --fields-terminated-by &apos;\001&apos; --split-by RECORD_NO</div><div class="line"></div><div class="line">#测试多表导入</div><div class="line">sqoop import-all-tables --connect jdbc:oracle:thin:@ip:port:database --username uid --password pwd --target-dir /oracle/$database -m 8 --fields-terminated-by &apos;\001&apos; --exclude-tables excludeTablesName</div><div class="line"></div><div class="line">#单表导入全部数据，使用并行导入，指定分割列</div><div class="line">sqoop import --connect jdbc:oracle:thin:@ip:port:database --username uid --password pwd --target-dir /oracle/$database -m 1 --table tableName  --fields-terminated-by &apos;\001&apos; --split-by PAYMENT_ID</div></pre></td></tr></table></figure>
+<p>测试失败，待重试</p>
+<p>##<strong>定时导入脚本实现</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">#!/bin/bash</div><div class="line"></div><div class="line">#Oracle的连接字符串，其中包含了Oracle的地址，SID，和端口号</div><div class="line">url=jdbc:oracle:thin:@ip:port:database</div><div class="line">#使用的用户名</div><div class="line">uid=username</div><div class="line">#使用的密码</div><div class="line">pwd=password</div><div class="line">#需要从Oracle中导入的表名</div><div class="line">tableName=tableName</div><div class="line">#需要从Oracle中导入的表中的字段名</div><div class="line">columns=columns</div><div class="line">#将Oracle中的数据导入到HDFS后的存放路径</div><div class="line">hdfsPath=path/$tableName</div><div class="line"></div><div class="line">#执行导入逻辑。将Oracle中的数据导入到HDFS中</div><div class="line">sqoop import --connect $url --username $uid --password $pwd --target-dir $hdfsPath  --m 1 --table $tableName --columns $columns --fields-terminated-by &apos;\001&apos;</div></pre></td></tr></table></figure>
+<p><strong>设置定时执行</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#编辑cron文件，设置定时执行</div><div class="line">crontab -e</div><div class="line"></div><div class="line">#文件内容，每天凌晨1点执行数据导入脚本</div><div class="line">* 1 * * * 脚本所在路径</div><div class="line"></div><div class="line">#保存退出之后即可</div></pre></td></tr></table></figure>
+<p>关于crontab一些知识请看：<br><a href="http://blog.csdn.net/qq1010885678/article/details/44657117" target="_blank" rel="external">linux设置定制器自动执行任务</a></p>
+<p>##<strong>注意事项</strong></p>
+<blockquote>
+<ul>
+<li>导入关系型数据库的数据时，确保集群上的所有节点都能连接到对应数据库服务器的IP和端口号！</li>
+<li>用户名和表名一定要大写！</li>
+</ul>
+</blockquote>
+<p>可以先使用list-tables测试能否连通再执行mr导入数据<br>统计导入的数据行数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop fs -cat  /导入的文件 | wc -l</div></pre></td></tr></table></figure></p>
+<p>##<strong>导入HBase示例</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#使用query参数自定义结果集，全量导入测试通过： </div><div class="line">sqoop import  --connect jdbc:oracle:thin:@ip:port:database --username UID --password pwd --query &apos;select reverse(t.op) as ROWKEY from  table t WHERE (1=1)  and $CONDITIONS &apos; --hbase-table test  --column-family test  --hbase-row-key ROWKEY --hbase-create-table -m 8 --split-by ORDER_ID</div><div class="line"></div><div class="line">增量导入测试通过：</div><div class="line">sqoop import  --connect jdbc:oracle:thin:@ip:port:database --username UID --password pwd --query &apos;select reverse(t.op) as ROWKEY from  table t WHERE (1=1)  and $CONDITIONS and t.ID&lt;23&apos; --hbase-table testapp  --column-family test  --hbase-row-key ROWKEY --hbase-create-table -m 8 --split-by ID --hbase-create-table</div><div class="line"></div><div class="line">sqoop import  --connect jdbc:oracle:thin:@ip:port:database --username UID --password pwd --query &apos;select reverse(t.op) as ROWKEY from  table t WHERE (1=1)  and $CONDITIONS and t.ID&lt;227840&apos; --hbase-table test  --column-family test  --hbase-row-key ROWKEY --hbase-create-table -m 8 --split-by ID --check-column ID --incremental append --last-value 22</div></pre></td></tr></table></figure>
+<p><strong>注意事项：</strong></p>
+<blockquote>
+<ul>
+<li>使用query参数时，如果sql中包含单引号，那么整个sql需要用双引号包裹起来，$CONDITIONS参数需要用\进行转义，变为\$CONDITIONS，否则会报错。</li>
+<li>增量导入的时候check-column指定为数字类型的字符串失败，需要使用数字类型。</li>
+</ul>
+</blockquote>
+<p>##<strong>1.27更新</strong></p>
+<p>检查发现导入hdfs的很多数据和oracle中的<strong>对不上</strong>，排查了很久发现是-m 8，这个并行量设置的问题（-m 1使用一个map进行导入是正确的数据）。</p>
+<p>猜测，可能是–split-by设置的字段造成导入的时候有的数据没有导入，有的数据重复导入，但是我使用的是rownum这个内置的变量，理应是没错的，不得其解。</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Sqoop/" rel="tag">#Sqoop</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/12/25/others-bigdata-env-developer/" rel="next" title="大数据环境下的开发者">
+                <i class="fa fa-chevron-left"></i> 大数据环境下的开发者
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/10/years-summary-2015/" rel="prev" title="2015年度总结">
+                2015年度总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/12/28/hadoop-sqoop-opt-real/"
+           data-title="Sqoop操作实践" data-url="http://xiaohei.info/2015/12/28/hadoop-sqoop-opt-real/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

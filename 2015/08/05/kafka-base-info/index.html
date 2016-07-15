@@ -1,0 +1,838 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Kafka," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="当前使用的事件总线采用的是Kafka分布式消息队列来完成的，近来项目需要接入到事件总线中，故开启了kafka的学习之旅（之前一直在听说kafka这玩意儿，但是学习计划中还没有将它安排进去，借着这个机会学习kafka也算是弥补了这方面的一些遗憾~）
+关于kafka是神马东西这里就不在累述了，网上的资料一大堆
+下面分享一些自己对kafka的理解，如有不妥之处还望指出~
+（1）何为分布式消息队列？有何特">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初识Kafka：构架、生产消费模型以及其他相关概念">
+<meta property="og:url" content="http://xiaohei.info/2015/08/05/kafka-base-info/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="当前使用的事件总线采用的是Kafka分布式消息队列来完成的，近来项目需要接入到事件总线中，故开启了kafka的学习之旅（之前一直在听说kafka这玩意儿，但是学习计划中还没有将它安排进去，借着这个机会学习kafka也算是弥补了这方面的一些遗憾~）
+关于kafka是神马东西这里就不在累述了，网上的资料一大堆
+下面分享一些自己对kafka的理解，如有不妥之处还望指出~
+（1）何为分布式消息队列？有何特">
+<meta property="og:image" content="http://img.blog.csdn.net/20150805200227291">
+<meta property="og:image" content="http://img.blog.csdn.net/20150805195513855">
+<meta property="og:image" content="http://img.blog.csdn.net/20150805201703859">
+<meta property="og:updated_time" content="2016-07-15T02:33:53.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="初识Kafka：构架、生产消费模型以及其他相关概念">
+<meta name="twitter:description" content="当前使用的事件总线采用的是Kafka分布式消息队列来完成的，近来项目需要接入到事件总线中，故开启了kafka的学习之旅（之前一直在听说kafka这玩意儿，但是学习计划中还没有将它安排进去，借着这个机会学习kafka也算是弥补了这方面的一些遗憾~）
+关于kafka是神马东西这里就不在累述了，网上的资料一大堆
+下面分享一些自己对kafka的理解，如有不妥之处还望指出~
+（1）何为分布式消息队列？有何特">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150805200227291">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/08/05/kafka-base-info/"/>
+
+  <title> 初识Kafka：构架、生产消费模型以及其他相关概念 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                初识Kafka：构架、生产消费模型以及其他相关概念
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-08-05T10:33:28+08:00" content="2015-08-05">
+              2015-08-05
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/08/05/kafka-base-info/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/08/05/kafka-base-info/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/08/05/kafka-base-info/" class="leancloud_visitors" data-flag-title="初识Kafka：构架、生产消费模型以及其他相关概念">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>当前使用的事件总线采用的是Kafka分布式消息队列来完成的，近来项目需要接入到事件总线中，故开启了kafka的学习之旅（之前一直在听说kafka这玩意儿，但是学习计划中还没有将它安排进去，借着这个机会学习kafka也算是弥补了这方面的一些遗憾~）</p>
+<p>关于kafka是神马东西这里就不在累述了，网上的资料一大堆</p>
+<p>下面分享一些自己对kafka的理解，如有不妥之处还望指出~</p>
+<h2 id="（1）何为分布式消息队列？有何特点？"><a href="#（1）何为分布式消息队列？有何特点？" class="headerlink" title="（1）何为分布式消息队列？有何特点？"></a><strong>（1）何为分布式消息队列？有何特点？</strong></h2><p>1、一旦涉及到分布式这个概念，其就必须解决两个问题：可靠性和可扩展性。<br>kafka通过事件回溯机制来实现高可靠性：当出现一些不可预料的异常导致生产的消息没有被相应的消费者消费掉时，kafka可以进行回滚操作，将消息队列恢复到这个异常事件的地方让消费者可以重新消费，保证每个消息都有相应的消费者消费掉</p>
+<p>kafka支持水平扩展，brocker（kafka集群上的一个或多个服务器）越多，集群的吞吐率越高，如果你觉得你的kafka不够用了，简单，加大集群规模，就像使用调节按钮一样简单方便</p>
+<p>2、既然叫消息队列，那么它就有队列的特征，顺序、按个存取。保证事件能够按照规定的顺序被处理掉，就像挂号排队一样，一个个领号，在按顺序一个个处理</p>
+<h2 id="（2）那么为什么要用这个分布式消息队列呢？"><a href="#（2）那么为什么要用这个分布式消息队列呢？" class="headerlink" title="（2）那么为什么要用这个分布式消息队列呢？"></a><strong>（2）那么为什么要用这个分布式消息队列呢？</strong></h2><p>大多数的应用都需要处理一些事件，例如某个用户点击了什么东西，这个动作要进行一些额外的处理，但是处理的行为定义在另外一个程序中（当系统框架大了之后这种行为很常见）。常规的解决方法就是调用接口</p>
+<p>但是这么做有一个很明显的问题，两个应用之间产生了耦合，它们需要知道对方的存在，接口的调用方式是什么。<br>当系统不是很大的时候这么做并没有什么缺陷，反而会比较方便</p>
+<p>但假如应用中要处理n个不同类型的事件，分别由n个不同的程序提供接口进行处理，在应用中必须要知道每个处理程序的调用方式，一方的修改会影响到另外一方。如果有n个应用中有n个事件需要n个程序来处理，互相调来调去，堆在一起很容易就变成了死亡代码</p>
+<p>这时候独立的消息队列就可以很简单的解决这个问题，生产事件的应用只管往队列上发事件，不关心有没有人去处理，怎么处理，发了之后就不管了<br>而处理事件的程序从消息队列中取得事件，不用关心是谁发的，怎么发的</p>
+<p>于是消息队列将整个系统都解耦了</p>
+<p>之前讲到过，kafka中的消息都是按顺序，一个个存取的，那么问题来了：按顺序一个个处理的话，如果应用A要处理消息a，应用B要处理消息b，消息a排在消息b之前，现在应用A不处理消息a了，而应用B马上就要处理消息b，怎么解决？</p>
+<p>其实很简单，kafka并不只有一个队列，不同应用发送的事件可以存放在不同的topic中而不互相影响，狭义上来讲可以将topic这个概念就看成是一个消息队列，而kafka中可以存在n个topic</p>
+<h2 id="（3）kafka的构架："><a href="#（3）kafka的构架：" class="headerlink" title="（3）kafka的构架："></a><strong>（3）kafka的构架：</strong></h2><p>kafka由以下几个部分组成：</p>
+<p><strong>Brocker</strong>：Kafka集群包含一个或多个服务器，这种服务器被称为broker。生产者向Brocker发送事件，消费者从Brocker中拿事件</p>
+<p>Topic：之前提到过，可以将topic看成是一个消息队列，每个事件都必须指定其要存在在哪个topic中（这里倒是可以当成事件的分类来看待），topic是存在于brocker之中的</p>
+<p><strong>Partition</strong>：每个topic都可以包含一个或者多个partition，顾名思义，就是分区的意思，这里和hadoop的mr程序的partitioner分区有些相似，可以将topic中的各个事件按照规则分开存放</p>
+<p><strong>Producer</strong>：即生产者，负责发送事件到kafka brocker</p>
+<p><strong>Consumer</strong>：即消费者，从kafka brocker读取事件</p>
+<p><strong>Consumer Group</strong>：每个Consumer属于一个特定的Consumer Group（可为每个Consumer指定group name，若不指定group name则属于默认的group）。</p>
+<p>kafka通过Consumer Group来实现消息的广播和单播，一个事件发送到一个Consumer Group中，那么这个Group中只能有一个Consumer消费这个事件，但是其他的Consumer Group也可以由其中的一个Consumer来消费这个事件</p>
+<p><strong>示意图</strong>：<br><img src="http://img.blog.csdn.net/20150805200227291" alt="这里写图片描述"></p>
+<p>如果要实现广播，让每个Consumer都能收到某个Topic中的事件，只要让各个Consumer处在不同的Consumer Group中即可；单播则是将所有的Consumer放在一个Consumer Group中</p>
+<p><strong>kafka构架图</strong>：</p>
+<p><img src="http://img.blog.csdn.net/20150805195513855" alt="这里写图片描述"></p>
+<p>图中的zk起到的作用就是负载均衡，将集群中的变化及时同步到各个节点中，保证集群是一致的</p>
+<h2 id="（4）kafka下载、运行测试"><a href="#（4）kafka下载、运行测试" class="headerlink" title="（4）kafka下载、运行测试"></a><strong>（4）kafka下载、运行测试</strong></h2><p><a href="http://kafka.apache.org/downloads.html" target="_blank" rel="external">Apache下载地址</a></p>
+<p>进入之后选择Binary Downloads<br>选择任意的一个版本即可（官方建议下载2.10）<br>下载下来的tgz包lib目录中有开发kafka客户端程序的相关jar包</p>
+<p>将其解压缩之后直接就可使用（因为公司已有kafka集群，可以仅仅拿来当客户端来连接测试使用）</p>
+<p>进入kafka目录执行以下命令：</p>
+<p><strong>显示kafka中的topic列表</strong></p>
+<p>bin/kafka-topics.sh –list –zookeeper 54.223.171.230:2181</p>
+<p>54.223.171.230:2181为集群zk节点对应的hostname:port</p>
+<p><strong>生产事件</strong></p>
+<p>bin/kafka-console-producer.sh –broker-list amazontest:9092 –topic omni</p>
+<p>amazontest:9092–为brocker的hostname:port<br>omni–为要发送到的topic</p>
+<p><strong>消费事件</strong></p>
+<p>bin/kafka-console-consumer.sh –zookeeper 54.223.171.230:2181 –topic omni –from-beginning</p>
+<p>54.223.171.230:2181–消费事件要从zk中获得，所以使用zk的地址<br>omni–从指定的topic中获得事件</p>
+<p>运行过程中出现一个异常，如下图：<br><img src="http://img.blog.csdn.net/20150805201703859" alt="这里写图片描述"></p>
+<p>原因是我在本地连接远程kafka集群，而amazontest是定义在程序服务器上的主机名，本地并不知道这个hostname映射到哪个ip，在/etc/hosts中加入此映射关系即可正常</p>
+<p>最后推荐一篇文章（上面的图都是偷这里面的）<br><a href="http://www.infoq.com/cn/articles/kafka-analysis-part-1/" target="_blank" rel="external">Kafka剖析（一）：Kafka背景及架构介绍</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Kafka/" rel="tag">#Kafka</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/07/16/hadoop-spark-interview/" rel="next" title="Hadoop/Spark相关面试问题总结">
+                <i class="fa fa-chevron-left"></i> Hadoop/Spark相关面试问题总结
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/08/24/linux-ec2-mysql-multi-master-slave/" rel="prev" title="Amazon EC2安装mysql多实例并配置主从复制">
+                Amazon EC2安装mysql多实例并配置主从复制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/08/05/kafka-base-info/"
+           data-title="初识Kafka：构架、生产消费模型以及其他相关概念" data-url="http://xiaohei.info/2015/08/05/kafka-base-info/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#（1）何为分布式消息队列？有何特点？"><span class="nav-number">1.</span> <span class="nav-text">（1）何为分布式消息队列？有何特点？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（2）那么为什么要用这个分布式消息队列呢？"><span class="nav-number">2.</span> <span class="nav-text">（2）那么为什么要用这个分布式消息队列呢？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（3）kafka的构架："><span class="nav-number">3.</span> <span class="nav-text">（3）kafka的构架：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#（4）kafka下载、运行测试"><span class="nav-number">4.</span> <span class="nav-text">（4）kafka下载、运行测试</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

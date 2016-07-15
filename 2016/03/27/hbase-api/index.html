@@ -1,0 +1,849 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="篇幅中使用的HBase版本为1.1.2
+Java APIHBase提供了一套Java API来支持Java程序对HBase数据库的请求操作，在hbase shell中能够使用的都可以通过这套API来实现   
+HBase有两套API，分别是1.0和2.0，在较新版本的HBase中使用1.0的API时，很多类和方法都被标记为Deprecated，官方表示旧版本的API将会在3.0版本中删除，所以推荐">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase进阶学习（二）--API使用">
+<meta property="og:url" content="http://xiaohei.info/2016/03/27/hbase-api/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="篇幅中使用的HBase版本为1.1.2
+Java APIHBase提供了一套Java API来支持Java程序对HBase数据库的请求操作，在hbase shell中能够使用的都可以通过这套API来实现   
+HBase有两套API，分别是1.0和2.0，在较新版本的HBase中使用1.0的API时，很多类和方法都被标记为Deprecated，官方表示旧版本的API将会在3.0版本中删除，所以推荐">
+<meta property="og:image" content="http://xiaohei.info/images/tableinputformat.png">
+<meta property="og:image" content="http://xiaohei.info/images/tableoutputformat.png">
+<meta property="og:image" content="http://xiaohei.info/images/inittablemapperjob.png">
+<meta property="og:image" content="http://xiaohei.info/images/inittablereducerjob.png">
+<meta property="og:updated_time" content="2016-07-14T03:20:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase进阶学习（二）--API使用">
+<meta name="twitter:description" content="篇幅中使用的HBase版本为1.1.2
+Java APIHBase提供了一套Java API来支持Java程序对HBase数据库的请求操作，在hbase shell中能够使用的都可以通过这套API来实现   
+HBase有两套API，分别是1.0和2.0，在较新版本的HBase中使用1.0的API时，很多类和方法都被标记为Deprecated，官方表示旧版本的API将会在3.0版本中删除，所以推荐">
+<meta name="twitter:image" content="http://xiaohei.info/images/tableinputformat.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/03/27/hbase-api/"/>
+
+  <title> HBase进阶学习（二）--API使用 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase进阶学习（二）--API使用
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-27T11:20:18+08:00" content="2016-03-27">
+              2016-03-27
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/27/hbase-api/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/27/hbase-api/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/27/hbase-api/" class="leancloud_visitors" data-flag-title="HBase进阶学习（二）--API使用">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>篇幅中使用的HBase版本为<strong>1.1.2</strong></p>
+<h2 id="Java-API"><a href="#Java-API" class="headerlink" title="Java API"></a>Java API</h2><p>HBase提供了一套Java API来支持Java程序对HBase数据库的请求操作，在hbase shell中能够使用的都可以通过这套API来实现   </p>
+<p>HBase有两套API，分别是1.0和2.0，在较新版本的HBase中使用1.0的API时，很多类和方法都被标记为<strong>Deprecated</strong>，官方表示旧版本的API将会在3.0版本中删除，所以推荐使用2.0<br>本篇中使用的API均为2.0<br><a href="http://hbase.apache.org/apidocs/" target="_blank" rel="external">2.0官方API文档</a></p>
+<h3 id="需要导入的jar包"><a href="#需要导入的jar包" class="headerlink" title="需要导入的jar包"></a>需要导入的jar包</h3><blockquote>
+<ul>
+<li>com.google.protobuf:rpc通信依赖   </li>
+<li>org.apache.zookeeper:连接zk依赖   </li>
+<li>hbase-client:hbase客户端   </li>
+<li>hbase-common:hbase组件   </li>
+</ul>
+</blockquote>
+<p>使用maven可以简单方便地管理jar包，pom文件示例如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">project.build.sourceEncoding</span>&gt;</span>UTF-8<span class="tag">&lt;/<span class="name">project.build.sourceEncoding</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">hbase.version</span>&gt;</span>1.1.2<span class="tag">&lt;/<span class="name">hbase.version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">zookeeper.version</span>&gt;</span>3.4.5<span class="tag">&lt;/<span class="name">zookeeper.version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">properties</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">dependencis</span>&gt;</span></div><div class="line">	<span class="comment">&lt;!--hadoop/hbase都要依赖(RPC通信)--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.google.protobuf<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>protobuf-java<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.5.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="comment">&lt;!--hbase--&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.zookeeper<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>zookeeper<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;zookeeper.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.hbase<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hbase-client<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;hbase.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.hbase<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hbase-common<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;hbase.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependencis</span>&gt;</span></div></pre></td></tr></table></figure>
+<h3 id="开发流程"><a href="#开发流程" class="headerlink" title="开发流程"></a>开发流程</h3><p>HBase API的使用可以归纳为一下几个步骤：</p>
+<blockquote>
+<p>1.获得Configuration实例:其中保存了环境和配置信息<br>2.在Configuration中设置zk和master的相关信息，如果hbase的配置文件在环境变量中则不需要配置<br>3.获得Connection实例连接到zk<br>4.通过Connection实例获得Admin和Table实例调用其方法进行操作</p>
+</blockquote>
+<p>其中Admin和Table为HBase API中提供的一个统一操作接口，在1.0中对应的是HAdmin和HTable<br>Admin对应的是DDL操作<br>Table对应的是相关表的DML操作</p>
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//1.获得Configuration实例并进行相关设置</span></div><div class="line">Configuration configuration = HBaseConfiguration.create();</div><div class="line">configuration.set(<span class="string">"hbase.zookeeper.quorum"</span>, <span class="string">"localhost:2181"</span>);</div><div class="line">configuration.set(<span class="string">"hbase.master"</span>, <span class="string">"localhost:16010"</span>);</div><div class="line"><span class="comment">//2.获得Connection实例</span></div><div class="line">Connection connection = ConnectionFactory.createConnection(configuration);</div><div class="line"><span class="comment">//3.1获得Admin接口</span></div><div class="line">Admin admin = connection.getAdmin();</div><div class="line"><span class="comment">//3.2获得Table接口,需要传入表名</span></div><div class="line">Table table = connection.getTable(tableName)</div></pre></td></tr></table></figure>
+<p>为了程序的可维护性和方便调用，这里将HBase API提供的接口划分成了三个类</p>
+<blockquote>
+<p>1.HBaseInfo:保存了Configuration和Connection，并进行一些初始化的设置，如zk地址等<br>2.HBaseDDLUtil:继承HBaseInfo，通过父类的Configuration和Connection获得Admin实例并使用其提供的方式进行DDL操作<br>3.HBaseDMLUtil:继承HBaseInfo，通过父类的Configuration和Connection获得Table实例并使用其提供的方式进行DML操作 </p>
+</blockquote>
+<p><strong>DDL操作</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">  * 创建表</div><div class="line">  * <span class="doctag">@param</span> tableName 表名</div><div class="line">  * <span class="doctag">@param</span> familyNames 列族名</div><div class="line">  * */</div><div class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">createTable</span><span class="params">(String tableName, String... familyNames)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">     <span class="keyword">if</span> (admin.tableExists(TableName.valueOf(tableName))) &#123;</div><div class="line">         <span class="keyword">return</span>;</div><div class="line">     &#125;</div><div class="line">     <span class="comment">//通过HTableDescriptor类来描述一个表，HColumnDescriptor描述一个列族</span></div><div class="line">     HTableDescriptor tableDescriptor = <span class="keyword">new</span> HTableDescriptor(TableName.valueOf(tableName));</div><div class="line">     <span class="keyword">for</span> (String familyName : familyNames) &#123;</div><div class="line">         tableDescriptor.addFamily(<span class="keyword">new</span> HColumnDescriptor(familyName));</div><div class="line">     &#125;</div><div class="line">     admin.createTable(tableDescriptor);</div><div class="line"> &#125;</div><div class="line"></div><div class="line"> <span class="comment">/**</span></div><div class="line">   * 删除表</div><div class="line">   * <span class="doctag">@param</span> tableName 表名</div><div class="line">   * */</div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dropTable</span><span class="params">(String tableName)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">  	  <span class="comment">//删除之前要将表disable</span></div><div class="line">      <span class="keyword">if</span> (!admin.isTableDisabled(TableName.valueOf(tableName))) &#123;</div><div class="line">          admin.disableTable(TableName.valueOf(tableName));</div><div class="line">      &#125;</div><div class="line">      admin.deleteTable(TableName.valueOf(tableName));</div><div class="line"></div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p><strong>DML操作</strong></p>
+<p>HBase中的CRUD都是通过对应的对象来操作的，例如：<br>Put为新增，如果记录已经存在会用新值覆盖，相当于修改<br>Delete为删除<br>Get为查询   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * 指定行/列中插入数据</div><div class="line"> * <span class="doctag">@param</span> tableName 表名</div><div class="line"> * <span class="doctag">@param</span> rowKey 主键rowkey</div><div class="line"> * <span class="doctag">@param</span> family 列族</div><div class="line"> * <span class="doctag">@param</span> column 列</div><div class="line"> * <span class="doctag">@param</span> value 值</div><div class="line"> * <span class="doctag">TODO:</span> 批量PUT</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(String tableName, String rowKey, String family, String column, String value)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">    table = connection.getTable(TableName.valueOf(tableName));</div><div class="line">    Put put = <span class="keyword">new</span> Put(Bytes.toBytes(rowKey));</div><div class="line">    put.addColumn(Bytes.toBytes(family), Bytes.toBytes(column), Bytes.toBytes(value));</div><div class="line">    table.put(put);</div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 删除表中的指定行</div><div class="line"> * <span class="doctag">@param</span> tableName 表名</div><div class="line"> * <span class="doctag">@param</span> rowKey rowkey</div><div class="line"> * <span class="doctag">TODO:</span> 批量删除</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(String tableName, String rowKey)</span> <span class="keyword">throws</span> IOException </span>&#123;</div><div class="line">    table = connection.getTable(TableName.valueOf(tableName));</div><div class="line">    Delete delete = <span class="keyword">new</span> Delete(Bytes.toBytes(rowKey));</div><div class="line">    table.delete(delete);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>篇幅有限，HBase工具类的代码已上传至<a href="https://github.com/chubbyjiang/HBase-API/tree/master/src/main/java/info/xiaohei/www/hbase/client" target="_blank" rel="external">Github</a><br>API文档中还有许多实用的函数没有接触到，希望在实践中可以操作一下</p>
+<h2 id="MapReduceApi"><a href="#MapReduceApi" class="headerlink" title="MapReduceApi"></a>MapReduceApi</h2><p>要使用HBase的MapReduce API需要在pom文件中添加以下依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.hbase<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>hbase-server<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>$&#123;hbase.version&#125;<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>HBase实现了TableInputFormat和TableOutputFormat用于读写HBase表<br>TableMapper类和TableReducer类，在使用MapReduce操作HBase的时候可以借助这两个类从HBase中读数据和写数据</p>
+<h3 id="TableInputFormat"><a href="#TableInputFormat" class="headerlink" title="TableInputFormat"></a>TableInputFormat</h3><p>用于读取HBase表数据并生成键值对<br>将数据表按照Region分割成split，既有多少个Regions就有多个splits<br>然后将Region按行键分成<key,value>对，value值为该行所包含的数据</key,value></p>
+<h3 id="TableMapper"><a href="#TableMapper" class="headerlink" title="TableMapper"></a>TableMapper</h3><p>和普通的Mapper的区别在于<br>TableMapper将输入的<key,value>对的类型分别限定为ImmutableBytesWritable和Result，对应HBase中的rowkey和结果集<br>我们可以通过自定义的Mapper类实现TableMapper，指定Mapper输出的<key,value>类型即可</key,value></key,value></p>
+<h3 id="TableReducer"><a href="#TableReducer" class="headerlink" title="TableReducer"></a>TableReducer</h3><p>该类将Reducer的输出类型限制为Mutation，Mutation是HBase中Delete/Put/Get/Append类的父类，也就是说TableReducer将输出类型限制在这几个类之中<br>自定义的Reducer类继承TableReducer，指定其输入的<key,value>和输出的value类型即可对HBase进行写入操作</key,value></p>
+<h3 id="TableOutputFormat"><a href="#TableOutputFormat" class="headerlink" title="TableOutputFormat"></a>TableOutputFormat</h3><p>该类负责将Reducer的输出数据写入到HBase中</p>
+<h3 id="代码示例-1"><a href="#代码示例-1" class="headerlink" title="代码示例"></a>代码示例</h3><p><strong>MyTableMapper</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyTableMapper</span> <span class="keyword">extends</span> <span class="title">TableMapper</span>&lt;<span class="title">ImmutableBytesWritable</span>, <span class="title">ImmutableBytesWritable</span>&gt; </span>&#123;</div><div class="line"></div><div class="line">    ImmutableBytesWritable k = <span class="keyword">new</span> ImmutableBytesWritable();</div><div class="line">    ImmutableBytesWritable v = <span class="keyword">new</span> ImmutableBytesWritable();</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 表中的每行都会调用一次map函数</div><div class="line">     * */</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(ImmutableBytesWritable key, Result value, Context context)</span> <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</div><div class="line">        <span class="comment">//遍历改行中的结果集</span></div><div class="line">        <span class="keyword">for</span> (Cell cell : value.rawCells()) &#123;</div><div class="line">            <span class="comment">//获得rowkey</span></div><div class="line">            <span class="keyword">byte</span>[] row = CellUtil.cloneRow(cell);</div><div class="line">            <span class="comment">//获得值</span></div><div class="line">            <span class="keyword">byte</span>[] rowValue = CellUtil.cloneValue(cell);</div><div class="line">            k.set(row);</div><div class="line">            v.set(rowValue);</div><div class="line">            context.write(k, v);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>MyTableReducer</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyTableReducer</span> <span class="keyword">extends</span> <span class="title">TableReducer</span>&lt;<span class="title">ImmutableBytesWritable</span>, <span class="title">ImmutableBytesWritable</span>, <span class="title">ImmutableBytesWritable</span>&gt; </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(ImmutableBytesWritable key, Iterable&lt;ImmutableBytesWritable&gt; values, Context context)</span> <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</div><div class="line">        <span class="keyword">for</span> (ImmutableBytesWritable value : values) &#123;</div><div class="line">            Put put = <span class="keyword">new</span> Put(key.get());</div><div class="line">            put.addColumn(Bytes.toBytes(<span class="string">"f1"</span>), Bytes.toBytes(<span class="string">"c3"</span>), value.get());</div><div class="line">            context.write(key, put);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>驱动程序</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException, ClassNotFoundException, InterruptedException </span>&#123;</div><div class="line">        Configuration configuration = HBaseConfiguration.create();</div><div class="line">        <span class="comment">//设置读取的表</span></div><div class="line">        configuration.set(TableInputFormat.INPUT_TABLE, <span class="string">"client"</span>);</div><div class="line"></div><div class="line">        Job job = Job.getInstance(configuration, <span class="string">"hbase-mr-api"</span>);</div><div class="line">        <span class="comment">//可以和普通mr程序一样进行设置</span></div><div class="line">        job.setJarByClass(Driver.class);</div><div class="line">        job.setInputFormatClass(TableInputFormat.class);</div><div class="line">        job.setMapperClass(MyTableMapper.class);</div><div class="line">        job.setMapOutputKeyClass(ImmutableBytesWritable.class);</div><div class="line">        job.setMapOutputValueClass(ImmutableBytesWritable.class);</div><div class="line">        <span class="comment">//也可以使用hbase提供的工具类来设置job</span></div><div class="line">        TableMapReduceUtil.initTableReducerJob(<span class="string">"t1"</span>, MyTableReducer.class, job);</div><div class="line">        job.waitForCompletion(<span class="keyword">true</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>示例代码以上传至<a href="https://github.com/chubbyjiang/HBase-API/tree/master/src/main/java/info/xiaohei/www/hbase/mr" target="_blank" rel="external">Github</a></p>
+<h3 id="关于驱动程序中设置job的方法"><a href="#关于驱动程序中设置job的方法" class="headerlink" title="关于驱动程序中设置job的方法"></a>关于驱动程序中设置job的方法</h3><p>在上面的代码中可以看到，设置job的方法有两种：<strong>MapReduce常用方式</strong>和HBase提供的<strong>TableMapReduceUtil</strong>工具类</p>
+<p>两种方式的设置效果是相同的，通过普通的方式进行设置的时候需要配置TableInputFormat/TableOutputFormat的相关属性，如上的   </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//设置读取的表</span></div><div class="line">configuration.set(TableInputFormat.INPUT_TABLE, <span class="string">"client"</span>);</div></pre></td></tr></table></figure>
+<p>而是使用TableMapReduceUtil的initTableMapperJob/initTableReducerJob则是通过参数传递这些配置，下面给出具体的配置项</p>
+<p><strong>TableInputFormat</strong></p>
+<p><img src="/images/tableinputformat.png" alt="TableInputFormat"></p>
+<p><strong>TableOutputFormat</strong></p>
+<p><img src="/images/tableoutputformat.png" alt="TableOutputFormat"></p>
+<p><strong>initTableMapperJob</strong></p>
+<p><img src="/images/inittablemapperjob.png" alt="initTableMapperJob"></p>
+<p><strong>initTableReducerJob</strong></p>
+<p><img src="/images/inittablereducerjob.png" alt="initTableReducerJob"></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/17/mapreduce-development-skills/" rel="next" title="MapReduce开发技巧">
+                <i class="fa fa-chevron-left"></i> MapReduce开发技巧
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/03/28/hbase-removal/" rel="prev" title="HBase进阶学习（三）--集群迁移">
+                HBase进阶学习（三）--集群迁移 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/03/27/hbase-api/"
+           data-title="HBase进阶学习（二）--API使用" data-url="http://xiaohei.info/2016/03/27/hbase-api/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-API"><span class="nav-number">1.</span> <span class="nav-text">Java API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#需要导入的jar包"><span class="nav-number">1.1.</span> <span class="nav-text">需要导入的jar包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开发流程"><span class="nav-number">1.2.</span> <span class="nav-text">开发流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码示例"><span class="nav-number">1.3.</span> <span class="nav-text">代码示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MapReduceApi"><span class="nav-number">2.</span> <span class="nav-text">MapReduceApi</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TableInputFormat"><span class="nav-number">2.1.</span> <span class="nav-text">TableInputFormat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TableMapper"><span class="nav-number">2.2.</span> <span class="nav-text">TableMapper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TableReducer"><span class="nav-number">2.3.</span> <span class="nav-text">TableReducer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TableOutputFormat"><span class="nav-number">2.4.</span> <span class="nav-text">TableOutputFormat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码示例-1"><span class="nav-number">2.5.</span> <span class="nav-text">代码示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关于驱动程序中设置job的方法"><span class="nav-number">2.6.</span> <span class="nav-text">关于驱动程序中设置job的方法</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

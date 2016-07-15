@@ -1,0 +1,927 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="HDFS构架三大特点
+
+大数据量：TB甚至PB以上的数据量都可以存储在集群中   
+流式数据访问：HDFS中的数据一般都是一次写入，多次读取的模式   
+廉价的商用硬件：可以将集群部署在大量的普通硬件上实现一个功能强大的集群
+
+
+不适用于HDFS的场景：
+
+要求低延迟的数据访问：HDFS是为了高吞吐量而设计的，代价就是延迟高，适合批处理（实时响应的可以选择HBase）   
+大量的小文件：HDFS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop核心组件之HDFS">
+<meta property="og:url" content="http://xiaohei.info/2016/05/01/hadoop-hdfs-summary/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="HDFS构架三大特点
+
+大数据量：TB甚至PB以上的数据量都可以存储在集群中   
+流式数据访问：HDFS中的数据一般都是一次写入，多次读取的模式   
+廉价的商用硬件：可以将集群部署在大量的普通硬件上实现一个功能强大的集群
+
+
+不适用于HDFS的场景：
+
+要求低延迟的数据访问：HDFS是为了高吞吐量而设计的，代价就是延迟高，适合批处理（实时响应的可以选择HBase）   
+大量的小文件：HDFS">
+<meta property="og:image" content="http://xiaohei.info/images/hdfs-file-read.png">
+<meta property="og:image" content="http://xiaohei.info/images/hdfs-file-write.png">
+<meta property="og:updated_time" content="2016-07-14T01:54:23.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop核心组件之HDFS">
+<meta name="twitter:description" content="HDFS构架三大特点
+
+大数据量：TB甚至PB以上的数据量都可以存储在集群中   
+流式数据访问：HDFS中的数据一般都是一次写入，多次读取的模式   
+廉价的商用硬件：可以将集群部署在大量的普通硬件上实现一个功能强大的集群
+
+
+不适用于HDFS的场景：
+
+要求低延迟的数据访问：HDFS是为了高吞吐量而设计的，代价就是延迟高，适合批处理（实时响应的可以选择HBase）   
+大量的小文件：HDFS">
+<meta name="twitter:image" content="http://xiaohei.info/images/hdfs-file-read.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/01/hadoop-hdfs-summary/"/>
+
+  <title> Hadoop核心组件之HDFS | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hadoop核心组件之HDFS
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-01T09:47:58+08:00" content="2016-05-01">
+              2016-05-01
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/01/hadoop-hdfs-summary/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/01/hadoop-hdfs-summary/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/01/hadoop-hdfs-summary/" class="leancloud_visitors" data-flag-title="Hadoop核心组件之HDFS">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="HDFS构架三大特点"><a href="#HDFS构架三大特点" class="headerlink" title="HDFS构架三大特点"></a>HDFS构架三大特点</h2><blockquote>
+<ul>
+<li>大数据量：TB甚至PB以上的数据量都可以存储在集群中   </li>
+<li>流式数据访问：HDFS中的数据一般都是<strong>一次写入，多次读取</strong>的模式   </li>
+<li>廉价的商用硬件：可以将集群部署在大量的普通硬件上实现一个功能强大的集群</li>
+</ul>
+</blockquote>
+<h3 id="不适用于HDFS的场景："><a href="#不适用于HDFS的场景：" class="headerlink" title="不适用于HDFS的场景："></a>不适用于HDFS的场景：</h3><blockquote>
+<ul>
+<li>要求低延迟的数据访问：HDFS是为了高吞吐量而设计的，代价就是延迟高，适合批处理（实时响应的可以选择HBase）   </li>
+<li>大量的小文件：HDFS存储的文件元数据都是<strong>保存在NameNode内存中的</strong>，大概估计一个文件、目录或者数据块占用的内存空间为<strong>150个字节</strong>，如果有上亿个小文件，那么NameNode将会奔溃   </li>
+<li>多用户写入和随意修改文件的要求：HDFS文件只能有一个写入用户，并且内容都是<strong>追加在末尾</strong>，不支持随机写入和修改</li>
+</ul>
+</blockquote>
+<h2 id="Block块的概念"><a href="#Block块的概念" class="headerlink" title="Block块的概念"></a>Block块的概念</h2><p>先不看HDFS的Block，每台机器都有磁盘，机器上的所有持久化数据都是存储在磁盘上的</p>
+<p>磁盘是通过<strong>块</strong>来管理数据的，一个块的数据是该磁盘一次能够读写的最小单位，一般是<strong>512个字节</strong><br>而建立在磁盘之上的文件系统也有块的概念，通常是磁盘块的整数倍，例如<strong>几kb</strong></p>
+<p>HDFS作为一个文件系统，一样有块的概念，对于分布式文件系统，使用文件块将会带来这些好处：</p>
+<blockquote>
+<p>1.一个文件的大小不限制于集群中任意机器的磁盘大小<br>2.因为块的大小是固定的，相对比不确定大小的文件，块更容易进行管理和计算<br>3.块同样方便进行备份操作，以提高数据容错性和系统的可靠性</p>
+</blockquote>
+<h3 id="2-x中，HDFS默认的快大小为128M"><a href="#2-x中，HDFS默认的快大小为128M" class="headerlink" title="2.x中，HDFS默认的快大小为128M"></a>2.x中，HDFS默认的快大小为128M</h3><p>为什么HDFS的块大小会比文件系统的块大那么多呢？</p>
+<p><strong>一个很重要的原因</strong>就是为了最小化磁盘的寻址开销<br>操作数据时，需要先从磁盘上找到指定的数据块然后进行传输，而这就包含两个动作：   </p>
+<blockquote>
+<p>1.数据块寻址：找到该数据块的起始位置<br>2.数据传输：读取数据</p>
+</blockquote>
+<p>也就是说，操作数据所花费的时间是由步骤12一起决定的，步骤1所花费的时间一般比步骤2要少很多，那么<strong>当操作的数据块越多，寻址所花费的时间在总时间中就越小的可以忽略不计</strong><br>但是HDFS的Block块也不能设置的太大，<strong>会影响到map任务的启动数</strong>，并行度降低，任务的执行数据将会变慢</p>
+<h2 id="Namenode和Datanode"><a href="#Namenode和Datanode" class="headerlink" title="Namenode和Datanode"></a>Namenode和Datanode</h2><h3 id="Namenode"><a href="#Namenode" class="headerlink" title="Namenode"></a>Namenode</h3><p>管理着文件系统的命名空间，维护着文件系统树，<strong>该树中存储着所有文件和目录的元数据信息</strong><br>这些信息会通过<strong>fsimage和edits文件</strong>被持久化到磁盘中<br>Namenode并不会永久存储块的存储地址，因为这些会在系统启动的时候由Datanode汇报更新并重建</p>
+<h3 id="Datanode"><a href="#Datanode" class="headerlink" title="Datanode"></a>Datanode</h3><p>是文件系统的工作节点，负责存储数据，并在受调度的时候检索数据块，<strong>定期向Namenode发送它们存储的数据块列表</strong></p>
+<h3 id="SecondaryNamenode"><a href="#SecondaryNamenode" class="headerlink" title="SecondaryNamenode"></a>SecondaryNamenode</h3><p>负责定期合并Namenode产生的fsimages和edits文件   </p>
+<blockquote>
+<ul>
+<li>如果只使用fsimage，那么当该文件非常大的时候直接对其很难进行操作   </li>
+<li>定期合并fsimage和edits文件是为了防止edits文件过多，系统重启的时候回加载很长时间</li>
+</ul>
+</blockquote>
+<p>并且，SecondaryNamenode和Namenode通常不在一个节点上，因为合并    操作会消耗大量CPU时间，会影响到Namenode的正常工作</p>
+<h3 id="fsimage和edits文件"><a href="#fsimage和edits文件" class="headerlink" title="fsimage和edits文件"></a>fsimage和edits文件</h3><p>HDFS进行初次格式化之后将会在$dfs.namenode.name.dir/current目录下生成一些列文件：   </p>
+<blockquote>
+<ul>
+<li>VERSION</li>
+<li>edits_*</li>
+<li>fsimage_0000000000008547077</li>
+<li>fsimage_0000000000008547077.md5</li>
+<li>seen_txid</li>
+</ul>
+</blockquote>
+<p>VERSION文件的内容是一些HDFS的ID信息，比较重要的是<strong>fsimage、edits和seen_txid</strong>   </p>
+<p>fsimage中存储的是HDFS的<strong>元数据信息</strong>，包括文件系统上的文件目录和相关序列化的信息。<br>edits文件保存的是HDFS上的更新操作信息。<br>seen<em>txid文件保存的是一个数字，就是最后一个edits</em>的数字。</p>
+<p>每次Namenode启动的时候都会将fsimage文件读入内存，并从00001开始到seen_txid中记录的数字依次执行每个edits里面的更新操作，<br>保证内存中的元数据信息是最新的、同步的，可以看成Namenode启动的时候就将fsimage和edits文件进行了合并。   </p>
+<p>集群启动的之后，每次对HDFS的更新操作都会写入edits文件。</p>
+<p>对于一个长期运行中的集群来说，edits文件会一直增大，<strong>SecondaryNamenode会在运行的时候定期将edits文件合并到fsimage中</strong><br>否则一旦集群重新启动，Namenode加载fsimage使用的时间将会非常久</p>
+<h2 id="HDFS联邦"><a href="#HDFS联邦" class="headerlink" title="HDFS联邦"></a>HDFS联邦</h2><p>因为Namenode管理着整个集群的元数据信息，当集群变得非常大的时候，Namenode的内存会变成一个瓶颈<br>这时候可以使用联邦机制来解决：<strong>使用多个Namenode共同管理整个集群</strong><br>每个Namenode管理不同目录下的元数据，并且互不影响</p>
+<h2 id="HDFS高可靠"><a href="#HDFS高可靠" class="headerlink" title="HDFS高可靠"></a>HDFS高可靠</h2><h3 id="老版本中的解决方式"><a href="#老版本中的解决方式" class="headerlink" title="老版本中的解决方式"></a>老版本中的解决方式</h3><p>当Namenode挂掉之后，管理员可以通过fsimages和edits文件来重新启动一个新的Namenode来提供服务并配置客户端和Datanode连接到这个新的Namenode<br>该Namenode会有一个<strong>冷启动</strong>过程：</p>
+<blockquote>
+<p>1.加载fsimage文件到内存中<br>2.重做edits文件<br>3.接收足够多的Datanode数据块报告直到退出安全模式</p>
+</blockquote>
+<p>对于一个大型集群，这个冷启动过程会消耗非常多的时间</p>
+<h3 id="2-x中的解决方式"><a href="#2-x中的解决方式" class="headerlink" title="2.x中的解决方式"></a>2.x中的解决方式</h3><p>Hadoop2提供了一种双Namenode节点的机制来确保Namenode的高可靠性，一个Namenode为active状态，另外一个为standby状态<br>当active节点失效之后，standby节点会马上进行替换，这个过程中客户端不会察觉到异常</p>
+<p>为了实现这个功能，HDFS的构架需要作出以下的调整：</p>
+<blockquote>
+<p>1.Namenode之间必要有一个共享edits文件的存储，且该存储必须是<strong>高可用的</strong><br>2.Datanode必须同时向两个Namenode发送数据块报告<br>3.客户端需要有如何处理Namenode切换的机制，该机制对于客户端来说是透明的<br>4.standby状态的Namenode包含了SecondaryNamenode节点的工作内容</p>
+</blockquote>
+<h3 id="QJM"><a href="#QJM" class="headerlink" title="QJM"></a>QJM</h3><p>对于调整1中的高可用共享存储，可以选择NFS或者QJM来实现，其中QJM是HDFS的专有实现，推荐使用QJM来实现这个共享存储<br><strong>QJM由一组journal node节点组成，每个edit文件必须写入大部分的journal node节点</strong><br>一般来说，有3个journal node节点，HDFS可以容忍它们之中的其中一个失效的情况<br>QJM的工作机制和Zookeeper差不多，但是其并不使用Zookeeper进行工作（HDFS的HA是通过Zookeeper来实现的）</p>
+<p>当active状态的Namenode失效之后，standby状态的Namenode可以快速切换为active并继续提供服务<br>因为standby状态时，<strong>其内存中也保存着最新的Datanode的数据块列表、最新的edit文件（从QJM中获得）</strong></p>
+<p>当两个Namenode节点都失效的时候，可以使用之前讨论过的方法进行冷启动</p>
+<h3 id="故障切换"><a href="#故障切换" class="headerlink" title="故障切换"></a>故障切换</h3><p>当active Namenode失效之后，将standby Namenode切换为active状态的过程称为故障切换<br>每个Namenode都会运行一个轻量级的failover controller进程，通过<strong>心跳机制</strong>来判断Namenode是否失效，并通过Zookeeper来选举出一个新的active Namenode</p>
+<h2 id="HDFS的Java-API"><a href="#HDFS的Java-API" class="headerlink" title="HDFS的Java API"></a>HDFS的Java API</h2><p>常用的HDFS接口可以参考：<br><a href="https://github.com/chubbyjiang/MapReduce/blob/master/src/main/java/info/xiaohei/www/HdfsUtil.java" target="_blank" rel="external">HDFS工具类</a></p>
+<p>以下针对一些API的特性展开讨论</p>
+<h3 id="FSDataInputStream"><a href="#FSDataInputStream" class="headerlink" title="FSDataInputStream"></a>FSDataInputStream</h3><p>该类提供了读取HDFS上文件的功能，原型如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FSDataInputStream</span> <span class="keyword">extends</span> <span class="title">DataInputStream</span> </span></div><div class="line">	<span class="keyword">implements</span> <span class="title">Seekable</span>,<span class="title">PositionedReadable</span>&#123;</div><div class="line">	<span class="comment">//implementation elided</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>Seekable</strong>接口支持从一个文件中定位到指定位置，并提供了一个返回当前位置偏移量的方法，原型如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Seekable</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">void</span> <span class="title">seek</span><span class="params">(<span class="keyword">long</span> pos)</span> <span class="keyword">throws</span> IOException</span>;</div><div class="line">	<span class="function"><span class="keyword">long</span> <span class="title">getPos</span><span class="params">()</span> <span class="keyword">throws</span> IOException</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>PositionedReadable允许从任意位置开始去读文件，原型省略<br>和Seekable配合使用使得FSDataInputStream支持文件的<strong>随机、重复访问</strong></p>
+<h3 id="写文件时获得文件写入进度"><a href="#写文件时获得文件写入进度" class="headerlink" title="写文件时获得文件写入进度"></a>写文件时获得文件写入进度</h3><p>FileSystem类的create方法有一个重载版本，除了提供第一个路径参数之后，还需要提供一个<strong>Progressable接口对象</strong><br>Progressable原型如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Progressable</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">progress</span><span class="params">()</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>progress方法在<strong>每次写入64kb的数据包到管道中时会被调用一次</strong>，在方法中可以获得文件的写入进度</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">OutputStream out = fs.create(<span class="keyword">new</span> Path(dst),<span class="keyword">new</span> Progressable()&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">progress</span><span class="params">()</span></span>&#123;</div><div class="line">		<span class="comment">//将打印出文件写入的进度</span></div><div class="line">		System.out.println(<span class="string">"..."</span>)</div><div class="line">	&#125;</div><div class="line">&#125;);</div></pre></td></tr></table></figure>
+<h2 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h2><h3 id="文件读取流程"><a href="#文件读取流程" class="headerlink" title="文件读取流程"></a>文件读取流程</h3><p><img src="/images/hdfs-file-read.png" alt="文件读取流程图"></p>
+<p>如图所示，可分为6个步骤：</p>
+<blockquote>
+<p>1.客户端通过DistributedFileSystem打开连接<br>2.向Namenode获得该文件存储的元数据，包括划分为几个块，各个块存储在哪些节点（<strong>根据节点离客户端的距离进行排序</strong>），多少个副本等<br>3.客户端通过Namenode返回的FSDataInputStream（负责Namenode和Datanode之间的通信）读取指定Datanode上的数据块<br>4.读取每个数据块的时候，会选择最近的Datanode进行读取<br>5.当前数据块读取完毕，寻找下一个数据块的最近节点<br>6.读取完毕后关闭连接</p>
+</blockquote>
+<p>当FSDataInputStream读取Datanode节点上的数据遇到错误的时候（例如，网络错误或者读取过来的数据校验不正确）<br><strong>会寻找另外一个最近的节点读取其副本，并且将记录该节点是的后续的读取操作不会到该节点上进行</strong>   </p>
+<p>在这个设计中，Namenode需要知道各个Datanode和客户端的距离，以<strong>确保客户端可以从最近的节点上获得数据</strong><br>那么这个距离是怎么算的呢？<br>在分布式文件存储系统中，数据传输的瓶颈是节点之间的网络传输，也就是<strong>带宽</strong><br>所以HDFS<strong>以两个节点之间的带宽作为距离的衡量标准</strong></p>
+<h3 id="节点带宽计算"><a href="#节点带宽计算" class="headerlink" title="节点带宽计算"></a>节点带宽计算</h3><p>实际上，节点之间的带宽是很难计算的，为此Hadoop采用了一个简单的方法：通过设定等级，带宽依次递减<br>这里的等级可以为：</p>
+<blockquote>
+<ul>
+<li>相同节点上的不同进程，带宽为0   </li>
+<li>相同机架上的不同节点，带宽为2   </li>
+<li>相同数据中心上的不同机架，带宽为4   </li>
+<li>不同的数据中心，带宽为6</li>
+</ul>
+</blockquote>
+<h3 id="文件写入流程"><a href="#文件写入流程" class="headerlink" title="文件写入流程"></a>文件写入流程</h3><p><img src="/images/hdfs-file-write.png" alt="文件写入流程图"></p>
+<p>如图所示，可以划分为7个步骤：</p>
+<blockquote>
+<p>1.客户端通过DistributedFileSystem发送创建文件的命令<br>2.Namenode会进行客户端是否有创建文件的权限以及该文件是否存在等检查，通过之后创建一个没有数据块的文件，并返回FSDataOutputStream<br>3.客户端通过FSDataOutputStream写入数据，此时会有一个和副本数相同的Datanode组成的管线等待写入数据（由Namenode确定）<br>4.数据包将会在该管线中按顺序写入指定的Datanode中<br>5.Datanode写入数据完毕的时候会返回一个ack确认的请求<br>6.确认所有数据写入完毕之后，客户端关闭和FSDataOutputStream的连接<br>7.DistributedFileSystem向Namenode发送完成的信号，记录数据保存的Datanode信息</p>
+</blockquote>
+<p>在这个过程中，Namenode需要确定数据副本存放在哪些Datanode上<br>这需要在数据的<strong>高可靠性、读写带宽消耗之间做出一个权衡</strong></p>
+<h3 id="副本存放策略"><a href="#副本存放策略" class="headerlink" title="副本存放策略"></a>副本存放策略</h3><p>副本存放在同一个节点上所消耗的读写带宽是最少的，因为其不需要跨网络进行传输，但这并不能体现副本的作用<br>即数据的高可靠性，一旦该节点失效，那么该数据会全部消失<br>反之，副本存放在不同数据中心是最可靠的，但是其消耗的读写带宽也是最大的</p>
+<p>HDFS中默认的副本存放策略是这样的：</p>
+<blockquote>
+<ul>
+<li>如果客户端运行在集群之上，那么第一份副本存放在该客户端节点   </li>
+<li>如果客户端运行在集群之外，那么第一份副本在集群中随机选择一个节点   </li>
+<li>第二份副本选择存放在第一份副本节点的不同机架上的随机一个节点   </li>
+<li>第三份副本选择存放在第二份副本相同机架上的随机一个节点   </li>
+<li>如果副本数超过3，那么剩余的副本将会在集群中随机选择节点进行存放</li>
+</ul>
+</blockquote>
+<p>在选择节点的时候，Hadoop会尽量避免那些繁忙的节点进行存储</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/08/mapreduce-weibo-ad/" rel="next" title="MapReduce广告精准营销案例">
+                <i class="fa fa-chevron-left"></i> MapReduce广告精准营销案例
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/02/hadoop-yarn-summary/" rel="prev" title="Hadoop核心组件之Yarn">
+                Hadoop核心组件之Yarn <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/01/hadoop-hdfs-summary/"
+           data-title="Hadoop核心组件之HDFS" data-url="http://xiaohei.info/2016/05/01/hadoop-hdfs-summary/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS构架三大特点"><span class="nav-number">1.</span> <span class="nav-text">HDFS构架三大特点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#不适用于HDFS的场景："><span class="nav-number">1.1.</span> <span class="nav-text">不适用于HDFS的场景：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Block块的概念"><span class="nav-number">2.</span> <span class="nav-text">Block块的概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-x中，HDFS默认的快大小为128M"><span class="nav-number">2.1.</span> <span class="nav-text">2.x中，HDFS默认的快大小为128M</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Namenode和Datanode"><span class="nav-number">3.</span> <span class="nav-text">Namenode和Datanode</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Namenode"><span class="nav-number">3.1.</span> <span class="nav-text">Namenode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Datanode"><span class="nav-number">3.2.</span> <span class="nav-text">Datanode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SecondaryNamenode"><span class="nav-number">3.3.</span> <span class="nav-text">SecondaryNamenode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fsimage和edits文件"><span class="nav-number">3.4.</span> <span class="nav-text">fsimage和edits文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS联邦"><span class="nav-number">4.</span> <span class="nav-text">HDFS联邦</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS高可靠"><span class="nav-number">5.</span> <span class="nav-text">HDFS高可靠</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#老版本中的解决方式"><span class="nav-number">5.1.</span> <span class="nav-text">老版本中的解决方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-x中的解决方式"><span class="nav-number">5.2.</span> <span class="nav-text">2.x中的解决方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#QJM"><span class="nav-number">5.3.</span> <span class="nav-text">QJM</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#故障切换"><span class="nav-number">5.4.</span> <span class="nav-text">故障切换</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS的Java-API"><span class="nav-number">6.</span> <span class="nav-text">HDFS的Java API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#FSDataInputStream"><span class="nav-number">6.1.</span> <span class="nav-text">FSDataInputStream</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写文件时获得文件写入进度"><span class="nav-number">6.2.</span> <span class="nav-text">写文件时获得文件写入进度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据流"><span class="nav-number">7.</span> <span class="nav-text">数据流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#文件读取流程"><span class="nav-number">7.1.</span> <span class="nav-text">文件读取流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#节点带宽计算"><span class="nav-number">7.2.</span> <span class="nav-text">节点带宽计算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#文件写入流程"><span class="nav-number">7.3.</span> <span class="nav-text">文件写入流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#副本存放策略"><span class="nav-number">7.4.</span> <span class="nav-text">副本存放策略</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

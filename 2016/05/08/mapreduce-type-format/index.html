@@ -1,0 +1,853 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="输入格式输入分片与记录之前讨论过，输入数据的每个分片对应一个map任务来处理在MapReduce中输入分片被表示为InputSplit类，原型如下：
+123456public abstract class InputSplit&amp;#123;	//该分片的长度，用于排序分片，有限处理大分片	public abstract long getLength() throw IOException,Inter">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce类型与格式">
+<meta property="og:url" content="http://xiaohei.info/2016/05/08/mapreduce-type-format/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="输入格式输入分片与记录之前讨论过，输入数据的每个分片对应一个map任务来处理在MapReduce中输入分片被表示为InputSplit类，原型如下：
+123456public abstract class InputSplit&amp;#123;	//该分片的长度，用于排序分片，有限处理大分片	public abstract long getLength() throw IOException,Inter">
+<meta property="og:image" content="http://xiaohei.info/images/inputformat-class.png">
+<meta property="og:image" content="http://xiaohei.info/images/outputformat-class.jpg">
+<meta property="og:updated_time" content="2016-07-14T04:40:41.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce类型与格式">
+<meta name="twitter:description" content="输入格式输入分片与记录之前讨论过，输入数据的每个分片对应一个map任务来处理在MapReduce中输入分片被表示为InputSplit类，原型如下：
+123456public abstract class InputSplit&amp;#123;	//该分片的长度，用于排序分片，有限处理大分片	public abstract long getLength() throw IOException,Inter">
+<meta name="twitter:image" content="http://xiaohei.info/images/inputformat-class.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/08/mapreduce-type-format/"/>
+
+  <title> MapReduce类型与格式 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce类型与格式
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-08T09:47:58+08:00" content="2016-05-08">
+              2016-05-08
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/08/mapreduce-type-format/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/08/mapreduce-type-format/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/08/mapreduce-type-format/" class="leancloud_visitors" data-flag-title="MapReduce类型与格式">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="输入格式"><a href="#输入格式" class="headerlink" title="输入格式"></a>输入格式</h2><h3 id="输入分片与记录"><a href="#输入分片与记录" class="headerlink" title="输入分片与记录"></a>输入分片与记录</h3><p>之前讨论过，输入数据的每个分片对应一个map任务来处理<br>在MapReduce中输入分片被表示为InputSplit类，原型如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">InputSplit</span></span>&#123;</div><div class="line">	<span class="comment">//该分片的长度，用于排序分片，有限处理大分片</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">long</span> <span class="title">getLength</span><span class="params">()</span> throw IOException,InterruptedException</span>;</div><div class="line">	<span class="comment">//该分片所在的存储位置（主机），不直接存储数据，而是指向数据的引用</span></div><div class="line">	<span class="keyword">public</span> <span class="keyword">abstract</span> String[] getLocations() <span class="keyword">throw</span> IOException,InterruptedException;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>开发者不用直接操作InputSplit，<strong>InputFormat根据输入的数据来创建计算的InputSplit并将其分割为一各个Record</strong><br>该类的原型如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">InputFormat</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt;</span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> List&lt;InputSplit&gt; <span class="title">getSplits</span><span class="params">(JobContext context)</span> throw IOException,InterruptedException</span>;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> RecordReader&lt;K,V&gt; <span class="title">createRecordReader</span><span class="params">(InputSplit inputSplit,TaskAttemptContext context)</span> throw IOException,InterruptedException</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>正如<a href="http://www.xiaohei.info/2016/05/07/mapreduce-works/" target="_blank" rel="external">MapReduce工作机制</a>中讨论到的一样<br>客户端运行作业的时候会对输入的数据计算分片信息，调用的就是InputFormat的getSplits方法<br>并将分片分析交给AM由此可以知道分片在集群上的存储位置并申请资源</p>
+<p>在map任务中，将各自的输入分片传给InputFormat的createRecordReader方法来获得这个分片的RecordReader<br>RecordReader是一个迭代器，map任务通过其遍历该分片内的数据，可以从Mapper类的run方法中看到：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(Context context)</span> throw IOException,InterruptedException</span>&#123;</div><div class="line">	<span class="keyword">super</span>(context);</div><div class="line">	<span class="comment">//context的nextKeyValue将会委托给RecordReader的同名函数</span></div><div class="line">	<span class="keyword">while</span>(context.nextKeyValue())&#123;</div><div class="line">		<span class="comment">//将当前的key和value传给map函数</span></div><div class="line">		map(context.getCurrentKey(),context.getCurrentValue(),context);</div><div class="line">	&#125;</div><div class="line">	cleanup(context);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="FileInputFormat"><a href="#FileInputFormat" class="headerlink" title="FileInputFormat"></a>FileInputFormat</h3><p>FileInputFormat是文件类的InputFormat的默认实现，其不能直接使用，但是提供了两个功能：</p>
+<blockquote>
+<p>1.指定输入数据的路径<br>2.输入文件生成分片的代码实现，即实现了InputFormat抽象类的getSplits方法</p>
+</blockquote>
+<p>而如何把分片分割为记录（即InputFormat的createRecordReader方法）则由其具体的子类来完成<br>常见的有TextInputFormat等，类图如下：</p>
+<p><img src="/images/inputformat-class.png" alt="InputFormat类层次图"></p>
+<p>需要注意的是FileInputFormat设置输入路径的时候，如果包含子路径默认是<strong>当做文件处理的</strong><br>如果需要递归的读取子目录文件，那么需要设置<strong>mapreduce.input.fileinputformat.input.dir.recursive</strong>属性为true</p>
+<h3 id="FileInputFormat的输入分片"><a href="#FileInputFormat的输入分片" class="headerlink" title="FileInputFormat的输入分片"></a>FileInputFormat的输入分片</h3><p>FileInputFormat的getSplit方法是如何将数据切分成一个个分片呢？<br>FileInputFormat只切分大文件，大文件是指文件超过HDFS块的大小，因为通常分片大小是和HDFS块大小相同的   </p>
+<p>但是输入分片的大小是可以通过属性来控制的，如下：</p>
+<table>
+<thead>
+<tr>
+<th>属性名</th>
+<th>类型</th>
+<th>默认值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mapreduce.input.fileinputformat.split.minsize</td>
+<td>int</td>
+<td>1(字节)</td>
+<td>Input Split的最小值</td>
+</tr>
+<tr>
+<td>mapreduce.input.fileinputformat.split.maxsize</td>
+<td>long</td>
+<td>Long.MAX_VALUE</td>
+<td>Input Split的最大值</td>
+</tr>
+<tr>
+<td>dfs.blocksize</td>
+<td>long</td>
+<td>128M</td>
+<td>HDFS块大小</td>
+</tr>
+</tbody>
+</table>
+<p>通过这三个属性来控制输入分片的大小的<strong>同时也可以控制作业的map任务数</strong>，定义分片大小的时候要注意：<br>太大，会导致map读取的数据可能跨越不同的节点，没有了数据本地化的优势<br>太小，会导致map数量过多，任务启动和切换开销太大，并行度过高</p>
+<p>那么分片的大小是如何从这三个属性中得到的呢？计算公式如下：<br>max(minimumSize,min(maximumSzie,blockSize))<br>首先从最大分片大小和block大小之间选出一个比较小的，再和最小分片大小相比选出一个较大的<br>由于默认情况下，<strong>minimumSize小于blockSize小于maximumSzie，所以分片的默认大小和blockSize一致</strong></p>
+<h3 id="小文件与CombineFileInputFormat"><a href="#小文件与CombineFileInputFormat" class="headerlink" title="小文件与CombineFileInputFormat"></a>小文件与CombineFileInputFormat</h3><p>在实例场景中介绍CombineFileInputFormat：<a href="http://www.xiaohei.info/2016/03/01/mapreduce-custom-split/" target="_blank" rel="external">自定义分片策略解决大量小文件问题</a></p>
+<h3 id="其他InputFormat的子类们"><a href="#其他InputFormat的子类们" class="headerlink" title="其他InputFormat的子类们"></a>其他InputFormat的子类们</h3><p>Hadoop提供了各个场景下使用的InputFormat，具体介绍可以参考Hadoop权威指南或者网上的资料~</p>
+<h2 id="输出格式"><a href="#输出格式" class="headerlink" title="输出格式"></a>输出格式</h2><p>和前一节讲述的输入格式一样，Hadoop也有一套输出格式，如下图：</p>
+<p><img src="/images/outputformat-class.jpg" alt="OutputFomat类层次图"></p>
+<h3 id="文本输出"><a href="#文本输出" class="headerlink" title="文本输出"></a>文本输出</h3><p>TextFileOutputFormat是默认的输出格式，其键值可以是任意的类型<br>将会调用键值的toString方法，并以制表符分割，键值之间的分隔符可以通过<strong>mapreduce.output.textoutputformat.separator</strong>属性来设置   </p>
+<h3 id="二进制输出"><a href="#二进制输出" class="headerlink" title="二进制输出"></a>二进制输出</h3><p>可以将数据内容以SequenceFile或者MapFile的形式存储在HDFS中</p>
+<h3 id="多个输出"><a href="#多个输出" class="headerlink" title="多个输出"></a>多个输出</h3><p>默认情况下，一个reducer会以特定的文件名产生一个文件，这个动作是自动完成的<br>有时候我们可能需要对输出文件的文件名和数量进行控制<br>所以Hadoop为我们提供了MultipleOutputs类</p>
+<p>MultipleOutputs类可以在一个mapper或者reducer中生成多个文件<br>文件名的格式为name-m-nnnnn或者name-r-nnnnn，分别代表mapper和reducer的输出<br>其中name是程序中指定的字符串，nnnnn是一个指明的快号整数（从0开始）</p>
+<p>MultipleOutputs的使用示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">MultipleOutputReducer</span></span>&#123;</div><div class="line">	<span class="comment">//MultipleOutputs类的实例</span></div><div class="line">	<span class="keyword">private</span> MultipleOutputs&lt;NullWritable,Text&gt; multipleOutput;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">setup</span><span class="params">(Context context)</span> throw IOException,InterruptedException</span>&#123;</div><div class="line">		<span class="comment">//在setup方法中通过context进行初始化</span></div><div class="line">		multipleOutput = <span class="keyword">new</span> MultipleOutputs&lt;NullWritable,Text&gt;(context);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;Text&gt; values,Context context)</span>IOException,InterruptedException</span>&#123;</div><div class="line">		<span class="keyword">for</span>(Text value:values)&#123;</div><div class="line">			<span class="comment">//使用multipleOutput代替context调用write方法</span></div><div class="line">			<span class="comment">//参数分别为：key，value，文件名中的name</span></div><div class="line">			multipleOutput.write(NullWritable.get(),value,key.toString());</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">cleanup</span><span class="params">(Context context)</span></span>&#123;</div><div class="line">		<span class="comment">//在cleanup方法中关闭该对象</span></div><div class="line">		multipleOutput.close();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如此一来，key相同的数据会被输出到同一个文件中，并且以该key的值作为文件名的开头</p>
+<p>在这个过程中，我们设置可以设置多层的输出路径：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Override</span></div><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key,Iterable&lt;Text&gt; values,Context context)</span>IOException,InterruptedException</span>&#123;</div><div class="line">	<span class="keyword">for</span>(Text value:values)&#123;</div><div class="line">		<span class="comment">//getYear和getMonth为伪代码，表示获取当前年份和月份，输出的时候将按照年月的路径输出</span></div><div class="line">		String basePath = String.format(<span class="string">"%s/%s/part"</span>,getYear(),getMonth())</div><div class="line">		<span class="comment">//使用multipleOutput代替context调用write方法</span></div><div class="line">		<span class="comment">//参数分别为：key，value，文件名中的name</span></div><div class="line">		multipleOutput.write(NullWritable.get(),value,basePath);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="延迟输出"><a href="#延迟输出" class="headerlink" title="延迟输出"></a>延迟输出</h3><p>FileOutputFormat即使没有数据也会产生一个空文件，有时候我们并不想这样子<br>这时候就可以使用LazyOutputFormat，该类只有在第一条数据真正输出的时候才会创建文件</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/07/mapreduce-works/" rel="next" title="MapReduce工作机制">
+                <i class="fa fa-chevron-left"></i> MapReduce工作机制
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/09/mapreduce-features/" rel="prev" title="MapReduce高级特性">
+                MapReduce高级特性 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/08/mapreduce-type-format/"
+           data-title="MapReduce类型与格式" data-url="http://xiaohei.info/2016/05/08/mapreduce-type-format/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#输入格式"><span class="nav-number">1.</span> <span class="nav-text">输入格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#输入分片与记录"><span class="nav-number">1.1.</span> <span class="nav-text">输入分片与记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FileInputFormat"><span class="nav-number">1.2.</span> <span class="nav-text">FileInputFormat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FileInputFormat的输入分片"><span class="nav-number">1.3.</span> <span class="nav-text">FileInputFormat的输入分片</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小文件与CombineFileInputFormat"><span class="nav-number">1.4.</span> <span class="nav-text">小文件与CombineFileInputFormat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他InputFormat的子类们"><span class="nav-number">1.5.</span> <span class="nav-text">其他InputFormat的子类们</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#输出格式"><span class="nav-number">2.</span> <span class="nav-text">输出格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#文本输出"><span class="nav-number">2.1.</span> <span class="nav-text">文本输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二进制输出"><span class="nav-number">2.2.</span> <span class="nav-text">二进制输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多个输出"><span class="nav-number">2.3.</span> <span class="nav-text">多个输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延迟输出"><span class="nav-number">2.4.</span> <span class="nav-text">延迟输出</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

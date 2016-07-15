@@ -1,0 +1,824 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="整个Spark框架都是基于RDD算子来进行计算的。
+What is RDD？Resilient Distributed Dataset(RDD)，分布式弹性数据集，是Spark上的一个核心抽象表示用于并行计算的，不可修改的，对数据集合进行分片的数据结构
+简单地，可以将RDD看成是Spark平台上的通用货币
+在Spark上，针对各种各样的计算场景存在着各种各种的RDD，这些RDD拥有一些共同的操作，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（六） -- Spark计算模型">
+<meta property="og:url" content="http://xiaohei.info/2015/05/17/spark-6-calculation-model/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="整个Spark框架都是基于RDD算子来进行计算的。
+What is RDD？Resilient Distributed Dataset(RDD)，分布式弹性数据集，是Spark上的一个核心抽象表示用于并行计算的，不可修改的，对数据集合进行分片的数据结构
+简单地，可以将RDD看成是Spark平台上的通用货币
+在Spark上，针对各种各样的计算场景存在着各种各种的RDD，这些RDD拥有一些共同的操作，">
+<meta property="og:image" content="http://img.blog.csdn.net/20150517121615754">
+<meta property="og:image" content="http://img.blog.csdn.net/20150517121742050">
+<meta property="og:image" content="http://img.blog.csdn.net/20150517122635169">
+<meta property="og:image" content="http://img.blog.csdn.net/20150517123031381">
+<meta property="og:updated_time" content="2016-07-15T02:48:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（六） -- Spark计算模型">
+<meta name="twitter:description" content="整个Spark框架都是基于RDD算子来进行计算的。
+What is RDD？Resilient Distributed Dataset(RDD)，分布式弹性数据集，是Spark上的一个核心抽象表示用于并行计算的，不可修改的，对数据集合进行分片的数据结构
+简单地，可以将RDD看成是Spark平台上的通用货币
+在Spark上，针对各种各样的计算场景存在着各种各种的RDD，这些RDD拥有一些共同的操作，">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150517121615754">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/17/spark-6-calculation-model/"/>
+
+  <title> Spark（六） -- Spark计算模型 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（六） -- Spark计算模型
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-17T10:48:16+08:00" content="2015-05-17">
+              2015-05-17
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/17/spark-6-calculation-model/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/17/spark-6-calculation-model/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/17/spark-6-calculation-model/" class="leancloud_visitors" data-flag-title="Spark（六） -- Spark计算模型">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>整个Spark框架都是基于RDD算子来进行计算的。</p>
+<p>What is RDD？<br>Resilient Distributed Dataset(RDD)，分布式弹性数据集，是Spark上的一个核心抽象<br>表示用于并行计算的，不可修改的，对数据集合进行分片的数据结构</p>
+<p><strong>简单地，可以将RDD看成是Spark平台上的通用货币</strong></p>
+<p>在Spark上，针对各种各样的计算场景存在着各种各种的RDD，这些RDD拥有一些共同的操作，例如map，filter，persist等，就好像RDDs都是一个总RDD的子类一样，拥有所有RDD的共同特性</p>
+<p>同时RDDs也拥有能表达自己特性的操作，例如PairRDDR有groupByKey，join等操作，而DoubleRDD有Doubles操作</p>
+<p>所有的RDD都有以下特性：<br>可以表示数据分片的列表集合。将原始数据经过某些分片处理生成RDDs，这些RDD将用于并行计算</p>
+<p><strong>通用的算子来计算每个数据分片</strong><br>包括transformation和action两大算子类别。</p>
+<p><strong>RDD之间拥有依赖关系</strong><br>transformation只对数据进行处理而不计算，处理过程会被画成一个DAG有向无循环图，只有当action操作要获取结果时，才根据DAG图来进行并行计算。<br>DAG图会根据RDD之间的依赖关系被分解成一个个stage之后提交</p>
+<p><strong>形成DAG图的过程中也会根据RDD之间的依赖关系形成Lineage</strong><br>这是Spark上一个重要的容错机制<br>当某个节点计算错误时，只需要根据Lineage重新计算相关的操作而不必回滚整个程序</p>
+<p>以下两张图是来源自网络的<br>Spark中部分RDD类的截图<br>transformation和action操作的Function截图</p>
+<p><img src="http://img.blog.csdn.net/20150517121615754" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20150517121742050" alt="这里写图片描述"></p>
+<p>除了transformation和action两大类算子之外，RDD还有一个比较特殊的算子<br>如persist和checkpoint，它们既不属于transformation也不属于action<br>但是都会触发Job的运行<br>persist将RDD结果持久化，修改了RDD中meta info的存储级别<br>checkpoint在持久化RDD的同时还切断了RDD之间的依赖血缘关系。除了修改了存储级别，还修改了meta info中RDD的lineage依赖关系<br>两者返回的均是修改后的RDD而不是产生的RDD（transformation是产生新的RDD，action是对RDD取结果）</p>
+<p>RDD之间的依赖关系可以分为Narrow，Wide：窄依赖和宽依赖两种</p>
+<p><strong>窄依赖</strong>：子RDD中的每个数据块只依赖于父RDD中对应的有限个固定的数据块，可以理解成父子RDD是一对一或者多对一的关系，例如：map变换，前后的数据都是一行对一行的。一个子RDD可以根据其父RDD直接计算得出，因而子RDD出现计算错误的时候，只需要重新计算对应的父RDD即可</p>
+<p><strong>宽依赖</strong>：子RDD中的一个数据块可以依赖于父RDD中的所有数据块。即一对多的情况，例如：groupByKey变换，子RDD中的数据块会依赖于多个父RDD中的数据块，因为一个key可能存在于父RDD的任何一个数据块中 。宽依赖中的子RDD要等到所有的父RDD计算完成之后才能进行计算，当数据丢失时需要对所有祖先RDD进行重新计算</p>
+<p>依赖关系图：</p>
+<p><img src="http://img.blog.csdn.net/20150517122635169" alt="这里写图片描述"></p>
+<p>其中，宽依赖是会触发shuffle行为的<br>而shuffle操作可以减小集群之间网络传输的压力，对数据进行一定的提前处理工作，对于提高整个集群的处理性能是十分重要的</p>
+<p>在Spark中shuffle操作会是将DAG图划分成一个个stage的起点</p>
+<p>如图所示：</p>
+<p><img src="http://img.blog.csdn.net/20150517123031381" alt="这里写图片描述"></p>
+<p>map和union是属于transformation操作的。这里会涉及到一个pipeline的概念，对数据切片之后并行协同计算，从图中我们可以看到，map和union的时候Task之间的处理是并行的，而协同体现在当某个Task计算缓慢的时候，集群会启动一个新的节点来计算该Task，哪个节点先处理完毕就采用哪个节点的结果</p>
+<p>groupBy和join操作是产生RDD之间的宽依赖的，这是一个shuffle过程，也是触发划分stages的起点，如上图中的三个stage</p>
+<p><strong>从物理的角度看RDD其实是一个元数据结构，存储着Block和Node之间的映射关系</strong></p>
+<p>关于Spark的transformation，action和划分stage等过程都是怎么处理的，整个作业的处理流程是什么，请看：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/45728173" target="_blank" rel="external">Spark（四） – Spark内核作业调度机制</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/16/spark-5-sparkstreaming-introduction/" rel="next" title="Spark（五） -- Spark Streaming介绍与基本执行过程">
+                <i class="fa fa-chevron-left"></i> Spark（五） -- Spark Streaming介绍与基本执行过程
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/18/spark-7-scala-quickstart/" rel="prev" title="Spark（七） -- Scala快速入门">
+                Spark（七） -- Scala快速入门 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/17/spark-6-calculation-model/"
+           data-title="Spark（六） -- Spark计算模型" data-url="http://xiaohei.info/2015/05/17/spark-6-calculation-model/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

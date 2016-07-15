@@ -1,0 +1,859 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="当下使用协同过滤算法计算的推荐系统到处可见，例如淘宝，京东，当当等电商网站，当你在网站上购买或者浏览了某些商品从而被其收集了相对应的数据，下次你在次浏览该网站的时候就会发现，他会根据你之前的购买/浏览记录为你推荐一些商品，而这些商品的推荐往往是十分精准的，因为它是建立在大数据的基础之上计算出来的。
+基于协同过滤的推荐是推荐算法中的一种思想，协同过滤的思想是这样的：一般是在海量的用户中发掘出一小部分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据挖掘算法之协同过滤算法">
+<meta property="og:url" content="http://xiaohei.info/2015/04/24/datamining-recommend-collective/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="当下使用协同过滤算法计算的推荐系统到处可见，例如淘宝，京东，当当等电商网站，当你在网站上购买或者浏览了某些商品从而被其收集了相对应的数据，下次你在次浏览该网站的时候就会发现，他会根据你之前的购买/浏览记录为你推荐一些商品，而这些商品的推荐往往是十分精准的，因为它是建立在大数据的基础之上计算出来的。
+基于协同过滤的推荐是推荐算法中的一种思想，协同过滤的思想是这样的：一般是在海量的用户中发掘出一小部分">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424183741074">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424184003886">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424185118073">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424190102200">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424194019386">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424194849445">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424201931692">
+<meta property="og:image" content="http://img.blog.csdn.net/20150424202137981">
+<meta property="og:updated_time" content="2016-07-15T02:53:46.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据挖掘算法之协同过滤算法">
+<meta name="twitter:description" content="当下使用协同过滤算法计算的推荐系统到处可见，例如淘宝，京东，当当等电商网站，当你在网站上购买或者浏览了某些商品从而被其收集了相对应的数据，下次你在次浏览该网站的时候就会发现，他会根据你之前的购买/浏览记录为你推荐一些商品，而这些商品的推荐往往是十分精准的，因为它是建立在大数据的基础之上计算出来的。
+基于协同过滤的推荐是推荐算法中的一种思想，协同过滤的思想是这样的：一般是在海量的用户中发掘出一小部分">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150424183741074">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/04/24/datamining-recommend-collective/"/>
+
+  <title> 数据挖掘算法之协同过滤算法 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                数据挖掘算法之协同过滤算法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-04-24T10:53:10+08:00" content="2015-04-24">
+              2015-04-24
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/04/24/datamining-recommend-collective/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/04/24/datamining-recommend-collective/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/04/24/datamining-recommend-collective/" class="leancloud_visitors" data-flag-title="数据挖掘算法之协同过滤算法">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>当下使用协同过滤算法计算的推荐系统到处可见，例如淘宝，京东，当当等电商网站，当你在网站上购买或者浏览了某些商品从而被其收集了相对应的数据，下次你在次浏览该网站的时候就会发现，他会根据你之前的购买/浏览记录为你推荐一些商品，而这些商品的推荐往往是十分精准的，因为它是建立在大数据的基础之上计算出来的。</p>
+<p>基于协同过滤的推荐是推荐算法中的一种思想，协同过滤的思想是这样的：一般是在海量的用户中发掘出一小部分和你品位比较类似的，在协同过滤中，这些用户成为邻居，然后根据他们喜欢的其他东西组织成一个排序的目彔作为推荐给你。</p>
+<p><strong>协同过滤的核心问题</strong>：</p>
+<ul>
+<li>如何确定一个用户是不是和你有相似的品位？</li>
+<li>如何将邻居们的喜好组织成一个排序的目彔？</li>
+</ul>
+<p><strong>实现协同过滤的步骤</strong>：</p>
+<ol>
+<li>收集用户偏好</li>
+<li>找到相似的用户或物品</li>
+<li>计算推荐</li>
+</ol>
+<p>当已经对用户行为进行分析得到用户喜好后，我们可以根据用户喜好计算相似用户和物品，然后基于相似用户戒者物品迚行推荐，这就是最典型的 CF 的两个分支：</p>
+<ul>
+<li>基于用户的 CF </li>
+<li>基于物品的 CF</li>
+</ul>
+<p>下面对这两种CF分别进行讨论</p>
+<p><strong>基于用户的协同过滤算法UserCF</strong></p>
+<p>基于用户的协同过滤，通过不同用户对物品的评分来评测用户之间的相似性，基于用户之间的相似性做出推荐。<br>简单来讲就是：给用户推荐和他兴趣相似的其他用户喜欢的物品。<br>如下图所示：</p>
+<p><img src="http://img.blog.csdn.net/20150424183741074" alt="图例"></p>
+<p>用户A购买了物品A和C<br>用户C购买了物品A,C,D<br>这时候我们可以将A,C两个用户看成是相似的，因为他们有很类似的购买行为，这时候我们就可以将物品D推荐给用户A</p>
+<p><strong>基于物品的协同过滤算法ItemCF</strong><br>基于item的协同过滤，通过用户对不同item的评分来评测item之间的相似性，基于item之间的相似性做出推荐。<br>简单来讲就是：给用户推荐和他之前喜欢的物品相似的物品。<br>如下图所示：<br><img src="http://img.blog.csdn.net/20150424184003886" alt="图例"><br>从上图可以看出<br>用户A购买了物品A的同时还购买了物品C<br>用户B购买了物品A的同时还购买了物品B,C<br>而用户C只购买了物品A<br>从这个简单的例子看出物品A和物品C是经常被一起购买的，那么我们可以将A,C看成是相似的，当用户C购买物品A的同时可以为他推荐物品C</p>
+<p><strong>UserCF vs. ItemCF</strong></p>
+<p>对于电子商务，用户数量一般大大超过商品数量，此时ItemCF的计算复杂度较低。<br>在非社交网络的网站中，内容内在的联系是很重要的推荐原则，它比基于相似用户的推荐原则更加有效。比如在购书网站上，当你看一本书的时候，推荐引擎 会给你推荐相关的书籍，这个推荐的重要性进进超过了网站首页对该用户的综合推荐。可以看到，在这种情况下，Item CF 的推荐成为了引导用户浏览的重要手段。<strong>基于物品的协同过滤算法，是目前电子商务采用最广泛的推荐算法。</strong><br>而在社交网络站点中，User CF 是一个更不错的选择，UserCF 加上社会网络信息，可以增加用户对推荐解释的信服程度。</p>
+<p><strong>基于物品的协同过滤算法实现</strong></p>
+<p>上面描述的是UserCF和ItemCF的基本思想，接下来用一个实例来实现ItemCF</p>
+<p>算法实现的步骤为：</p>
+<ol>
+<li>计算物品之间的相似度</li>
+<li>根据物品的相似度和用户的历史行为给用户生成推荐列表</li>
+</ol>
+<p>下面通过一个简单的影院数据分析来解释ItemCF的实现过程<br>这里假设我们已经将文字或者其他类型的数据转换成我们所需要的数据格式</p>
+<p><img src="http://img.blog.csdn.net/20150424185118073" alt="影院数据"></p>
+<p>在上图的数据中每行3个字段，依次是用户ID,电影ID,用户对电影的评分(0-5分，每0.5分为一个评分点)<br>从之前的算法思想描述中我们知道，首先要分析电影和电影之间的相似度，但是现在我们不能再使用之前那种通过肉眼或者人工的方式来得出物品之间的相似度了，因为在大数据的前提下，手工所做的一切都是徒劳的<br>那么我们要怎么得到电影和电影之间的相似度呢？<br>这里需要借助到数学上的技巧<br>步骤如下：</p>
+<ol>
+<li>建立物品的同现矩阵</li>
+<li>建立用户对物品的评分矩阵</li>
+<li>矩阵计算推荐结果</li>
+</ol>
+<p><strong>1.建立物品的同现矩阵</strong></p>
+<p>如下图所示：</p>
+<p><img src="http://img.blog.csdn.net/20150424190102200" alt="物品的同现矩阵"></p>
+<p>由于这里的数据总共只有7个，所以这个矩阵是7*7<br>怎么理解这个矩阵呢？<br>这个矩阵的行列的编号都是对应的电影编号<br>我们先看矩阵的对角线，对角线上行=列，表示这个电影在数据集中出现了几次（多少人看过）<br>在例如第一行第二列的数据3，这个数字代表的是101和102这两部电影一起被同一个用户看过的次数，也就是同现度<br>其余行列上的数字分别代表某两个电影之间的同现度</p>
+<p>由于例子数据量小，形成的同现矩阵规模也比较小，当数据量一大，构建的这个矩阵是十分巨大的，这也是为什么ItemCF一般会比UserCF好算（因为用户量一般是远远大于物品量的）</p>
+<p>在之前的算法解释中，判断两个物品是否是相似的是根据这两个物品是不是经常被一起购买，在本例中的解释就变成，哪些电影是否经常被同一个用户观看过，如果有，这些电影就是相似的<br>如果只从这一点上看的话，从同现度矩阵中我们就可以得出相似的电影结果，因为同现度本身就是代表两个电影之间同时被一个用户观看的次数，但是由于本例中红还有一个影响推荐结果的因素：用户评分<br>所以我们要继续进行数据分析</p>
+<p><strong>2.建立用户对物品的评分矩阵</strong></p>
+<p>评分矩阵如下图所示：</p>
+<p><img src="http://img.blog.csdn.net/20150424194019386" alt="物品的评分矩阵"></p>
+<p>表示U3这个用户对每个电影的评分</p>
+<p><strong>3.矩阵计算推荐结果</strong></p>
+<p>现在根据得到的同现矩阵和评分矩阵来计算推荐结果<br>计算公式：<strong>同现矩阵*评分矩阵=推荐结果</strong></p>
+<p><img src="http://img.blog.csdn.net/20150424194849445" alt="推荐结果"></p>
+<p>7<em> 7的矩阵乘上7</em>1的矩阵的计算结果=一个7 *1的矩阵<br>其中第一个矩阵的列数要=第二个矩阵的行数，否则无法计算</p>
+<p>在结果矩阵R中可以看到对该用户每个电影的推荐分，但是这里只能推荐那些用户没有看过的电影，也就是原先评分为0.0的，所以得到首要推荐的电影为103，推荐分为24.5，然后在根据推荐分依次排列得到推荐列表</p>
+<p>那么为什么同现矩阵和评分矩阵相乘会得到这个推荐的结果呢？<br>这里可以理解为对同现度的一种加权运算，将评分看做是一种权值，最终得到的权值越大当然就越重要</p>
+<p><strong>最后的算法评估方式</strong></p>
+<p>Mahout提供了2个评估推荐器的指标，查准率和召回率（查全率），这两个指标是搜索引擎中经典的度量方法。</p>
+<p><img src="http://img.blog.csdn.net/20150424201931692" alt="算法评估"></p>
+<p>A：检索到的，相关的 （搜到的也想要的）<br>B：未检索到的，但是相关的 （没搜到，然而实际上想要的）<br>C：检索到的，但是丌相关的 （搜到的但没用的）<br>D：未检索到的，也丌相关的 （没搜到也没用的）</p>
+<p><img src="http://img.blog.csdn.net/20150424202137981" alt="算法评估"></p>
+<p>被检索到的越多越好，这是追求“查全率”，即A/(A+B)，越大越好。<br>被检索到的，越相关的越多越好，不相关的越少越好，这是追求“查准率”，即A/(A+C)，越大越好。<br>在大规模数据集合中，这两个指标是相互制约的。当希望索引出更多的数据的时候，查准率就会下降，当希望索引更准确的时候，会索引更少的数据。</p>
+<p>本文参考书《Mahout In Action》</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/04/23/datamining-relate-apriori/" rel="next" title="数据挖掘算法之关联规则挖掘（一）apriori算法">
+                <i class="fa fa-chevron-left"></i> 数据挖掘算法之关联规则挖掘（一）apriori算法
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/04/24/datamining-relate-fpgrowth/" rel="prev" title="数据挖掘算法之关联规则挖掘（二）FPGrowth算法">
+                数据挖掘算法之关联规则挖掘（二）FPGrowth算法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/04/24/datamining-recommend-collective/"
+           data-title="数据挖掘算法之协同过滤算法" data-url="http://xiaohei.info/2015/04/24/datamining-recommend-collective/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

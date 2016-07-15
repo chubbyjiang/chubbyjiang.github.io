@@ -1,0 +1,815 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="首先交代一下集群的规模和配置集群有六台机器，均是VM虚拟机，每台256M的内存（原谅楼主物理机硬件不太给力）主机名分别是cloud1~cloud6每台机器上都装有jdk6,和hadoop-2.2.0其中cloud4~cloud6上装有zookeepercloud1为hdfs文件系统的启动节点cloud3为yarn资源管理的启动节点（注意每台机器都配置好SSH免密码登录，可以在下面的hadoop部署">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（一）-- Standalone HA的部署">
+<meta property="og:url" content="http://xiaohei.info/2015/05/11/spark-1-standalone-install/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="首先交代一下集群的规模和配置集群有六台机器，均是VM虚拟机，每台256M的内存（原谅楼主物理机硬件不太给力）主机名分别是cloud1~cloud6每台机器上都装有jdk6,和hadoop-2.2.0其中cloud4~cloud6上装有zookeepercloud1为hdfs文件系统的启动节点cloud3为yarn资源管理的启动节点（注意每台机器都配置好SSH免密码登录，可以在下面的hadoop部署">
+<meta property="og:updated_time" content="2016-07-15T02:52:29.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（一）-- Standalone HA的部署">
+<meta name="twitter:description" content="首先交代一下集群的规模和配置集群有六台机器，均是VM虚拟机，每台256M的内存（原谅楼主物理机硬件不太给力）主机名分别是cloud1~cloud6每台机器上都装有jdk6,和hadoop-2.2.0其中cloud4~cloud6上装有zookeepercloud1为hdfs文件系统的启动节点cloud3为yarn资源管理的启动节点（注意每台机器都配置好SSH免密码登录，可以在下面的hadoop部署">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/11/spark-1-standalone-install/"/>
+
+  <title> Spark（一）-- Standalone HA的部署 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（一）-- Standalone HA的部署
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-11T10:52:08+08:00" content="2015-05-11">
+              2015-05-11
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/11/spark-1-standalone-install/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/11/spark-1-standalone-install/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/11/spark-1-standalone-install/" class="leancloud_visitors" data-flag-title="Spark（一）-- Standalone HA的部署">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>首先交代一下集群的规模和配置<br>集群有六台机器，均是VM虚拟机，每台256M的内存（原谅楼主物理机硬件不太给力）<br>主机名分别是cloud1~cloud6<br>每台机器上都装有jdk6,和hadoop-2.2.0<br>其中cloud4~cloud6上装有zookeeper<br>cloud1为hdfs文件系统的启动节点<br>cloud3为yarn资源管理的启动节点<br>（注意每台机器都配置好SSH免密码登录，可以在下面的hadoop部署链接中查看具体步骤）</p>
+<p>有关hadoop和zookeeper的部署请看：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/44492747" target="_blank" rel="external">hadoop-2.2.0集群安装部署</a></p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/43772749" target="_blank" rel="external">zookeeper集群安装部署</a></p>
+<p>本次实验目标是在六台虚拟机上装上spark，并且将cloud1作为主节点</p>
+<p>首先将下载好的spark和scala包上传到cloud1上</p>
+<p><a href="http://www.scala-lang.org/download/2.10.5.html" target="_blank" rel="external">scala下载地址</a></p>
+<p><a href="http://mirrors.cnnic.cn/apache/spark/spark-1.3.0/spark-1.3.0-bin-hadoop2.3.tgz" target="_blank" rel="external">spark下载地址</a></p>
+<p>注意安装时尽量不要使用root用户（这里使用cloud自定义用户）</p>
+<p>安装scala：<br>tar –zxvf scala-2.10.5.tgz<br>mv scala-2.10.5 scala</p>
+<p>安装spark：<br>tar -zxvf spark-1.3.0-bin-hadoop2.3.tgz<br>mv spark-1.3.1 spark</p>
+<p>配置环境变量：<br>vi /etc/profile<br>export SCALA_HOME=/home/cloud/scala<br>export SPARK_HOME=/home/cloud/spark<br>export PATH=$$SPARK_HOME/bin:$SCALA_HOME/bin:$PATH</p>
+<p>source /etc/profile<br>使用scala -version查看是否配置成功</p>
+<p>进入spark目录，修改文件slaves<br>vi conf/slaves<br>cloud1<br>cloud2<br>cloud3<br>cloud4<br>cloud5<br>cloud6</p>
+<p>修改spark-env.sh<br>vi conf/spark-env.sh</p>
+<p>export SPARK_MASTER_IP=cloud1<br>export SPARK_WORKER_MEMORY=128m<br>export JAVA_HOME=/usr/java/jdk<br>export SCALA_HOME=/home/cloud/scala<br>export SPARK_HOME=/home/cloud/spark<br>export HADOOP_CONF_DIR=/home/cloud/hadoop/etc/hadoop<br>export SPARK_LIBRARY_PATH=$$SPARK_HOME/lib<br>export SCALA_LIBRARY_PATH=$SPARK_LIBRARY_PATH<br>export SPARK_WORKER_CORES=1<br>export SPARK_WORKER_INSTANCES=1<br>export SPARK_MASTER_PORT=7077</p>
+<p>将cloud1上配置好的spark和scala通过scp复制到其他各个节点上（注意其他节点上的profile文件也要一致）<br>scp -r spark cloud2:/home/cloud/<br>scp -r scala cloud2:/home/cloud/</p>
+<p>scp -r spark cloud3:/home/cloud/<br>scp -r scala cloud3:/home/cloud/</p>
+<p>scp -r spark cloud4:/home/cloud/<br>scp -r scala cloud4:/home/cloud/</p>
+<p>scp -r spark cloud5:/home/cloud/<br>scp -r scala cloud5:/home/cloud/</p>
+<p>scp -r spark cloud6:/home/cloud/<br>scp -r scala cloud6:/home/cloud/</p>
+<p>通过<br>sbin/start-all.sh<br>启动spark集群<br><a href="http://cloud1:8080可以监控spark" target="_blank" rel="external">http://cloud1:8080可以监控spark</a> Standalone集群</p>
+<p>如果要启动spark-shell连接到spark Standalone集群，有两种方法：<br>a：使用MASTER=spark://cloud1:7077 bin/spark-shell启动<br>b：配置在conf/spark-env.sh增加：<br>export MASTER=spark://$${SPARK_MASTER_IP}:${SPARK_MASTER_PORT}<br>然后使用使用./spark-shell启动</p>
+<p>基于文件系统的单点恢复<br>主要用于开发或测试环境下<br>当spark提供目录保存spark Application和worker的注册信息，并将他们的恢复状态写</p>
+<p>入该目录中，这时，一旦Master发生故障，就可以通过重新启动Master进程（sbin/start-master.sh），恢复已运行的spark Application和worker的注册信息。<br>基于文件系统的单点恢复，主要是在spark-env里对SPARK_DAEMON_JAVA_OPTS设置：<br> 参数     含义<br> spark.deploy.recoveryMode：设成FILESYSTEM ， 缺省值为NONE<br>spark.deploy.recoveryDirectory：Spark 保存恢复状态的目录</p>
+<p>export SPARK_DAEMON_JAVA_OPTS=”-Dspark.deploy.recoveryMode=FILESYSTEM -<br>Dspark.deploy.recoveryDirectory=/home/cloud/spark/recovery”</p>
+<p>基于zookeeper的Standby Masters<br> 参数     含义<br> spark.deploy.recoveryMode：设置成ZOOKEEPER，缺省值为 NONE<br> spark.deploy.zookeeper.url： ZooKeeper URL(如192.168.100.111:2181,192.168.100.112:2181…)<br> spark.deploy.zookeeper.dir：ZooKeeper 保存恢复状态的目录，缺省为 /spark</p>
+<p>Master可以在任何时候添加或移除。如果发生故障切换，新的Master将联系所有以前注册的Application和Worker告知Master的改变。</p>
+<p>export SPARK_DAEMON_JAVA_OPTS=”-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=cloud4:2181,cloud5:2181,cloud6:2181, -<br>Dspark.deploy.zookeeper.dir=/home/cloud/spark”</p>
+<p>对于初次接触Spark的一些常见的问题：<br>1.小的数据量，如G级别，适合在Spark上运行吗？<br>大数据和数据大是两个不同的概念，大数据处理强调的是处理的速度，数据量的大小反而不是关键。例如，1G的数据要求在0.005秒之内处理完毕</p>
+<p>2.Standalone和ON YARN模式有什么区别？<br>两者都是部署在多台节点上的分布式环境，Standalone从名字上就可以看出是Spark自己的集群，而ON YARN模式下，YARN提供了多框架并存的机制，不仅仅是Spark。并且还提供对多个框架之间是分配和调度资源的管理。</p>
+<p>3.运行Spark一定需要Hadoop吗？<br>不一定，如果是学习需要，完全可以将Spark安装在local模式下，连HDFS都不需要<br>但是一般的商业部署架构为：Hadoop+Yarn+Spark<br>Hadoop的HDFS是大数据处理首选的文件系统，Spark需要历史数据，而这些数据就在HDFS中<br>Yarn多框架并存，资源管理保证了集群的高效和可用性<br>Spark应对大数据处理的各种场景，一套搞定，one stack to rule them all</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/04/24/datamining-relate-fpgrowth/" rel="next" title="数据挖掘算法之关联规则挖掘（二）FPGrowth算法">
+                <i class="fa fa-chevron-left"></i> 数据挖掘算法之关联规则挖掘（二）FPGrowth算法
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/13/spark-2-introduction/" rel="prev" title="Spark（二） -- Spark简单介绍">
+                Spark（二） -- Spark简单介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/11/spark-1-standalone-install/"
+           data-title="Spark（一）-- Standalone HA的部署" data-url="http://xiaohei.info/2015/05/11/spark-1-standalone-install/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

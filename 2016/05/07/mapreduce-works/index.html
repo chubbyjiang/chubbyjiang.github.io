@@ -1,0 +1,875 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="运行流程当你在MapReduce程序中调用了Job实例的Submit()或者waitForCompletion()方法，该程序将会被提交到Yarn中运行其中的过程大部分被Hadoop隐藏起来了，对开发者来说是透明的程序运行的过程涉及到个概念：
+
+1.Client：提交程序的客户端2.ResourceManager：集群中的资源分配管理3.NodeManager：启动和监管各自节点上的计算资源4.A">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce工作机制">
+<meta property="og:url" content="http://xiaohei.info/2016/05/07/mapreduce-works/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="运行流程当你在MapReduce程序中调用了Job实例的Submit()或者waitForCompletion()方法，该程序将会被提交到Yarn中运行其中的过程大部分被Hadoop隐藏起来了，对开发者来说是透明的程序运行的过程涉及到个概念：
+
+1.Client：提交程序的客户端2.ResourceManager：集群中的资源分配管理3.NodeManager：启动和监管各自节点上的计算资源4.A">
+<meta property="og:image" content="http://xiaohei.info/images/mapreduce-works.png">
+<meta property="og:image" content="http://xiaohei.info/images/mr-shuffle.jpg">
+<meta property="og:updated_time" content="2016-07-14T01:50:10.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce工作机制">
+<meta name="twitter:description" content="运行流程当你在MapReduce程序中调用了Job实例的Submit()或者waitForCompletion()方法，该程序将会被提交到Yarn中运行其中的过程大部分被Hadoop隐藏起来了，对开发者来说是透明的程序运行的过程涉及到个概念：
+
+1.Client：提交程序的客户端2.ResourceManager：集群中的资源分配管理3.NodeManager：启动和监管各自节点上的计算资源4.A">
+<meta name="twitter:image" content="http://xiaohei.info/images/mapreduce-works.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/07/mapreduce-works/"/>
+
+  <title> MapReduce工作机制 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce工作机制
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-07T09:49:26+08:00" content="2016-05-07">
+              2016-05-07
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/07/mapreduce-works/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/07/mapreduce-works/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/07/mapreduce-works/" class="leancloud_visitors" data-flag-title="MapReduce工作机制">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="运行流程"><a href="#运行流程" class="headerlink" title="运行流程"></a>运行流程</h2><p>当你在MapReduce程序中调用了Job实例的Submit()或者waitForCompletion()方法，该程序将会被提交到Yarn中运行<br>其中的过程大部分被Hadoop隐藏起来了，对开发者来说是透明的<br>程序运行的过程涉及到个概念：</p>
+<blockquote>
+<p>1.Client：提交程序的客户端<br>2.ResourceManager：集群中的资源分配管理<br>3.NodeManager：启动和监管各自节点上的计算资源<br>4.ApplicationMaster：每个程序对应一个AM，负责程序的任务调度，本身也是运行在NM的Container中<br>5.HDFS：分布式文件系统，和以上各个实体进行作业数据的共享</p>
+</blockquote>
+<p>MapReduce作业在Yarn中的运行流程如图所示：</p>
+<p><img src="/images/mapreduce-works.png" alt="MapReduce运行流程图"></p>
+<p>这张图和<a href="http://www.xiaohei.info/2016/05/02/hadoop-yarn-summary/" target="_blank" rel="external">Hadoop核心组件之Yarn</a>中提到的流程图很相似<br>因为MapReduce作业也是属于Yarn管理的一部分，只是这张图针对MapReduce的运行更加细化了</p>
+<h3 id="作业提交"><a href="#作业提交" class="headerlink" title="作业提交"></a>作业提交</h3><blockquote>
+<p>1.客户端调用Job实例的Submit()或者waitForCompletion()方法提交作业<br>2.客户端向RM请求分配一个Application ID</p>
+</blockquote>
+<p>进行步骤2的时候，<strong>客户端会对程序的输出路径进行检查，如果没有问题，进行作业输入分片的计算</strong></p>
+<blockquote>
+<p>3.将作业运行所需要的资源拷贝到HDFS中，包括jar包、配置文件和计算出来的输入分片信息等<br>4.调用RM的submitApplication方法将作业提交到RM</p>
+</blockquote>
+<h3 id="作业初始化"><a href="#作业初始化" class="headerlink" title="作业初始化"></a>作业初始化</h3><blockquote>
+<p>5a.RM收到submitApplication方法的调用之后会命令一个NM启动一个Container<br>5b.在该NM的Container上启动管理该作业的ApplicationMaster进程<br>6.AM对作业进行初始化操作，并将会接收作业的处理和完成情况报告<br>7.AM从HDFS中获得输入数据的分片信息  </p>
+</blockquote>
+<p>在步骤7中，AM将会根据分片信息确定要启动的map任务数，reduce任务数则根据mapreduce.job.reduces属性或者Job实例的setNumReduceTasks方法来决定</p>
+<h3 id="任务分配"><a href="#任务分配" class="headerlink" title="任务分配"></a>任务分配</h3><blockquote>
+<p>8.AM为其每个map和reduce任务向RM请求计算资源</p>
+</blockquote>
+<p>步骤8中，map任务的资源分配是要优先于reduce任务的，因为在reduce的排序阶段开始之前，map任务必须全部完成<br>因此，reduce任务的资源请求只有当map任务完成了至少5%的时候才会进行</p>
+<p>reduce任务是可以在集群上的任意一个节点运行的，所以进行计算资源分配的时候RM不需要为reduce任务考虑分配哪个节点的资源给它<br>但是map任务不一样，<strong>map任务有一个数据本地化的优化特性</strong>   </p>
+<p>数据本地优化是指map任务中处理的数据存储在各个运行map本身的节点上，这能够使得作业以最好的状态运行，因为不需要跨界点消耗网络带宽进行数据传输<br>移动计算而不移动数据<br>Yarn会优先给map任务分配本地数据，如果不存在，则在同一机架内的不同节点上搜寻数据，最差的情况是跨机架之间的数据传输<br>map每个split大小默认和hdfs的block块大小一致的原因就是：<br>太大，会导致map读取的数据可能跨越不同的节点，没有了数据本地化的优势<br>太小，会导致map数量过多，任务启动和切换开销太大，并行度过高</p>
+<p>RM在map任务要处理的数据块的那个节点上为map分配计算资源，如此一来，map任务就不需要跨网络进行数据传输了<br>因为AM中有输入数据的分片信息和要启动的map任务的信息，所以在为map任务请求资源的时候，RM会根据这些信息为map分配计算资源</p>
+<p>这里的计算资源指的是map/reduce任务运行所需要的内存和CPU等，默认每个任务分配1024M的内存和一个CPU虚拟核心<br>可以通过修改以下选项来修改这个配置：</p>
+<blockquote>
+<ul>
+<li>mapreduce.map.memory.mb   </li>
+<li>mapreduce.reduce.memory.mb   </li>
+<li>mapreduce.map.cpu.vcores   </li>
+<li>mapreduce.reduce.cpu.vcores </li>
+</ul>
+</blockquote>
+<h3 id="任务执行"><a href="#任务执行" class="headerlink" title="任务执行"></a>任务执行</h3><blockquote>
+<p>9a.AM在RM指定的NM上启动Container<br>9b.在Container上启动任务（通过YarnChild进行来运行）<br>10.在真正执行任务之前，从HDFS从将任务运行需要的资源拷贝到本地，包括jar包、配置文件信息和分布式缓存文件等<br>11.执行map/reduce任务</p>
+</blockquote>
+<h3 id="作业完成"><a href="#作业完成" class="headerlink" title="作业完成"></a>作业完成</h3><p>作业执行过程中，我们可以通过Yarn Web UI界面的AM页面中查看作业的运行信息<br>当在客户端调用waitForCompletion方法，每隔5秒钟客户端会检查一次作业的运行情况</p>
+<p>作业执行完毕之后将调用OutputCommitter方法对作业的信息进行最后的清理工作</p>
+<h2 id="失败处理"><a href="#失败处理" class="headerlink" title="失败处理"></a>失败处理</h2><p>在实际场景中，用户的代码总是会有bug、程序异常和节点失效等问题，Hadoop提供了失败处理的机制尽可能的保证用户的作业可以被顺利完成<br>其中的过程需要考虑以下几个实体：</p>
+<h3 id="Task的失败"><a href="#Task的失败" class="headerlink" title="Task的失败"></a>Task的失败</h3><h4 id="任务失败标记"><a href="#任务失败标记" class="headerlink" title="任务失败标记"></a>任务失败标记</h4><p>当由于用户的代码导致map/reduce任务产生运行时异常时<br>在该任务退出之前，JVM会发送报告给AM，并且将错误信息写入用户日志中<br>AM将该任务标记为失败，释放Container资源</p>
+<p>除了用户代码之外，还有很多其他原因会导致任务失败，如JVM的bug等<br>AM会间隔性的接收来自各个任务的汇报，当一段时间过后AM没有接收到某个任务的报告<br>AM将会判断<strong>该任务超时</strong>，将该任务标记为失败并让节点上的任务退出</p>
+<p>任务超时的时间可以在作业中通过<strong>mapreduce.task.timeout</strong>选项来为每个作业单独配置<br>设置为0表示无任务超时时间，此时任务运行再久也不会被标记为失败，其资源也无法释放，会导致集群效率降低</p>
+<h4 id="失败任务的重启"><a href="#失败任务的重启" class="headerlink" title="失败任务的重启"></a>失败任务的重启</h4><p>当AM注意到一个任务失败了之后，将会尝试重新调度该任务<br>任务的重试不会在之前失败了的节点上运行，并且失败四次之后AM将不会继续重启该任务<br>这个值同样是可以配置的：</p>
+<blockquote>
+<ul>
+<li>mapreduce.map.maxattempts   </li>
+<li>mapreduce.reduce.maxattempts</li>
+</ul>
+</blockquote>
+<p>默认的，一旦作业中有任何一个任务失败超过4次，<strong>那么整个作业将会标记为失败</strong><br>但是很多情况下，即使作业中的某些任务失败了，其他任务的执行结果还是有价值的<br>所以我们可以配置一个作业中允许任务失败的最大比例：</p>
+<blockquote>
+<ul>
+<li>mapreduce.map.failures.maxpercent   </li>
+<li>mapreduce.reduce.failures.maxpercent</li>
+</ul>
+</blockquote>
+<h3 id="ApplicationMater的失败"><a href="#ApplicationMater的失败" class="headerlink" title="ApplicationMater的失败"></a>ApplicationMater的失败</h3><p>和任务失败一样，AM也可能由于各种原因（如网络问题或者硬件故障）失效，Yarn同样会尝试重启AM<br>可以为每个作业单独配置AM的尝试重启次数：<strong>mapreduce.am.max-attempts</strong>，默认值为2<br>需要注意的是，Yarn中限制了每个AM重启的最大限制，默认也为2，如果为单个作业设置重启次数为3，超过了这个上限也不会起到作用<br>所以还需要注意将Yarn中的上限一起提高：<strong>yarn.resourcemanager.am.nax-attempts</strong></p>
+<p>由于AM会通过心跳机制向RM信息，当RM注意到AM失败了之后，会在另外一个节点的Container上重启，并将恢复已经执行的任务进度（心跳机制保留）<br>使得重启的AM不用重头执行任务，任务进度恢复默认是开启的，可以通过<strong>yarn.app.mapreduce.am.job.recovery.enable</strong>为false来禁用</p>
+<p>客户端通过AM来获得作业的执行情况，当AM失效的时候，客户端会重新向RM请求新的AM地址来更新信息</p>
+<h3 id="NodeManager的失败"><a href="#NodeManager的失败" class="headerlink" title="NodeManager的失败"></a>NodeManager的失败</h3><p>NM也通过心跳机制向RM汇报情况，当一个NM失效，或者运行缓慢的时候，RM将收不到该NM的心跳，或者心跳时间超时<br>此时RM会认为该NM失败并<strong>移出可用NM管理池</strong>，心跳超时的时间通过<strong>yarn.resourcemanager.nm.liveness-monitor.expiry-interval-ms</strong>来配置<br>默认为10分钟</p>
+<p>在失败的NM上运行的AM或者任务都会按照之前讨论的机制进行恢复   </p>
+<p>Yarn对于NM的管理还有一个类似黑名单的功能，当该NM上的任务失败次数超过3次之后（默认），该NM会被拉入黑名单<br>此时，即使该NM没有失效，AM也不会在该NM上运行任务了<br>NM上的最大任务失败次数可以通过<strong>mapreduce.job.maxtaskfailures.per.tracker</strong>来配置</p>
+<h3 id="ResourceManager的失败"><a href="#ResourceManager的失败" class="headerlink" title="ResourceManager的失败"></a>ResourceManager的失败</h3><p>RM是Yarn中最终要的一个角色，没有了RM集群将无法使用<br>RM类似于HDFS中的Namenode，需要一种高可用的机制来保障<br>RM一开始就使用一种检查点的机制来将集群信息持久化到磁盘中<br>当RM失效了之后，管理员可以手动启动一个备用的RM读取持久化的信息</p>
+<h2 id="Shuffle和Sort"><a href="#Shuffle和Sort" class="headerlink" title="Shuffle和Sort"></a>Shuffle和Sort</h2><p>Shuffle是MapReduce中的核心概念，也是代码优化中很重要的一部分<br>理解Shuffle过程可以帮助你写出更高级的MapReduce程序</p>
+<p><img src="/images/mr-shuffle.jpg" alt="Map-Reduce运行原理图"></p>
+<h3 id="Map-Side"><a href="#Map-Side" class="headerlink" title="Map Side"></a>Map Side</h3><p>如上图所示，map函数在产生数据的时候并不是直接写入磁盘的，而是先写入一个内存中的环形缓冲区<br>理由是在内存中对数据进行分区、分组排序等操作对比在磁盘上快很多</p>
+<p>每个map都有一个缓冲区，默认大小为100M<br>当缓冲区的数据达到一个阈值的时候将会产生spill操作写入到磁盘中，阈值默认为80%</p>
+<p>缓冲区中的数据spill的时候，map产生的数据会源源不断的写入到缓冲区中空出来的空间<br>当缓冲区占满的时候，map任务将会阻塞直到缓冲区可以写入数据</p>
+<p>在map的数据写入磁盘之前，在内存的缓冲区中会根据程序中设置的分区数对数据进行分区<br>并在每个分区内对数据进行分组和排序<br>如果设置了combiner函数，其将会在排序之后的数据上运行，以减少写入到磁盘的数据量</p>
+<p>缓冲区的每次spill操作都会在磁盘上产生一个spill文件，所以一个map可能产生多个spill文件<br>任务完成之前，这些spill文件会被合并为一个已分区且已排序的输出文件</p>
+<p>如果至少存在三个spill文件（默认）且设置了combiner函数，那么在合并spill文件再次写入到磁盘的时候会再次调用combiner</p>
+<p>此时Map端的任务完成</p>
+<h3 id="Reduce-Side"><a href="#Reduce-Side" class="headerlink" title="Reduce Side"></a>Reduce Side</h3><p>Map端的任务完成之后，Reduce端将会启动会多个线程通过HTTP的方式到Map端获取数据<br>为了优化reduce的执行时间，hadoop中等第一个map结束后，所有的reduce就开始尝试从完成的map中下载该reduce对应的partition部分数据</p>
+<p>在这个shuffle过程中，由于map的数量通常是很多个的，而每个map中又都有可能包含每个reduce所需要的数据<br>所以对于每个reduce来说，去各个map中拿数据也是并行的</p>
+<p>Reduce端会启动一个线程周期性的向AM请求Map端产生数据所在的位置（map任务和AM之间有心跳机制）<br>Map端产生的数据并不会在Reduce端获取之后马上删除，因为reduce任务可能会因为失败而重启</p>
+<p>Reduce端将Map端的数据拷贝过来之后也会放入一个内存缓冲区中，数据达到缓冲区的指定阈值之后h合并写入到磁盘   </p>
+<p>随着磁盘数据文件的增多，和Map端一样，Reduce端也会对溢出文件进行合并<br><strong>mapreduce.task.io.sort.factor</strong>可以控制Map和Reduce端的文件数量达到多少个时进行合并<br>和Map端的合并不同，假设上述选项采用默认值10，共有40个溢出文件<br>Map端最终会合并形成4个文件<br>而Reduce端第一次只会合并4个文件，随后三次各合并10个文件，还剩余6个文件<br>此时Reduce端中的文件还有10个，最后一次合并为1个文件输入到reduce函数中<br>由此可以看出，Reduce端的合并<strong>目标是合并最小的文件数量以满足最后一次合并刚好达到设置的文件合并系数</strong><br>其目的是为了reduce读取减少磁盘的开销</p>
+<p>如果指定了combiner函数则会在合并期间运行</p>
+<p>随后进入reduce函数的执行阶段，并产生数据输出到HDFS<br>由于大部分情况下，运行NM的节点往往还运行着Datanode，所以输出数据的第一个副本通常是保存在本地</p>
+<h2 id="性能调优"><a href="#性能调优" class="headerlink" title="性能调优"></a>性能调优</h2><p>参考：<a href="http://www.xiaohei.info/2016/03/15/mapreduce-tunning/" target="_blank" rel="external">MapReduce性能调优记录</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/06/spark-decisiontree-predict/" rel="next" title="决策树算法预测森林植被">
+                <i class="fa fa-chevron-left"></i> 决策树算法预测森林植被
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/08/mapreduce-type-format/" rel="prev" title="MapReduce类型与格式">
+                MapReduce类型与格式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/07/mapreduce-works/"
+           data-title="MapReduce工作机制" data-url="http://xiaohei.info/2016/05/07/mapreduce-works/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#运行流程"><span class="nav-number">1.</span> <span class="nav-text">运行流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#作业提交"><span class="nav-number">1.1.</span> <span class="nav-text">作业提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作业初始化"><span class="nav-number">1.2.</span> <span class="nav-text">作业初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#任务分配"><span class="nav-number">1.3.</span> <span class="nav-text">任务分配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#任务执行"><span class="nav-number">1.4.</span> <span class="nav-text">任务执行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作业完成"><span class="nav-number">1.5.</span> <span class="nav-text">作业完成</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#失败处理"><span class="nav-number">2.</span> <span class="nav-text">失败处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Task的失败"><span class="nav-number">2.1.</span> <span class="nav-text">Task的失败</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#任务失败标记"><span class="nav-number">2.1.1.</span> <span class="nav-text">任务失败标记</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#失败任务的重启"><span class="nav-number">2.1.2.</span> <span class="nav-text">失败任务的重启</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ApplicationMater的失败"><span class="nav-number">2.2.</span> <span class="nav-text">ApplicationMater的失败</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NodeManager的失败"><span class="nav-number">2.3.</span> <span class="nav-text">NodeManager的失败</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ResourceManager的失败"><span class="nav-number">2.4.</span> <span class="nav-text">ResourceManager的失败</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Shuffle和Sort"><span class="nav-number">3.</span> <span class="nav-text">Shuffle和Sort</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Map-Side"><span class="nav-number">3.1.</span> <span class="nav-text">Map Side</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reduce-Side"><span class="nav-number">3.2.</span> <span class="nav-text">Reduce Side</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#性能调优"><span class="nav-number">4.</span> <span class="nav-text">性能调优</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="HDFS中的数据完整性HDFSZ在写入数据的时候会计算数据的校验和，针对每个由dfs.bytes.per.checksum指定字节的数据计算校验和，默认为512个字节当客户端读取数据的时候，会对数据的校验和进行检查，如果发现数据出现损坏，则会执行以下步骤：
+
+1.向Namenode报告其正在读取的数据块和所在的Datanode，之后会抛出ChecksumException异常2.Namenode会">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop I/O">
+<meta property="og:url" content="http://xiaohei.info/2016/05/04/hadoop-io-summary/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="HDFS中的数据完整性HDFSZ在写入数据的时候会计算数据的校验和，针对每个由dfs.bytes.per.checksum指定字节的数据计算校验和，默认为512个字节当客户端读取数据的时候，会对数据的校验和进行检查，如果发现数据出现损坏，则会执行以下步骤：
+
+1.向Namenode报告其正在读取的数据块和所在的Datanode，之后会抛出ChecksumException异常2.Namenode会">
+<meta property="og:image" content="http://xiaohei.info/images/hadoop-base-datatype.png">
+<meta property="og:updated_time" content="2016-07-14T01:52:27.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop I/O">
+<meta name="twitter:description" content="HDFS中的数据完整性HDFSZ在写入数据的时候会计算数据的校验和，针对每个由dfs.bytes.per.checksum指定字节的数据计算校验和，默认为512个字节当客户端读取数据的时候，会对数据的校验和进行检查，如果发现数据出现损坏，则会执行以下步骤：
+
+1.向Namenode报告其正在读取的数据块和所在的Datanode，之后会抛出ChecksumException异常2.Namenode会">
+<meta name="twitter:image" content="http://xiaohei.info/images/hadoop-base-datatype.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/04/hadoop-io-summary/"/>
+
+  <title> Hadoop I/O | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hadoop I/O
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-04T09:47:58+08:00" content="2016-05-04">
+              2016-05-04
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/04/hadoop-io-summary/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/04/hadoop-io-summary/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/04/hadoop-io-summary/" class="leancloud_visitors" data-flag-title="Hadoop I/O">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="HDFS中的数据完整性"><a href="#HDFS中的数据完整性" class="headerlink" title="HDFS中的数据完整性"></a>HDFS中的数据完整性</h2><p>HDFSZ在写入数据的时候会<strong>计算数据的校验和</strong>，针对每个由<strong>dfs.bytes.per.checksum</strong>指定字节的数据计算校验和，默认为512个字节<br>当客户端读取数据的时候，会对数据的<strong>校验和</strong>进行检查，如果发现数据出现损坏，则会执行以下步骤：</p>
+<blockquote>
+<p>1.向Namenode报告其正在读取的数据块和所在的Datanode，之后会抛出ChecksumException异常<br>2.Namenode会将高数据块标记为损坏，让其不再处理请求，或者将该数据块复制到其他节点上<br>3.Namenode安排该数据块的其他完整的副本复制一份到其他完好的节点上，如此系统中的副本数恢复到期望值</p>
+</blockquote>
+<p>在使用FileSystem的open方法之前，可以通过<strong>setVerifyChecksum(false)</strong>方法将校验过程停用</p>
+<h2 id="压缩"><a href="#压缩" class="headerlink" title="压缩"></a>压缩</h2><p>在Hadoop中使用压缩可以带来许多好处，例如：<strong>减少存储空间和降低网络传输的消耗</strong><br>在选择压缩算法的时候通常要权衡时间和空间之间的平衡度，例如，压缩速度越快的往往节约的空间会比较少</p>
+<h3 id="Hadoop中压缩API的使用"><a href="#Hadoop中压缩API的使用" class="headerlink" title="Hadoop中压缩API的使用"></a>Hadoop中压缩API的使用</h3><p>如果需要对输出的数据进行压缩，可以通过createOutputStream(OutputStream out)方法来获得一个<strong>CompressionOutputStream</strong><br>反之，也可以通过createInputStream(InputStream in)方法来创建一个<strong>CompressionInputStream</strong></p>
+<h4 id="压缩数据"><a href="#压缩数据" class="headerlink" title="压缩数据"></a>压缩数据</h4><p>使用示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StreamCompressor</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> throw Exception</span>&#123;</div><div class="line">		String codecClassName = args[<span class="number">0</span>];</div><div class="line">		<span class="comment">//获得压缩类的全名称</span></div><div class="line">		Class&lt;?&gt; codecClass = Class.forName(codecClassName);</div><div class="line">		Configuration conf = <span class="keyword">new</span> Configuration();</div><div class="line">		<span class="comment">//通过ReflectionUtil来创建一个CompressionCodec实例</span></div><div class="line">		CompressionCodec codec = (CompressionCodec)ReflectionUtil.newInstance(codecClass,conf);</div><div class="line">		<span class="comment">//由CompressionOutputStream对System.out进行包装，对数据进行压缩</span></div><div class="line">		CompressionOutputStream out = codec.createOutputStream(System.out);</div><div class="line">		IOUtils.copyBytes(System.in,out,<span class="number">4096</span>,<span class="keyword">false</span>);</div><div class="line">		out.finish();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>进行测试：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">echo &quot;hello&quot; | hadoop StreamCompressor org.apache.hadoop.io.compress.GzipCodec | gunzip</div><div class="line"># 将会输出</div><div class="line">hello</div></pre></td></tr></table></figure>
+<h4 id="解压缩数据"><a href="#解压缩数据" class="headerlink" title="解压缩数据"></a>解压缩数据</h4><p>使用示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FileDecompressor</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> throw Exception</span>&#123;</div><div class="line">		String uri = args[<span class="number">0</span>];</div><div class="line">		Configuration conf = <span class="keyword">new</span> Configuration();</div><div class="line">		FileSystem fs = FileSystem.get(URI.create(uri),conf);</div><div class="line">		Path inputPath = <span class="keyword">new</span> Path(uri);</div><div class="line">		<span class="comment">//CompressionCodecFactory根据文件后缀名来获取对应的codec</span></div><div class="line">		CompressionCodecFactory factory = <span class="keyword">new</span> CompressionCodecFactory(conf);</div><div class="line">		CompressionCodec codec = factory.getCodec(inputPath);</div><div class="line">		<span class="keyword">if</span>(codec == <span class="keyword">null</span>)&#123;</div><div class="line">			System.out.println(<span class="string">"No codec found for "</span> + uri);</div><div class="line">			System.exit(<span class="number">1</span>);</div><div class="line">		&#125;</div><div class="line">		<span class="comment">//将压缩的后缀去除，形成普通的文件名</span></div><div class="line">		String outputUri = CompressionCodecFactory.removeSuffix(uri,codec.getDefaultExtension);</div><div class="line">		InputStream in = <span class="keyword">null</span>;</div><div class="line">		OutputSteam out = <span class="keyword">null</span>;</div><div class="line">		<span class="keyword">try</span>&#123;</div><div class="line">			in = codec.createInputStream(fs.open(inputPath));</div><div class="line">			out = fs.create(<span class="keyword">new</span> Path(outputUri));</div><div class="line">			IOUtils.copyBytes(in,out,conf);</div><div class="line">		&#125;<span class="keyword">finally</span>&#123;</div><div class="line">			IOUtils.closeStream(in);</div><div class="line">			IOUtils.closeStream(out);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>进行测试：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop FileDecompressior file.gz</div></pre></td></tr></table></figure>
+<h3 id="CodecPool"><a href="#CodecPool" class="headerlink" title="CodecPool"></a>CodecPool</h3><p>压缩格式的实现有<strong>原生类库</strong>和<strong>Java实现的类库</strong>两种，在gzip格式中，使用原生类库会比使用Java类库提高很多效率（10%的压缩时间和50%的解压缩时间）<br>所以最好使用原生类库进行操作（注意，并非所有压缩格式都有原生类库）<br>可以通过设置<strong>java.library.path</strong>属性指定原生代码库路径（可以在应用中单独设置，或者在bin目录下的脚本中设置）<br>Hadoop中自带了32和64位Linux构架的原生代码库，位于<strong>$HADOOP_HOME/lib/native</strong>目录<br>默认情况下Hadoop运行的时候会自动搜索原生代码库路径，如果不需要，可以通过将<strong>hadoop.natice.lib</strong>设置为false</p>
+<p>如果使用了原生代码库，并且在应用中需要反复压缩和解压缩，可以通过CodecPool来减少创建这些对象的开销</p>
+<p>使用示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PooledStreamCompressor</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> throw Exception</span>&#123;</div><div class="line">		String codecClassName = args[<span class="number">0</span>];</div><div class="line">		<span class="comment">//获得压缩类的全名称</span></div><div class="line">		Class&lt;?&gt; codecClass = Class.forName(codecClassName);</div><div class="line">		Configuration conf = <span class="keyword">new</span> Configuration();</div><div class="line">		<span class="comment">//通过ReflectionUtil来创建一个CompressionCodec实例</span></div><div class="line">		CompressionCodec codec = (CompressionCodec)ReflectionUtil.newInstance(codecClass,conf);</div><div class="line">		Compressor compressor = <span class="keyword">null</span>;</div><div class="line">		<span class="keyword">try</span>&#123;</div><div class="line">			compressor = CodecPool.getCompressor(codec);</div><div class="line">			<span class="comment">//CompressionOutputStream通过CodecPool中获得，而不是重新创建一个</span></div><div class="line">			CompressionOutputStream out = codec.createOutputStream(System.out,compressor);</div><div class="line">			IOUtils.copyBytes(System.in,out,<span class="number">4096</span>,<span class="keyword">false</span>);</div><div class="line">			out.finish();</div><div class="line">		&#125;<span class="keyword">finally</span>&#123;</div><div class="line">			CodecPool.returnCompressor(compressor);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="选择合适的压缩格式"><a href="#选择合适的压缩格式" class="headerlink" title="选择合适的压缩格式"></a>选择合适的压缩格式</h3><p>HDFS中，数据被划分为多个分片进行存储，由于在MapReduce中，每个分片有一个map任务来处理<br>如果这些数据使用了不支持切分的压缩格式，那么<strong>整个数据文件将会由一个map来处理，失去了数据本地化的特性</strong><br>因为在不支持切分的压缩文件中，<strong>无法从任意的数据流中读取数据</strong><br>所以在对大数据量的文件进行压缩的时候<strong>要选择支持切分的压缩格式</strong></p>
+<p>下面是一些建议，效率由高到低进行排序：</p>
+<blockquote>
+<ul>
+<li>使用容器文件格式，例如sequence file,RCFile或者Avro数据文件，这些文件格式同时支持<strong>压缩和切分</strong>，所以可以选择快速压缩工具，如LZO,LZ4或者Snappy   </li>
+<li>使用<strong>支持切分的压缩格式</strong>，如bzip2（尽管其很慢），或者通过索引来实现切分的LZO   </li>
+<li>在应用中手动将文件切片，每个数据块单独进行压缩，<strong>确保压缩之后的数据块大小和HDFS块大小相当</strong>   </li>
+<li>直接使用未压缩的文件</li>
+</ul>
+</blockquote>
+<h3 id="在MapReduce中使用压缩"><a href="#在MapReduce中使用压缩" class="headerlink" title="在MapReduce中使用压缩"></a>在MapReduce中使用压缩</h3><p>如果能够根据文件的后缀名推断出使用的压缩格式，MapReduce会在输入的时候自动对数据进行解压缩</p>
+<p>要对MapReduce作业的输出进行压缩可以使用两种方式：</p>
+<blockquote>
+<p>1.在应用中设置<strong>mapreduce.output.fileoutputformat.compress</strong>属性为true、设置<strong>mapreduce.output.fileoutputformat.codec</strong>为压缩格式的全名<br>2.在应用中通过<strong>FileOutputFormat.setCompressOutput(job,true)、FileOutputFormat.setOutputCompressorClass(job,GzipCodec.class)</strong>进行设置</p>
+</blockquote>
+<p>此外，在map任务产生的中间数据输出到磁盘的时候使用压缩也可以带来很大的效率提升，仍然可以通过两种方式进行设置</p>
+<table>
+<thead>
+<tr>
+<th>属性名</th>
+<th>类型</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mapreduce.output.map.output.compress</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>mapreduce.output.map.output.codec</td>
+<td>CLass</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">conf.setBoolean(Job.MAP_OUTPUT_COMPRESS,<span class="keyword">true</span>);</div><div class="line">conf.setClass(Job.MAP_OUTPUT_COMPRESS_CODEC,GzipCOdec.class,CompressionCodec.class);</div></pre></td></tr></table></figure>
+<h2 id="序列化"><a href="#序列化" class="headerlink" title="序列化"></a>序列化</h2><p>序列化是指将<strong>结构化对象转为字节流数组</strong>以便在网络上进行传输或者永久存储的行为，反序列化则是序列化的一个逆过程<br>序列化常被用在进程间的通讯和永久存储，Hadoop系统各个节点之间通过<strong>RPC</strong>进行进程间的通信，交换数据的过程就设计到序列化和反序列化</p>
+<p>通常，RPC序列化格式标准包括以下几点：</p>
+<blockquote>
+<ul>
+<li>紧凑：不仅节约磁盘空间，同时减少数据传输所消耗的网络开销   </li>
+<li>快速：使序列化和反序列化的开销达到最小   </li>
+<li>可扩展：支持新老系统的兼容   </li>
+<li>互操作：不同语言的客户端和服务端通信不会产生障碍</li>
+</ul>
+</blockquote>
+<h3 id="Writable接口"><a href="#Writable接口" class="headerlink" title="Writable接口"></a>Writable接口</h3><p>Hadoop中提供了一系列的基本数据类型和Java的数据类型一一对应，不同的是，Hadoop中的数据类型都<strong>实现Writable接口</strong><br>Writable接口提供了两个方法，一个将数据序列化写入二进制流，另一个从二进制流中反序列化读取数据<br>该接口使得Hadoop的数据类型能够以高效的序列化方式进行运作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Writable</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">void</span> <span class="title">write</span><span class="params">(DataOutput out)</span> throw IOException</span>;</div><div class="line">	<span class="function"><span class="keyword">void</span> <span class="title">readFields</span><span class="params">(DataInput in)</span> throw IOException</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>大部分Hadoop的基本数据类型并不是直接实现Writable接口，而是通过实现一个<strong>WritableComparable接口</strong>来实现，如下图：</p>
+<p><img src="/images/hadoop-base-datatype.png" alt="Hadoop数据类型继承图"></p>
+<p>WritableComparable接口的定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">WritableComparable</span>&lt;<span class="title">T</span>&gt; <span class="keyword">extends</span> <span class="title">Writable</span>,<span class="title">Comparable</span>&lt;<span class="title">T</span>&gt;</span>&#123;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>因为Hadoop中数据除了需要进行序列化，在MapReduce过程中还需要<strong>对Key进行排序</strong>的阶段<br>所以需要数据类型有可以比较的方法<br>Comparable来自java.lang.Comparable，其<strong>提供了compareTo方法对转换为对象的字节流数据进行比较</strong></p>
+<h3 id="自定义Writable数据类型"><a href="#自定义Writable数据类型" class="headerlink" title="自定义Writable数据类型"></a>自定义Writable数据类型</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//要实现自定义的排序规则必须实现WritableComparable接口，泛型参数为类本身  </span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NewK2</span> <span class="keyword">implements</span> <span class="title">WritableComparable</span>&lt;<span class="title">NewK2</span>&gt; </span>&#123;  </div><div class="line">    </div><div class="line">    <span class="comment">//代表第一列和第二列的数据  </span></div><div class="line">    Long first;  </div><div class="line">    Long second;  </div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">NewK2</span><span class="params">()</span> </span>&#123;  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">NewK2</span><span class="params">(<span class="keyword">long</span> first, <span class="keyword">long</span> second)</span> </span>&#123;  </div><div class="line">        <span class="keyword">this</span>.first = first;  </div><div class="line">        <span class="keyword">this</span>.second = second;  </div><div class="line">    &#125;  </div><div class="line">      </div><div class="line">    <span class="comment">//重写序列化和反序列化方法  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">readFields</span><span class="params">(DataInput in)</span> <span class="keyword">throws</span> IOException </span>&#123;  </div><div class="line">        <span class="keyword">this</span>.first = in.readLong();  </div><div class="line">        <span class="keyword">this</span>.second = in.readLong();  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(DataOutput out)</span> <span class="keyword">throws</span> IOException </span>&#123;  </div><div class="line">        out.writeLong(first);  </div><div class="line">        out.writeLong(second);  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="comment">//当k2进行排序时，会自动调用该方法. 当第一列不同时，升序；当第一列相同时，第二列升序  </span></div><div class="line">    <span class="comment">//如果希望降序排列，那么只需要对调this对象和o对象的顺序  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(NewK2 o)</span> </span>&#123;  </div><div class="line">        <span class="keyword">if</span>(<span class="keyword">this</span>.first != o.first)  </div><div class="line">        &#123;  </div><div class="line">        <span class="keyword">return</span> (<span class="keyword">int</span>)(<span class="keyword">this</span>.first - o.first);  </div><div class="line">        &#125;  </div><div class="line">        <span class="keyword">else</span>  </div><div class="line">        &#123;  </div><div class="line">            <span class="keyword">return</span> (<span class="keyword">int</span>) (<span class="keyword">this</span>.second - o.second);  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">      </div><div class="line">    <span class="comment">//重写hashCode和equals方法  </span></div><div class="line">    <span class="comment">//hashCode会在分区阶段被HashPartitioner调用来确定该数据所属的reduce分区</span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">hashCode</span><span class="params">()</span> </span>&#123;  </div><div class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.first.hashCode() + <span class="keyword">this</span>.second.hashCode();  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object obj)</span> </span>&#123;  </div><div class="line">        <span class="keyword">if</span> (!(obj <span class="keyword">instanceof</span> NewK2)) &#123;  </div><div class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;  </div><div class="line">        &#125;  </div><div class="line">        NewK2 oK2 = (NewK2) obj;  </div><div class="line">        <span class="keyword">return</span> (<span class="keyword">this</span>.first == oK2.first) &amp;&amp; (<span class="keyword">this</span>.second == oK2.second);  </div><div class="line">    &#125;</div><div class="line">    <span class="comment">//toString方法会TextOutputFormat输出数据的时候调用</span></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span></span>&#123;</div><div class="line">    	<span class="keyword">return</span> <span class="keyword">this</span>.first + <span class="string">'\t'</span> + <span class="keyword">this</span>.second;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>详细的使用案例请看：<a href="http://www.xiaohei.info/2015/02/15/mapreduce-custom-sort-group/" target="_blank" rel="external">Hadoop提交作业自定义排序和分组</a></p>
+<p>但是这个方法有一个缺陷，WritableComparable提供的compareTo方法是针对对象的<br>也就是说，要对比两个数据，需要<strong>先进行反序列化成对象之后才能调用compare进行比较</strong>，如果能够直接<strong>在字节流中对数据进行对比</strong>，将会减少反序列化的开销<br>Hadoop中提供了一个RawComparator接口，该接口的compare方法可以直接比较字节流中的数据<br>而在实际使用中，通常不直接实现RawComparator接口，而是继承RawComparator接口的一个通用实现WritableComparator<br>因为它提供了一些很好的默认实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyComparator</span> <span class="keyword">implements</span> <span class="title">WritableComparator</span> </span>&#123;  </div><div class="line">    <span class="comment">//重写两个比较方法  </span></div><div class="line">    <span class="comment">//按对象进行比较，规定只要两个NewK2对象的first属性相同就视为相等  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(WritableComparable o1, WritableComparable o2)</span> </span>&#123;  </div><div class="line">    	<span class="keyword">if</span>(o1 <span class="keyword">instanceof</span> NewK2 &amp;&amp; o2 <span class="keyword">instanceof</span> NewK2)&#123;</div><div class="line">    		<span class="keyword">return</span> (NewK2)o1.fitst - (NewK2)o2.first;</div><div class="line">    	&#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.compare(o1,o2);  </div><div class="line">    &#125;  </div><div class="line">    <span class="comment">/** </span></div><div class="line">     * <span class="doctag">@param</span> arg0 </div><div class="line">     *            表示第一个参与比较的字节数组 </div><div class="line">     * <span class="doctag">@param</span> arg1 </div><div class="line">     *            表示第一个参与比较的字节数组的起始位置 </div><div class="line">     * <span class="doctag">@param</span> arg2 </div><div class="line">     *            表示第一个参与比较的字节数组的偏移量 </div><div class="line">     *  </div><div class="line">     * <span class="doctag">@param</span> arg3 </div><div class="line">     *            表示第二个参与比较的字节数组 </div><div class="line">     * <span class="doctag">@param</span> arg4 </div><div class="line">     *            表示第二个参与比较的字节数组的起始位置 </div><div class="line">     * <span class="doctag">@param</span> arg5 </div><div class="line">     *            表示第二个参与比较的字节数组的偏移量 </div><div class="line">     */  </div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(<span class="keyword">byte</span>[] arg0, <span class="keyword">int</span> arg1, <span class="keyword">int</span> arg2, <span class="keyword">byte</span>[] arg3,  </span></span></div><div class="line">            <span class="keyword">int</span> arg4, <span class="keyword">int</span> arg5) &#123;  </div><div class="line">        <span class="comment">//其他字节比较方法</span></div><div class="line">        <span class="keyword">return</span> WritableComparator  </div><div class="line">                .compareBytes(arg0, arg1, <span class="number">8</span>, arg3, arg4, <span class="number">8</span>);  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>直接使用RawComparator的情况</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyGroupingComparator</span> <span class="keyword">implements</span> <span class="title">RawComparator</span>&lt;<span class="title">NewK2</span>&gt; </span>&#123;  </div><div class="line">    <span class="comment">//重写两个比较方法  </span></div><div class="line">    <span class="comment">//按对象进行比较，规定只要两个NewK2对象的first属性相同就视为相等  </span></div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(NewK2 o1, NewK2 o2)</span> </span>&#123;  </div><div class="line">        <span class="keyword">return</span> (<span class="keyword">int</span>) (o1.first - o2.first);  </div><div class="line">    &#125;  </div><div class="line"></div><div class="line">    <span class="comment">/** </span></div><div class="line">     * <span class="doctag">@param</span> arg0 </div><div class="line">     *            表示第一个参与比较的字节数组 </div><div class="line">     * <span class="doctag">@param</span> arg1 </div><div class="line">     *            表示第一个参与比较的字节数组的起始位置 </div><div class="line">     * <span class="doctag">@param</span> arg2 </div><div class="line">     *            表示第一个参与比较的字节数组的偏移量 </div><div class="line">     *  </div><div class="line">     * <span class="doctag">@param</span> arg3 </div><div class="line">     *            表示第二个参与比较的字节数组 </div><div class="line">     * <span class="doctag">@param</span> arg4 </div><div class="line">     *            表示第二个参与比较的字节数组的起始位置 </div><div class="line">     * <span class="doctag">@param</span> arg5 </div><div class="line">     *            表示第二个参与比较的字节数组的偏移量 </div><div class="line">     */  </div><div class="line">    <span class="meta">@Override</span>  </div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(<span class="keyword">byte</span>[] arg0, <span class="keyword">int</span> arg1, <span class="keyword">int</span> arg2, <span class="keyword">byte</span>[] arg3,  </span></span></div><div class="line">            <span class="keyword">int</span> arg4, <span class="keyword">int</span> arg5) &#123;  </div><div class="line">        <span class="keyword">return</span> WritableComparator  </div><div class="line">                .compareBytes(arg0, arg1, <span class="number">8</span>, arg3, arg4, <span class="number">8</span>);  </div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="基于文件的数据结构"><a href="#基于文件的数据结构" class="headerlink" title="基于文件的数据结构"></a>基于文件的数据结构</h2><p>因为直接将二进制数据的大对象存入单独的文件中不容易扩展，所以Hadoop提供了很多高层次的容器，也就是一些特殊的数据结构</p>
+<h3 id="SequenceFile"><a href="#SequenceFile" class="headerlink" title="SequenceFile"></a>SequenceFile</h3><p>SequenceFile提供了一种<strong>二进制的键值对</strong>存储格式，通常有以下的使用场景：</p>
+<blockquote>
+<p>1.作为中间mr任务的输出结果：即作为下一个mr任务的输入<br>2.适当解决小文件的问题：作为一个<strong>容器</strong>，可以将其当做一堆小文件的集合，文件名作为key，内容作为值一起存储在一个大文件中<br>3.二进制的数据对象存储</p>
+</blockquote>
+<p>SequenceFile的键值类型只要能够进行序列化都可以，通常使用Hadoop的框架中的数据类型（或者自定义的Writable类型）</p>
+<p>SequenceFile实际的存储内容也是二进制格式的，所以无法直接查看<br>但是Hadoop CLI的-text选项可以自动判别SequenceFile文件进行输出（如果是自定义的Writable类型，会使用到toString方法，类需要在classpath中）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop fs -text data.seq</div></pre></td></tr></table></figure>
+<h4 id="写入SequenceFile文件"><a href="#写入SequenceFile文件" class="headerlink" title="写入SequenceFile文件"></a>写入SequenceFile文件</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> throw Exception</span>&#123;</div><div class="line">	String uri = args[<span class="number">0</span>];</div><div class="line">	Configuration conf = <span class="keyword">new</span> Configuration();</div><div class="line">	FileSystem fs = FileSystem.get(URI.create(uri),conf);</div><div class="line">	Path inputPath = <span class="keyword">new</span> Path(uri);</div><div class="line">	IntWritable key = <span class="keyword">new</span> IntWritable();</div><div class="line">	Text value = <span class="keyword">new</span> Text();</div><div class="line">	SequenceFile.Writer writer = <span class="keyword">null</span>;</div><div class="line">	<span class="keyword">try</span>&#123;</div><div class="line">		<span class="comment">//通过SequenceFile.createWriter得到写入对象</span></div><div class="line">		writer = SequenceFile.createWriter(fs,conf,path,key.getClass(),value.getClass());</div><div class="line">		<span class="comment">//设置键值内容</span></div><div class="line">		key.set(<span class="number">0</span>);</div><div class="line">		value.set(<span class="string">"test"</span>);</div><div class="line">		<span class="comment">//调用append方法写入</span></div><div class="line">		writer.append(key,value);</div><div class="line">	&#125;<span class="keyword">finally</span>&#123;</div><div class="line">		IOUtils.closeStream(writer);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="读取SequenceFile文件"><a href="#读取SequenceFile文件" class="headerlink" title="读取SequenceFile文件"></a>读取SequenceFile文件</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> throw Exception</span>&#123;</div><div class="line">	String uri = args[<span class="number">0</span>];</div><div class="line">	Configuration conf = <span class="keyword">new</span> Configuration();</div><div class="line">	FileSystem fs = FileSystem.get(URI.create(uri),conf);</div><div class="line">	Path inputPath = <span class="keyword">new</span> Path(uri);</div><div class="line">	SequenceFile.Reader reader = <span class="keyword">null</span>;</div><div class="line">	<span class="keyword">try</span>&#123;</div><div class="line">		<span class="comment">//创建一个读取对象</span></div><div class="line">		reader = <span class="keyword">new</span> SequenceFile.Reader(fs,path,conf);</div><div class="line">		<span class="comment">//获得键值类型</span></div><div class="line">		Writable key = (Writable)ReflectionUtils.newInstance(reader.getKeyClass().conf);</div><div class="line">		Writable value = (Writable)ReflectionUtils.newInstance(reader.getValueClass().conf);</div><div class="line">		<span class="comment">//获得当前读取数据的位置</span></div><div class="line">		<span class="keyword">long</span> position = reader.getPosition();</div><div class="line">		<span class="comment">//如果有记录，返回true，并将数据填入key，value参数中</span></div><div class="line">		<span class="keyword">while</span>(reader.next(key,value))&#123;</div><div class="line">			System.out.println(key + <span class="string">":"</span> + value + <span class="string">"position in file:"</span> + position);</div><div class="line">			position = reader.getPosition();</div><div class="line">		&#125;</div><div class="line">	&#125;<span class="keyword">finally</span>&#123;</div><div class="line">		IOUtils.closeStream(reader);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>如果使用的是Writable接口的数据类型，则可以直接使用next方法得到下一个键值对的值<br>如果不是，则需要使用以下的方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">next</span><span class="params">(Object key)</span> throw IOException</span>;</div><div class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">getCurrentValue</span><span class="params">(Object val)</span> throw IOException</span>;</div></pre></td></tr></table></figure>
+<h3 id="MapFile"><a href="#MapFile" class="headerlink" title="MapFile"></a>MapFile</h3><p>MapFile相当于<strong>加了索引和排过序</strong>的SequenceFile<br>和SequenceFile不同的是，MapFile存储在HDFS上是一个<strong>包含两个SequenceFile文件的目录</strong><br>例如写入一个MapFile文件，生成test.map，其是一个目录，包含data和index两个SequenceFile文件：</p>
+<blockquote>
+<ul>
+<li>data文件：和之前讨论的单独的SequenceFile完全一致   </li>
+<li>index文件：也是一个key-value型的SequenceFile</li>
+</ul>
+</blockquote>
+<p>可以看到，MapFile最主要的特点就是多了个index文件，那么这个index文件有什么用呢？<br>顾名思义，其是一个充当索引作用的文件，将会被载入内存中以提高数据的访问速度</p>
+<p>index文件中，key的内容就是data文件中的key，data文件中每个128个key（默认）<strong>便在index文件中记录一次</strong><br>index文件中该key对应的value<strong>是data文件中，该key对应的value的偏移量</strong></p>
+<p>也就是说，index中存储着data中的<strong>一部分一模一样的key</strong>和<strong>该key对应value的偏移量</strong><br>当index被载入内存中，程序可以根据index的内容<strong>快速定位key在data文件中所在的位置</strong><br>由于index中只记录部分key，所以对于<strong>随机读</strong>来说，可以提高很高的效率</p>
+<p>MapFile文件的读写流程和SequenceFile类似，只要将SequenceFile.Writer/Reader替换为<strong>MapFile.Writer/Reader</strong>即可<br>如果需要改变默认的每隔128个key记录一次，可以通过SequenceFile.Writer实例的<strong>setIndexInterval()</strong>设置<strong>io.map.index.interval</strong>属性即可</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/02/hadoop-yarn-summary/" rel="next" title="Hadoop核心组件之Yarn">
+                <i class="fa fa-chevron-left"></i> Hadoop核心组件之Yarn
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/06/spark-decisiontree-predict/" rel="prev" title="决策树算法预测森林植被">
+                决策树算法预测森林植被 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/04/hadoop-io-summary/"
+           data-title="Hadoop I/O" data-url="http://xiaohei.info/2016/05/04/hadoop-io-summary/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HDFS中的数据完整性"><span class="nav-number">1.</span> <span class="nav-text">HDFS中的数据完整性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#压缩"><span class="nav-number">2.</span> <span class="nav-text">压缩</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Hadoop中压缩API的使用"><span class="nav-number">2.1.</span> <span class="nav-text">Hadoop中压缩API的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#压缩数据"><span class="nav-number">2.1.1.</span> <span class="nav-text">压缩数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解压缩数据"><span class="nav-number">2.1.2.</span> <span class="nav-text">解压缩数据</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CodecPool"><span class="nav-number">2.2.</span> <span class="nav-text">CodecPool</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#选择合适的压缩格式"><span class="nav-number">2.3.</span> <span class="nav-text">选择合适的压缩格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在MapReduce中使用压缩"><span class="nav-number">2.4.</span> <span class="nav-text">在MapReduce中使用压缩</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#序列化"><span class="nav-number">3.</span> <span class="nav-text">序列化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Writable接口"><span class="nav-number">3.1.</span> <span class="nav-text">Writable接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义Writable数据类型"><span class="nav-number">3.2.</span> <span class="nav-text">自定义Writable数据类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于文件的数据结构"><span class="nav-number">4.</span> <span class="nav-text">基于文件的数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SequenceFile"><span class="nav-number">4.1.</span> <span class="nav-text">SequenceFile</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#写入SequenceFile文件"><span class="nav-number">4.1.1.</span> <span class="nav-text">写入SequenceFile文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#读取SequenceFile文件"><span class="nav-number">4.1.2.</span> <span class="nav-text">读取SequenceFile文件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MapFile"><span class="nav-number">4.2.</span> <span class="nav-text">MapFile</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

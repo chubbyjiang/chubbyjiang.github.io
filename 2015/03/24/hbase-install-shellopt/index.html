@@ -1,0 +1,834 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="1.上传hbase安装包
+2.解压
+3.配置hbase集群，要修改3个文件（首先zk集群已经安装好了）注意：要把hadoop的hdfs-site.xml和core-site.xml 放到hbase/conf下让hbase节点知道hdfs的映射关系，也可以在hbase-site.xml中配置
+3.1修改hbase-env.shexport JAVA_HOME=/usr/java/jdk//告诉hba">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase集群安装和shell操作">
+<meta property="og:url" content="http://xiaohei.info/2015/03/24/hbase-install-shellopt/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="1.上传hbase安装包
+2.解压
+3.配置hbase集群，要修改3个文件（首先zk集群已经安装好了）注意：要把hadoop的hdfs-site.xml和core-site.xml 放到hbase/conf下让hbase节点知道hdfs的映射关系，也可以在hbase-site.xml中配置
+3.1修改hbase-env.shexport JAVA_HOME=/usr/java/jdk//告诉hba">
+<meta property="og:updated_time" content="2016-07-15T03:17:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase集群安装和shell操作">
+<meta name="twitter:description" content="1.上传hbase安装包
+2.解压
+3.配置hbase集群，要修改3个文件（首先zk集群已经安装好了）注意：要把hadoop的hdfs-site.xml和core-site.xml 放到hbase/conf下让hbase节点知道hdfs的映射关系，也可以在hbase-site.xml中配置
+3.1修改hbase-env.shexport JAVA_HOME=/usr/java/jdk//告诉hba">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/03/24/hbase-install-shellopt/"/>
+
+  <title> HBase集群安装和shell操作 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase集群安装和shell操作
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-03-24T11:17:00+08:00" content="2015-03-24">
+              2015-03-24
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/03/24/hbase-install-shellopt/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/03/24/hbase-install-shellopt/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/03/24/hbase-install-shellopt/" class="leancloud_visitors" data-flag-title="HBase集群安装和shell操作">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>1.上传hbase安装包</p>
+<p>2.解压</p>
+<p>3.配置hbase集群，要修改3个文件（首先zk集群已经安装好了）<br>注意：要把hadoop的hdfs-site.xml和core-site.xml 放到hbase/conf下<br>让hbase节点知道hdfs的映射关系，也可以在hbase-site.xml中配置</p>
+<p>3.1修改hbase-env.sh<br>export JAVA_HOME=/usr/java/jdk<br>//告诉hbase使用外部的zk<br>export HBASE_MANAGES_ZK=false</p>
+<p>vi hbase-site.xml</p>
+<p>hbase.rootdir<br>hdfs://ns1/hbase</p>
+<p>hbase.cluster.distributed<br>true</p>
+<p>hbase.zookeeper.quorum<br>cloud4:2181,cloud5:2181,cloud6:2181</p>
+<p>和hdfs的配置一样，说明hbase的子节点都在哪些机器上<br>vi regionservers<br>cloud3<br>cloud4<br>cloud5<br>cloud6</p>
+<p>3.2拷贝hbase到其他节点<br>scp -r ~/hbase/ cloud2:~/<br>scp -r ~/hbase/ cloud3:~/<br>scp -r ~/hbase/ cloud4:~/<br>scp -r ~/hbase/ cloud5:~/<br>scp -r ~/hbase/ cloud6:~/<br>4.将配置好的HBase拷贝到每一个节点并同步时间。</p>
+<p>5.启动所有的hbase<br>分别启动zk<br>./zkServer.sh start<br>启动hadoop集群<br>start-dfs.sh<br>启动hbase，在主节点（cloud1）上运行：<br>start-hbase.sh<br>6.通过浏览器访问hbase管理页面<br>192.168.1.201:60010<br>7.为保证集群的可靠性，要启动多个HMaster（cloud1和cloud2上都是主节点）<br>hbase-daemon.sh start master</p>
+<p>进入hbase命令行<br>./hbase shell</p>
+<p>显示hbase中的表<br>list</p>
+<p>创建user表，包含info、data两个列族<br>create ‘user’, ‘info1’, ‘data1’<br>create ‘user’, {NAME =&gt; ‘info’, VERSIONS =&gt; ‘3’}</p>
+<p>向user表中插入信息，row key为rk0001，列族info中添加name列标示符，值为zhangsan<br>put ‘user’, ‘rk0001’, ‘info:name’, ‘zhangsan’</p>
+<p>向user表中插入信息，row key为rk0001，列族info中添加gender列标示符，值为female<br>put ‘user’, ‘rk0001’, ‘info:gender’, ‘female’</p>
+<p>向user表中插入信息，row key为rk0001，列族info中添加age列标示符，值为20<br>put ‘user’, ‘rk0001’, ‘info:age’, 20</p>
+<p>向user表中插入信息，row key为rk0001，列族data中添加pic列标示符，值为picture<br>put ‘user’, ‘rk0001’, ‘data:pic’, ‘picture’</p>
+<p>获取user表中row key为rk0001的所有信息<br>get ‘user’, ‘rk0001’</p>
+<p>获取user表中row key为rk0001，info列族的所有信息<br>get ‘user’, ‘rk0001’, ‘info’</p>
+<p>获取user表中row key为rk0001，info列族的name、age列标示符的信息<br>get ‘user’, ‘rk0001’, ‘info:name’, ‘info:age’</p>
+<p>获取user表中row key为rk0001，info、data列族的信息<br>get ‘user’, ‘rk0001’, ‘info’, ‘data’<br>get ‘user’, ‘rk0001’, {COLUMN =&gt; [‘info’, ‘data’]}</p>
+<p>get ‘user’, ‘rk0001’, {COLUMN =&gt; [‘info:name’, ‘data:pic’]}</p>
+<p>获取user表中row key为rk0001，列族为info，版本号最新5个的信息<br>get ‘people’, ‘rk0002’, {COLUMN =&gt; ‘info’, VERSIONS =&gt; 2}<br>get ‘user’, ‘rk0001’, {COLUMN =&gt; ‘info:name’, VERSIONS =&gt; 5}<br>get ‘user’, ‘rk0001’, {COLUMN =&gt; ‘info:name’, VERSIONS =&gt; 5, TIMERANGE =&gt; [1392368783980, 1392380169184]}</p>
+<p>获取user表中row key为rk0001，cell的值为zhangsan的信息<br>get ‘people’, ‘rk0001’, {FILTER =&gt; “ValueFilter(=, ‘binary:图片’)”}</p>
+<p>获取user表中row key为rk0001，列标示符中含有a的信息<br>get ‘people’, ‘rk0001’, {FILTER =&gt; “(QualifierFilter(=,’substring:a’))”}</p>
+<p>查询user表中的所有信息<br>scan ‘user’</p>
+<p>查询user表中列族为info的信息<br>scan ‘people’, {COLUMNS =&gt; ‘info’}<br>scan ‘user’, {COLUMNS =&gt; ‘info’, RAW =&gt; true, VERSIONS =&gt; 5}<br>scan ‘persion’, {COLUMNS =&gt; ‘info’, RAW =&gt; true, VERSIONS =&gt; 3}<br>查询user表中列族为info和data的信息<br>scan ‘user’, {COLUMNS =&gt; [‘info’, ‘data’]}<br>scan ‘user’, {COLUMNS =&gt; [‘info:name’, ‘data:pic’]}</p>
+<p>查询user表中列族为info、列标示符为name的信息<br>scan ‘user’, {COLUMNS =&gt; ‘info:name’}</p>
+<p>查询user表中列族为info、列标示符为name的信息,并且版本最新的5个<br>scan ‘user’, {COLUMNS =&gt; ‘info:name’, VERSIONS =&gt; 5}</p>
+<p>查询user表中列族为info和data且列标示符中含有a字符的信息<br>scan ‘people’, {COLUMNS =&gt; [‘info’, ‘data’], FILTER =&gt; “(QualifierFilter(=,’substring:a’))”}</p>
+<p>查询user表中列族为info，rk范围是[rk0001, rk0003)的数据<br>scan ‘people’, {COLUMNS =&gt; ‘info’, STARTROW =&gt; ‘rk0001’, ENDROW =&gt; ‘rk0003’}</p>
+<p>查询user表中row key以rk字符开头的<br>scan ‘user’,{FILTER=&gt;”PrefixFilter(‘rk’)”}</p>
+<p>查询user表中指定范围的数据<br>scan ‘user’, {TIMERANGE =&gt; [1392368783980, 1392380169184]}</p>
+<p>删除数据<br>删除user表row key为rk0001，列标示符为info:name的数据<br>delete ‘people’, ‘rk0001’, ‘info:name’<br>删除user表row key为rk0001，列标示符为info:name，timestamp为1392383705316的数据<br>delete ‘user’, ‘rk0001’, ‘info:name’, 1392383705316</p>
+<p>清空user表中的数据<br>truncate ‘people’</p>
+<p>修改表结构<br>首先停用user表（新版本不用）<br>disable ‘user’</p>
+<p>添加两个列族f1和f2<br>alter ‘people’, NAME =&gt; ‘f1’<br>alter ‘user’, NAME =&gt; ‘f2’<br>启用表<br>enable ‘user’</p>
+<p>disable ‘user’(新版本不用)<br>删除一个列族：<br>alter ‘user’, NAME =&gt; ‘f1’, METHOD =&gt; ‘delete’ 或 alter ‘user’, ‘delete’ =&gt; ‘f1’</p>
+<p>添加列族f1同时删除列族f2<br>alter ‘user’, {NAME =&gt; ‘f1’}, {NAME =&gt; ‘f2’, METHOD =&gt; ‘delete’}</p>
+<p>将user表的f1列族版本号改为5<br>alter ‘people’, NAME =&gt; ‘info’, VERSIONS =&gt; 5<br>启用表<br>enable ‘user’</p>
+<p>删除表<br>disable ‘user’<br>drop ‘user’</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/03/19/mapreduce-inverted-index/" rel="next" title="mapreduce实现搜索引擎简单的倒排索引">
+                <i class="fa fa-chevron-left"></i> mapreduce实现搜索引擎简单的倒排索引
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/03/26/hive-opt/" rel="prev" title="hive操作记录">
+                hive操作记录 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/03/24/hbase-install-shellopt/"
+           data-title="HBase集群安装和shell操作" data-url="http://xiaohei.info/2015/03/24/hbase-install-shellopt/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

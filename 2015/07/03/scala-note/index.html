@@ -1,0 +1,870 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Scala," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="1、伴生对象
+形如：有一个类class Test{}一个object和该类同名object Test{}
+object Test的作用类似于静态类（工具类），其中的所有成员都是静态的，在object Test中可以直接访问class Test的成员；反之，class Test中要通过object Test来引用其成员例如使用Test.的方式
+2、apply方法
+class中的apply：是一个比较">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Scala笔记">
+<meta property="og:url" content="http://xiaohei.info/2015/07/03/scala-note/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="1、伴生对象
+形如：有一个类class Test{}一个object和该类同名object Test{}
+object Test的作用类似于静态类（工具类），其中的所有成员都是静态的，在object Test中可以直接访问class Test的成员；反之，class Test中要通过object Test来引用其成员例如使用Test.的方式
+2、apply方法
+class中的apply：是一个比较">
+<meta property="og:updated_time" content="2016-07-15T02:36:24.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Scala笔记">
+<meta name="twitter:description" content="1、伴生对象
+形如：有一个类class Test{}一个object和该类同名object Test{}
+object Test的作用类似于静态类（工具类），其中的所有成员都是静态的，在object Test中可以直接访问class Test的成员；反之，class Test中要通过object Test来引用其成员例如使用Test.的方式
+2、apply方法
+class中的apply：是一个比较">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/07/03/scala-note/"/>
+
+  <title> Scala笔记 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Scala笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-07-03T10:36:01+08:00" content="2015-07-03">
+              2015-07-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/07/03/scala-note/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/07/03/scala-note/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/07/03/scala-note/" class="leancloud_visitors" data-flag-title="Scala笔记">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>1、伴生对象</strong></p>
+<p>形如：<br>有一个类<br>class Test{<br>}<br>一个object和该类同名<br>object Test{<br>}</p>
+<p>object Test的作用类似于静态类（工具类），其中的所有成员都是静态的，在object Test中可以直接访问class Test的成员；反之，class Test中要通过object Test来引用其成员例如使用Test.的方式</p>
+<p><strong>2、apply方法</strong></p>
+<p>class中的apply：是一个比较特殊的方法，通过这个class new 出来的对象，可以直接通过对象()，这样的方式来调用apply方法</p>
+<p>object中的apply：比较常用，例如，通常使用数组时是下面这样的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">val arr = new Array[Int](3)</div><div class="line">arr(0) = 1</div><div class="line">arr(1) = 2</div><div class="line">arr(2) = 3</div></pre></td></tr></table></figure>
+<p>但是，在scala中可以通过伴生对象的apply方法，我们可以很方便的构建类的对象，而不必知道和操作这个过程，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">val arr = Array(1,2,3)</div></pre></td></tr></table></figure>
+<p>通过伴生对象的apply方法，我们可以很方便的构建类的对象，而不必知道和操作这个过程，在apply方法中其实也是new出一个Array，并在其中做好了初始化操作<br>源代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">/** Creates an array of `Int` objects */</div><div class="line">  // Subject to a compiler optimization in Cleanup, see above.</div><div class="line">  def apply(x: Int, xs: Int*): Array[Int] = &#123;</div><div class="line">    val array = new Array[Int](xs.length + 1)</div><div class="line">    array(0) = x</div><div class="line">    var i = 1</div><div class="line">    for (x &lt;- xs.iterator) &#123; array(i) = x; i += 1 &#125;</div><div class="line">    array</div><div class="line">  &#125;</div></pre></td></tr></table></figure>
+<p><strong>3、继承</strong></p>
+<p>没啥好说的，概念和其他语言一样，只是语法有点区别：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Father(name:String)&#123;</div><div class="line">...</div><div class="line">&#125;</div><div class="line">//构造子类的时候会先构造父类，所以要将父类构造函数需要的参数给它</div><div class="line">class Son(name:String,age:Int) extends Father(name)&#123;</div><div class="line">...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>4、trait特质</strong></p>
+<p>trait可以当接口来用，但是和其他语言的接口有些不同，trait里面竟然还可以有方法的定义！<br>那么这样和抽象类不是一样的了，干嘛还要trait？<br>Scala中也是单继承，也就是说一个类只能继承一个父类，需要有很多子类的特性的时候就可以通过继承多个trait来实现（可以把抽象类看成是一个统一的模板，trait则是其他七七八八的装饰，可加可减灵活性高）</p>
+<p>在Scala中如果一个class，或者一个trait直接继承了另外一个trait，那么语法是一样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">trait Test&#123;</div><div class="line">...</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Test1 extends Test&#123;</div><div class="line">...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当多重继承时，trait要使用with关键字，构造顺序从左往右，且不重复构造：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">class Human&#123;...&#125;</div><div class="line">trait ITeacher extends Human&#123;...&#125;</div><div class="line">trait IBasketballPlayer extends Human&#123;...&#125;</div><div class="line">class BasketballTeacher extends Human with ITeacher with IBasketballPlayer&#123;...&#125;</div></pre></td></tr></table></figure>
+<p>由于ITeacher和IBasketballPlayer都继承了Human，理论上在构造他们的时候会去构造他们的父类，也就是Human，但是由于Human之间在构造BasketballTeacher 的时候已经构造过了，所以这里不再重复构造</p>
+<p>上面代码演示的是在定义class的时候混入trait<br>实际上也可以在new object的时候使用，这样可以在具体的场景中定义具体处理的对象（和定义class的时候直接混入的区别是，前者new出来的所有object都带有trait特质的，后者只作用在一个单一的object）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class Human&#123;...&#125;</div><div class="line">trait ITeacher extends Human&#123;...&#125;</div><div class="line">trait IBasketballPlayer extends Human&#123;...&#125;</div><div class="line"></div><div class="line">val t1 = new Human with ITeacher with IBasketballPlayer&#123;</div><div class="line">//如果有抽象方法，在此重写</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>需要注意的是，混入的trait必须都继承自同一个父类</p>
+<p>trait的AOP实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">trait DoSomething &#123;</div><div class="line">  def work</div><div class="line">&#125;</div><div class="line"></div><div class="line">class Do extends DoSomething&#123;</div><div class="line">  override def work: Unit = &#123;</div><div class="line">    println(&quot;working!&quot;)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">trait BeforeAndAfter extends DoSomething &#123;</div><div class="line">  abstract override def work: Unit = &#123;</div><div class="line">    println(&quot;init...&quot;)</div><div class="line">    super.work</div><div class="line">    println(&quot;destroy...&quot;)</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">object test &#123;</div><div class="line">  def main(args: Array[String]) &#123;</div><div class="line">    val worker = new Do with BeforeAndAfter</div><div class="line">    worker.work</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码中，使用trait实现了一个简单的AOP编程实例</p>
+<p>首先定义了一个trait DoSomething，里面有一个抽象方法work<br>class Do继承自DoSomething，并实现了具体的work方法</p>
+<p>这时new一个Do的object之后调用work应该打印出一行记录<br>之后定义了另外一个trait BeforeAndAfter，也继承了DoSomething并重写work</p>
+<p>在其重写的方法中将父trait的work方法放在初始化和销毁的操作之间，由于父trait的work方法是抽象的，此时又调用了这个抽象方法，所以这个重写的work仍然是抽象的，要加上abstract关键字</p>
+<p>在new Do的object的时候混入这个trait就可以实现AOP，代码执行过程应该是这样的：<br>1、调用worker的work方法，由于混入了trait，所以实际调用的是这个trait里面的work<br>2、这个trait里面的work先进行了初始化操作，然后调用父trait的work，而这个方法的具体实现是在Do类中完成的，所以又调用了Do类中的具体work实现<br>3、work调用完成之后，进行销毁操作</p>
+<p><strong>5、包对象</strong></p>
+<p>包对象的定义及作用如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">//这是一个包对象</div><div class="line">package obejct Person&#123;...&#125;</div><div class="line">//这是一个包的定义</div><div class="line">package Person&#123;</div><div class="line">//此时，在这个包的作用于范围之内，可以直接访问包对象的成员</div><div class="line">&#125;</div><div class="line"></div><div class="line">//使用这种语法的import意思是将scala包中的StringBuilder隐藏起来不使用（使用别的包的StringBuilder）</div><div class="line">import scala.&#123;StringBuilder =&gt; _&#125;</div></pre></td></tr></table></figure>
+<p><strong>6、文件操作</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">//读取本地文件</div><div class="line">val localFile = Source.fromFile(&quot;file path&quot;)</div><div class="line">val lines = localFile.getLines</div><div class="line">//读取网络文件</div><div class="line">val networkFile = Source.fromURL(&quot;file url&quot;)</div><div class="line">//创建一个写入器</div><div class="line">val writer = new PrintWriter(new File(&quot;file path&quot;))</div><div class="line">writer.println(&quot;something to write&quot;)</div><div class="line">writer.close</div><div class="line">//控制台读取</div><div class="line">Console.readLine</div></pre></td></tr></table></figure>
+<p><strong>7、正则表达式</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">//可以直接使用字符串.r的方式返回一个Regex对象</div><div class="line">val regex1 = &quot;[0-9]+&quot;.r</div><div class="line">//三个引号表示表达式中的符号都是原意，而不是转义符（如\）</div><div class="line">val regex2 = &quot;&quot;&quot;\s+[0-9]+\s+&quot;&quot;&quot;.r</div><div class="line">//Regex对象可以直接调用findAllIn/findFirstIn等方法</div><div class="line">regex1.findAllIn(&quot;1234 dqd qwdq&quot;)//该方法会返回全部匹配项</div></pre></td></tr></table></figure>
+<p>正则表达式和模式匹配相结合</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">val regex = &quot;&quot;&quot;([0-9]+) ([a-z]+)&quot;&quot;&quot;.r</div><div class="line">val line = &quot;123 abc&quot;</div><div class="line">line match &#123;</div><div class="line">//line如果符合regex1规则，会将其自动匹配成(num,str)格式</div><div class="line">case regex(num, str) =&gt; println(num + &quot;:&quot; + str)</div><div class="line">case _ =&gt; println(&quot;~~~~~~~~~`&quot;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>8、内部函数的定义</strong></p>
+<p>开发过程中，经常将各个子功能定义为一个个函数，在通过一个统一入口函数在调用这个子函数<br>但是这样存在一个问题，入口函数和子函数通常是定义在一起的，既然入口函数可以被外部调用，那么子函数同样也可以<br>这就不是我们想要的效果了，我们需要实现的是外部只能调用入口函数，而对于其他的子功能都是不可见的<br>这也就是高内聚低耦合的思想</p>
+<p>在Scala中，函数是一等公民，意味着函数可以当做变量成员来使用<br>那么，在函数中可以定义变量，也就可以定义函数<br>这就是内部函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">def portal&#123;</div><div class="line">	//内部函数定义</div><div class="line">	def action1&#123;</div><div class="line">	&#125;</div><div class="line">	def action2&#123;</div><div class="line">	&#125;</div><div class="line">	...</div><div class="line">	调用内部函数</div><div class="line">	action1</div><div class="line">	action2</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>9、闭包</strong></p>
+<p>简单的说，闭包就是指在一个函数中，能够访问另外一个函数的变量（必须要访问这个变量才能完成函数的工作），读取这个变量之后，这个函数就关闭执行，成为闭包<br>一个简单的闭包例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">//这个函数中，要完成功能必须要知道more的值</div><div class="line">def add(more:Int) = (x:Int) =&gt; x + more</div><div class="line">//传入more的值为1，返回值其实还是一个函数x+1</div><div class="line">val a = add(9)</div><div class="line">val b = add(90)</div><div class="line">//调用这个返回的函数，传入x=1</div><div class="line">a(1)</div><div class="line">b(10)</div></pre></td></tr></table></figure>
+<p><strong>10、高阶函数</strong></p>
+<p>高阶函数简单的说就是 参数是函数 的函数<br>例如map、reduce等需要传入匿名函数的函数<br>具体操作就不详细说明了，因为高阶函数太多了= =使用方法都是差不多的</p>
+<p><strong>11、SAM转换</strong></p>
+<p>即Simple Abstract Method<br>在例如Java等语言中，代码通常是这样子写的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">jButton.addActionListener(new ActionListener&#123;</div><div class="line">	override def actionPerformed(event:ActionEvent)&#123;</div><div class="line">		counter += 1</div><div class="line">	&#125;</div><div class="line">&#125;)</div></pre></td></tr></table></figure>
+<p>jButton的addActionListener需要一个格式为(event:ActionEvent)=&gt;Unit的方法，上面的代码中直接new出了一个ActionListener并重写其方法传入<br>这叫做样本代码，即符合这个样本格式的方法才能使用<br>而很多时候，addActionListener这类的方法并不需要知道这么多信息，它只需要我们给它一个方法就行了，而不是一大堆的重新new对象，重写方法</p>
+<p>在Scala中是这么解决问题的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">//这是一个隐式转换，其实起到的作用就是样本代码，名字任意，只要参数和返回值是符合固定格式的即可</div><div class="line">implicit def makeAction(action:(ActionEvent) =&gt; Unit) = &#123;</div><div class="line">	new ActionListener&#123;</div><div class="line">		override def actionPerformed(event:ActionEvent)&#123;</div><div class="line">		action(event)</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">//有了上面的隐式转换，我们就可以很简洁的直接将方法当做参数传入</div><div class="line">jButton.addActionListener((event:ActionEvent) =&gt; counter += 1)</div></pre></td></tr></table></figure>
+<p>此时，在这个界面的所有地方，都可以传入(ActionEvent) =&gt; Unit类型的函数给需要的函数了</p>
+<p>总结SAM转换：<br>借助隐式转换，将样本代码省去<br>传入一个方法，自动扫描当前区域的隐式转换（定义了样本代码），如果转换成功就可以调用</p>
+<p><strong>12、Currying函数柯里化</strong></p>
+<p>函数的柯里化即将原来接受两个参数的函数变成新的接受一个参数的函数的过程。<br>简单的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">//多参数的函数</div><div class="line">def add(x:Int,y:Int) = x + y</div><div class="line">add(1,2)</div><div class="line">//接受一个参数的函数</div><div class="line">def add(x:Int) = (y:Int) =&gt; x + y</div><div class="line">add(1)(2)</div></pre></td></tr></table></figure>
+<p>对于只接受一个参数的函数格式是不是挺熟悉的？在之前的闭包中使用的就是这种格式的函数<br>Scala中支持定义简介的柯里化函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def add(x:Int)(y:Int) = x + y</div></pre></td></tr></table></figure>
+<p>柯里化的作用有很多，其中一个就是用来做类型推断<br>在一些场合，Scala编译器可以通过第一个参数的类型推荐第二个参数的类型以便进行一些操作</p>
+<p><strong>13、模式匹配</strong></p>
+<p>Scala的模式匹配类似于switch，但是更加灵活，格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">val line = ...</div><div class="line">line match&#123;</div><div class="line">	case ... =&gt; ...</div><div class="line">	...</div><div class="line">	case _ =&gt; ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>每个case都有返回值（没有特殊指定的话）<br>case分支不用break<br>case后可以用常亮，变量，表达式，方法等</p>
+<p>模式匹配还有很多其他的特殊的用法<br>例如：匹配type，array、list、tuple格式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">def match_type(t:Any) = t match&#123;</div><div class="line">	case i:Int =&gt; println(&quot;Int&quot;)</div><div class="line">	case s:String =&gt; println(&quot;String&quot;)</div><div class="line">	case m:Map[_,_] =&gt; m.foreach(println)</div><div class="line">&#125;</div><div class="line"></div><div class="line">def match_array(arr:Any) = arr match&#123;</div><div class="line">	//数组中只有一个0的匹配成功</div><div class="line">	case Array(0) =&gt; ...</div><div class="line">	//数组中有任意的两个数匹配成功</div><div class="line">	case Array(x,y) =&gt; ...</div><div class="line">	//数组中第一个为0，还有任意多个元素的匹配成功</div><div class="line">	case Array(0,_*) =&gt; ...</div><div class="line">&#125;</div><div class="line"></div><div class="line">def match_list(lst:Any) = lst match&#123;</div><div class="line">	//List中有一个0的匹配成功（Nil表示一个空的List，::运算符是从右至左运算的，表示空List加上一个0元素，即为只有一个0的List集合）</div><div class="line">	case 0 :: Nil =&gt; ...</div><div class="line">	//List中有任意的两个数匹配成功</div><div class="line">	case x :: y :: Nil =&gt; ...</div><div class="line">	//集合中第一个为0，还有任意多个元素的匹配成功（tail表示List中除了第一个元素外的所有元素）</div><div class="line">	case 0 :: tail =&gt; ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>14、样例类和样例对象</strong></p>
+<p>通常在系统开发中，我们需要自己定义一些数据结构来进行统一的消息传递，例如经常使用的Model<br>在Scala中，使用样例类和样例对象来完成这个功能<br>定义的格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">case class Person(...)</div><div class="line">case object Person1(...)</div></pre></td></tr></table></figure>
+<p><strong>15、嵌套的样例类和模式匹配结合</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">abstract class Item&#123;...&#125;</div><div class="line">case class Book(name:String,price:Int) extends Item</div><div class="line">//BookList中嵌套了一个Book的样例类</div><div class="line">case class BookList(num:Int,books:Book*) extends Item</div><div class="line"></div><div class="line">def match_caseclass(item:Item) = item match&#123;</div><div class="line">	//匹配BookList，用占位符_代替的属性都不关心，只要Book的name属性</div><div class="line">	case BookList(_,Book(name,_),_*) =&gt; ...</div><div class="line">	//可以使用别名@Book的方式进行模式匹配，后面的方法体中可以使用别名直接操作</div><div class="line">	case BookList(_,b1 @ Book(_,_),other @ _*) =&gt; ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>未完待续…</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Scala/" rel="tag">#Scala</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/06/28/spark-recommend-baseon-sparkstreaming/" rel="next" title="基于Spark机器学习和实时流计算的智能推荐系统">
+                <i class="fa fa-chevron-left"></i> 基于Spark机器学习和实时流计算的智能推荐系统
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/04/scala-sort/" rel="prev" title="Scala实现冒泡排序、归并排序和快速排序">
+                Scala实现冒泡排序、归并排序和快速排序 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/07/03/scala-note/"
+           data-title="Scala笔记" data-url="http://xiaohei.info/2015/07/03/scala-note/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

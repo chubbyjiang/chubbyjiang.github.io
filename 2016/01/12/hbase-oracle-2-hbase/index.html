@@ -1,0 +1,916 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
+##HBase表设计
+首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+
+
+交易信息
+客户操作
+
+
+刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
+
+1、由于各个表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Oracle数据迁移至HBase操作记录">
+<meta property="og:url" content="http://xiaohei.info/2016/01/12/hbase-oracle-2-hbase/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
+##HBase表设计
+首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+
+
+交易信息
+客户操作
+
+
+刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
+
+1、由于各个表">
+<meta property="og:updated_time" content="2016-07-14T03:33:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Oracle数据迁移至HBase操作记录">
+<meta name="twitter:description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
+##HBase表设计
+首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+
+
+交易信息
+客户操作
+
+
+刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
+
+1、由于各个表">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/01/12/hbase-oracle-2-hbase/"/>
+
+  <title> Oracle数据迁移至HBase操作记录 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Oracle数据迁移至HBase操作记录
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-01-12T11:33:07+08:00" content="2016-01-12">
+              2016-01-12
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/01/12/hbase-oracle-2-hbase/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/01/12/hbase-oracle-2-hbase/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/01/12/hbase-oracle-2-hbase/" class="leancloud_visitors" data-flag-title="Oracle数据迁移至HBase操作记录">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。</p>
+<p>##<strong>HBase表设计</strong></p>
+<p>首先，是根据Oracle的数据规划HBase的表和表结构。<br>从业务上看，十几张表大概可以分为两大部分：</p>
+<blockquote>
+<ul>
+<li>交易信息</li>
+<li>客户操作</li>
+</ul>
+</blockquote>
+<p>刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：</p>
+<blockquote>
+<p>1、由于各个表之间的业务关系复杂，无法设定一个理想的Rowkey。<br>2、各个表的数据量也是相差万别的，都放入一张大表中会造成列簇的数据倾斜问题。<br>3、建立HBase表的目的理论上和建立关系型数据库的目的是一致的，想想为什么Oracle中为什么要分为十几张表而不是一张就明白了，方便业务逻辑。</p>
+</blockquote>
+<p>接下来的思路就是根据业务逻辑划分出来的两大部分，建立两张HBase表。</p>
+<p>由于系统业务和建表逻辑是另外一组的人负责的，交给我们的文档就是一堆sql文件，隔壁的大神根据这堆sql文件整理除了表的关联关系，为建HBase表提供了基础依据，功不可没:-)</p>
+<p>那么接下来的事情就是为两张表设计Rowkey和列簇了。<br>关于Rowkey和列簇的设计原则可以参考：<br><a href="http://blog.csdn.net/qq1010885678/article/details/50504941" target="_blank" rel="external">http://blog.csdn.net/qq1010885678/article/details/50504941</a></p>
+<p>根据业务逻辑和表字段信息，发现交易和客户信息都是以手机号码为中心的，Rowkey可以使用手机号码来实现，为了<strong>避免数据热点</strong>的问题，决定将<strong>手机号码反转</strong>之后的值作为Rowkey。</p>
+<p>关于列簇的敲定，由于HBase列簇最好是控制在1-2个，超过3个可能会有性能问题，所以我们根据<strong>业务逻辑</strong>，分别对属于交易和客户信息两大类下的各个表再次进行划分。</p>
+<p>第一次划分出两大类是为了建HBase表，这次的划分是为了建立表中的列簇。</p>
+<p>例如：交易这一大部分的6个表中，有4个是经常一起做连接查询的，而另外2个表则是另一组业务逻辑经常使用的 ，那么就HBase中的交易表就可以分为两个列簇:交易业务，个人操作，分别存储着原本Oracle中4个表和2个表的数据。</p>
+<p>客户信息表中列簇的设计同理，根据表之间的关联程度划分出三个列簇，大致可以称为：基本属性，行为属性，签署协议。</p>
+<p>敲定了HBase的表结构之后，建表就是分分钟的事情了。</p>
+<p>##<strong>数据迁移部分</strong></p>
+<p>现在我们在HBase中有两张表，结构如下。</p>
+<p>交易表：</p>
+<table>
+<thead>
+<tr>
+<th>Rowkey</th>
+<th>交易业务列簇</th>
+<th>个人操作列簇</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手机号码反转</td>
+<td>4张Oracle表数据</td>
+<td>2张Oracle表数据</td>
+</tr>
+</tbody>
+</table>
+<p>客户表：</p>
+<table>
+<thead>
+<tr>
+<th>Rowkey</th>
+<th>基本属性</th>
+<th>行为属性</th>
+<th>签署协议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>手机号码反转</td>
+<td>4张Oracle表数据</td>
+<td>2张Oracle表数据</td>
+<td>3张Orale表数据</td>
+</tr>
+</tbody>
+</table>
+<p>使用Sqoop进行数据迁移工作，详细操作说明见：<a href="http://blog.csdn.net/qq1010885678/article/details/50504925" target="_blank" rel="external">Sqoop操作实践</a></p>
+<p>但是开始迁移操作的时候发现两个问题：</p>
+<blockquote>
+<ul>
+<li>1、个人操作列簇中有张表的数据量是20亿，而交易业务列簇中最大的数据量才5千万，差了40倍。</li>
+<li>2、交易表的交易业务列簇中，4张表在导入HBase的时候时间戳是入库时间，但是在业务上需要使用一个该数据的生产时间。</li>
+</ul>
+</blockquote>
+<p>对于第一个问题，我们采取的解决方案是：直接将20亿的个人操作列簇单独拆分为一张HBase表。<br><strong>理由：</strong>避免HBase表中数据稀疏、倾斜造成性能问题，而个人操作列簇从业务和数据量上看完成可以单独作为一张表使用。</p>
+<p>对于第二个问题，采取的方案是：先将这四张表分别导入为四张HBase临时表，之后使用mr程序修改时间戳统一导入最终的交易表。<br><strong>理由：</strong>使用临时表第一是为了避免数据损坏，第二是方便mr程序修改时间戳属性。</p>
+<p>而对于客户表，业务逻辑比较简单，可以直接使用Sqoop进行导入。</p>
+<p><strong>建立HBase始终是要在业务逻辑之上的</strong>，没有分析业务根本没办法知道HBase该分为几个表，每个表有几个列簇，每个列簇分别存储哪些数据，以及Rowkey的定义。</p>
+<p>##<strong>1.13更新</strong><br>关于交易表的的数据版本问题，因为业务是根据手机号码和某个月份来查询的，平均每个月每个用户会查5次，那么之前的rowkey设计就是不合理的：</p>
+<p><strong>之前的rowkey是手机号码反转，其中一列为时间戳字段，那么每次有新的交易数据进来就会发生覆盖</strong>，之前我们一直在想设定值的版本为多少个比较好，12*5=60，也就是说每个列的值要设置为60个版本，这是极其不合理的。</p>
+<p>现在，解决的思路是，<strong>既然是根据时间戳和手机号码来取数据的，因为每次数据入库的时候相同用户的交易数据会被新数据覆盖，那么把时间戳和手机号的组合设置为rowkey就完全可以解决这个问题。</strong></p>
+<p>那么这个rowkey的格式就是手机号码反转+时间戳，理由如下：</p>
+<blockquote>
+<ul>
+<li>手机号码提供业务查询</li>
+<li>反转避免数据热点</li>
+<li>时间戳避免每月数据被覆盖（其实最后还是只用手机号码的话rowkey会重复的问题，也就是确保rowkey的唯一性）</li>
+</ul>
+</blockquote>
+<p><strong>另注：hbase统计数据量大的表可以使用其自带的一个mr程序：</strong>$HBASE_HOME/bin/hbase org.apache.hadoop.hbase.mapreduce.RowCounter tableName</p>
+<p>##<strong>1.21更新</strong></p>
+<p>从传统数据库到HBase，表设计的思路与步骤大概如下：</p>
+<blockquote>
+<ul>
+<li>根据业务划分hbase表</li>
+<li>根据业务划分各个表的列族</li>
+<li>判断各个列族所对应的表是否有关联关系</li>
+<li>根据关联关系和查询的业务逻辑来确定rowkey的设计</li>
+<li>如果一个列族中的表关键字或者字段有冲突，可以在rowkey后面添加后缀。</li>
+<li>如果有关联关系，导入数据时需要注意对应问题</li>
+</ul>
+</blockquote>
+<p>##<strong>1.25更新</strong></p>
+<p>oracle表中如果没有合适的字段来给–split-by参数的话，可以用<strong>rownum</strong>这个默认的字段。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">--split-by rownum</div></pre></td></tr></table></figure>
+<p>其余遇到的困惑会再进行后续更新。</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/11/hadoop-pom-example/" rel="next" title="Hadoop Maven pom文件示例">
+                <i class="fa fa-chevron-left"></i> Hadoop Maven pom文件示例
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/13/hadoop-datadir-migration/" rel="prev" title="Hadoop数据目录迁移">
+                Hadoop数据目录迁移 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/01/12/hbase-oracle-2-hbase/"
+           data-title="Oracle数据迁移至HBase操作记录" data-url="http://xiaohei.info/2016/01/12/hbase-oracle-2-hbase/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,851 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Docker,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="由于自己的电脑配置普普通通，在VM虚拟机中搭建的集群规模也就是6个节点左右，再多就会卡的不行碰巧接触了Docker这种轻量级的容器虚拟化技术，理论上在普通PC机上搭建的集群规模可以达到很高（具体能有多少个也没有实际测试过）
+于是就准备在Docker上搭建Spark集群由于是Docker新手，在操作过程中遇到了不少麻烦
+刚开始在网上找的资料都是直接从DockerHub上拉取别人已经建好的镜像使用问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在Docker中从头部署自己的Spark集群">
+<meta property="og:url" content="http://xiaohei.info/2015/06/03/docker-spark-install/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="由于自己的电脑配置普普通通，在VM虚拟机中搭建的集群规模也就是6个节点左右，再多就会卡的不行碰巧接触了Docker这种轻量级的容器虚拟化技术，理论上在普通PC机上搭建的集群规模可以达到很高（具体能有多少个也没有实际测试过）
+于是就准备在Docker上搭建Spark集群由于是Docker新手，在操作过程中遇到了不少麻烦
+刚开始在网上找的资料都是直接从DockerHub上拉取别人已经建好的镜像使用问题">
+<meta property="og:image" content="http://img.blog.csdn.net/20150603181909916">
+<meta property="og:image" content="http://img.blog.csdn.net/20150603182703187">
+<meta property="og:image" content="http://img.blog.csdn.net/20150603185007502">
+<meta property="og:image" content="http://img.blog.csdn.net/20150603182824978">
+<meta property="og:image" content="http://img.blog.csdn.net/20150603185032213">
+<meta property="og:updated_time" content="2016-07-15T02:38:15.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在Docker中从头部署自己的Spark集群">
+<meta name="twitter:description" content="由于自己的电脑配置普普通通，在VM虚拟机中搭建的集群规模也就是6个节点左右，再多就会卡的不行碰巧接触了Docker这种轻量级的容器虚拟化技术，理论上在普通PC机上搭建的集群规模可以达到很高（具体能有多少个也没有实际测试过）
+于是就准备在Docker上搭建Spark集群由于是Docker新手，在操作过程中遇到了不少麻烦
+刚开始在网上找的资料都是直接从DockerHub上拉取别人已经建好的镜像使用问题">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150603181909916">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/06/03/docker-spark-install/"/>
+
+  <title> 在Docker中从头部署自己的Spark集群 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                在Docker中从头部署自己的Spark集群
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-06-03T10:37:39+08:00" content="2015-06-03">
+              2015-06-03
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/06/03/docker-spark-install/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/06/03/docker-spark-install/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/06/03/docker-spark-install/" class="leancloud_visitors" data-flag-title="在Docker中从头部署自己的Spark集群">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>由于自己的电脑配置普普通通，在VM虚拟机中搭建的集群规模也就是6个节点左右，再多就会卡的不行<br>碰巧接触了Docker这种轻量级的容器虚拟化技术，理论上在普通PC机上搭建的集群规模可以达到很高（具体能有多少个也没有实际测试过）</p>
+<p>于是就准备在Docker上搭建Spark集群<br>由于是Docker新手，在操作过程中遇到了不少麻烦</p>
+<p>刚开始在网上找的资料都是直接从DockerHub上拉取别人已经建好的镜像使用<br>问题多多，下载速度慢，下载异常，运行异常，配置异常等等等等。。。<br>好不容易下载了一个可以用的镜像，但是是一个节点的伪分布式，jdk，hadoop，spark等等的版本也不是我想要的<br>所以就着手从头开始在Docker中部署Spark</p>
+<p>下面进入正题</p>
+<p>宿主机为Ubuntu系统（VM上的一个虚拟机），Docker的安装请看：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/46290985" target="_blank" rel="external">Docker解析及轻量级PaaS平台演练（一）</a></p>
+<p>安装好Docker之后，先拉取一个官方的基本镜像ubuntu</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker pull ubuntu</div></pre></td></tr></table></figure>
+<p>我们将在这个基础镜像上运行容器，将这个容器当成一个普通的ubuntu虚拟机来操作部署spark，最后将配置好的容器commit为一个镜像，之后就可以通过这个镜像运行n个节点来完成集群的搭建</p>
+<p>下载完ubuntu镜像之后运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker images</div></pre></td></tr></table></figure>
+<p>可以看到该镜像</p>
+<p><img src="http://img.blog.csdn.net/20150603181909916" alt="这里写图片描述"></p>
+<p>上图最后一个就是（其他是一些测试时候的镜像）</p>
+<p>运行ubuntu容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -v /home/docker/software/:/software -it ubuntu</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20150603182703187" alt="这里写图片描述"></p>
+<p><strong>在容器中安装ssh</strong></p>
+<p>这个镜像中默认是没有ssh的，所以要自行安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">apt-get install ssh</div></pre></td></tr></table></figure>
+<p>SSH装好了以后，由于我们是Docker容器中运行，所以SSH服务不会自动启动。需要我们在容器启动以后，手动通过 /usr/sbin/sshd 手动打开SSH服务。为了方便，把这个命令加入到 ~/.bashrc 文件中，这样在容器启动的时候就会自动开启ssh服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">vim ~/.bashrc</div><div class="line"></div><div class="line">#加入</div><div class="line">/usr/sbin/sshd</div><div class="line"></div><div class="line">#如果在启动容器的时候还是无法启动ssh的话，在/etc/rc.local文件中也加入</div><div class="line"></div><div class="line">vim /etc/rc.local</div><div class="line">#加入</div><div class="line">/usr/sbin/sshd</div></pre></td></tr></table></figure>
+<p>（这个镜像自带的vi编辑器部分难用。。。建议使用apt-get install vim 下载vim编辑器）</p>
+<p>ssh默认配置root无法登陆<br>将 /etc/ssh/sshd_config中PermitRootLogin  no 改为yes</p>
+<p>生成访问密钥</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">cd ~/</div><div class="line"></div><div class="line">ssh-keygen -t rsa -P &apos;&apos; -f ~/.ssh/id_rsa</div><div class="line"></div><div class="line">cd .ssh</div><div class="line"></div><div class="line">cat id_rsa.pub &gt;&gt; authorized_keys</div><div class="line"></div><div class="line">#开启ssh服务后验证是否可以使用，打印出当前时间</div><div class="line">ssh localhost date</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20150603185007502" alt="这里写图片描述"></p>
+<p><strong>安装JDK</strong></p>
+<p>可以使用apt-get方式直接下载安装jdk（不推荐，下载速度慢，有可能还会失败）<br>这里选择从网上下载完jdk-6u45-linux-i586.bin之后<br>将其传到Ubuntu宿主机中，在运行容器的时候使用-v参数将宿主机上的目录映射到容器中，这样在容器中就可以访问到宿主机中的文件了</p>
+<p>将JDK铜鼓FTP上传到宿主机的/home/docker/software目录下<br>在容器中可以在/software下看到该目录下的文件</p>
+<p><img src="http://img.blog.csdn.net/20150603182824978" alt="这里写图片描述"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">#将该文件移动到usr目录下</div><div class="line">mkdir /usr/java</div><div class="line">mv /software/jdk-6u45-linux-i586.bin /usr/java</div><div class="line">#安装JDK</div><div class="line">chmod 755 jdk-6u45-linux-i586.bin</div><div class="line">./jdk-6u45-linux-i586.bin</div></pre></td></tr></table></figure>
+<p>如果提示不能安装.bin文件，使用一下命令即可解决（下载时间可能会很久，如果失败可能是网络原因，多试几次）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#</div><div class="line">apt-get update</div><div class="line">#</div><div class="line">apt-get install g++-multilib</div></pre></td></tr></table></figure>
+<p>配置环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">mv jdk-6u45-linux-i586 jdk</div><div class="line">#在/etc/profile中配置的环境变量不起作用，要配置在宿主目录下的.bashrc</div><div class="line">vim ~/.bashrc</div><div class="line"></div><div class="line">export JAVA_HOME=/usr/java/jdk</div><div class="line">export PATH=$PATH:$JAVA_HOME/bin</div><div class="line"></div><div class="line">#保存退出之后验证是否安装成功</div><div class="line">java -version</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20150603185032213" alt="这里写图片描述"></p>
+<p><strong>安装Zookeeper</strong></p>
+<p>将下载好的zookeeper-3.4.5.tar.gz上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">mv /software/zookeeper-3.4.5.tar.gz ~</div><div class="line"></div><div class="line">tar -zxvf zookeeper-3.4.5.tar.gz</div><div class="line"></div><div class="line">mv zookeeper-3.4.5 zookeeper</div><div class="line"></div><div class="line">cd ~/zookeeper/conf/</div><div class="line"></div><div class="line">cp zoo_sample.cfg zoo.cfg</div><div class="line"></div><div class="line">vim zoo.cfg</div><div class="line"></div><div class="line">#修改：</div><div class="line">dataDir=/root/zookeeper/tmp</div><div class="line"></div><div class="line">#在最后添加：</div><div class="line">server.1=cloud4:2888:3888</div><div class="line">server.2=cloud5:2888:3888</div><div class="line">server.3=cloud6:2888:3888</div><div class="line"></div><div class="line">#保存退出，然后创建一个tmp文件夹</div><div class="line">mkdir ~/zookeeper/tmp</div><div class="line"></div><div class="line">#再创建一个空文件</div><div class="line">touch ~/zookeeper/tmp/myid</div><div class="line"></div><div class="line">#最后向该文件写入ID</div><div class="line">echo 1 &gt; ~/zookeeper/tmp/myid</div></pre></td></tr></table></figure>
+<p><strong>安装Hadoop</strong></p>
+<p>将下载好的hadoop-2.2.0-64bit.tar.gz上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div></pre></td><td class="code"><pre><div class="line">mv /software/hadoop-2.2.0-64bit.tar.gz ~</div><div class="line"></div><div class="line">tar -zxvf hadoop-2.2.0-64bit.tar.gz</div><div class="line"></div><div class="line">mv hadoop-2.2.0 hadoop</div><div class="line"></div><div class="line">cd ~/hadoop/etc/hadoop</div><div class="line"></div><div class="line">vim hadoop-env.sh</div><div class="line"></div><div class="line">#加入java环境变量</div><div class="line">export JAVA_HOME=/usr/java/jdk</div><div class="line"></div><div class="line">vim core-site.xml</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;fs.defaultFS&lt;/name&gt;</div><div class="line">&lt;value&gt;hdfs://ns1&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hadoop.tmp.dir&lt;/name&gt;</div><div class="line">&lt;value&gt;/root/hadoop/tmp&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;ha.zookeeper.quorum&lt;/name&gt; </div><div class="line">&lt;value&gt;cloud4:2181,cloud5:2181,cloud6:2181&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line"></div><div class="line">vim hdfs-site.xml</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.nameservices&lt;/name&gt;</div><div class="line">&lt;value&gt;ns1&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.ha.namenodes.ns1&lt;/name&gt;</div><div class="line">&lt;value&gt;nn1,nn2&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.namenode.rpc-address.ns1.nn1&lt;/name&gt;</div><div class="line">&lt;value&gt;cloud1:9000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.namenode.http-address.ns1.nn1&lt;/name&gt;</div><div class="line">&lt;value&gt;cloud1:50070&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.namenode.rpc-address.ns1.nn2&lt;/name&gt;</div><div class="line">&lt;value&gt;cloud2:9000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.namenode.http-address.ns1.nn2&lt;/name&gt;</div><div class="line">&lt;value&gt;cloud2:50070&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.namenode.shared.edits.dir&lt;/name&gt; </div><div class="line">&lt;value&gt;qjournal://cloud4:8485;cloud5:8485;cloud6:8485/ns1&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.journalnode.edits.dir&lt;/name&gt;</div><div class="line">&lt;value&gt;/root/hadoop/journal&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.ha.automatic-failover.enabled&lt;/name&gt;</div><div class="line">&lt;value&gt;true&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.client.failover.proxy.provider.ns1&lt;/name&gt;</div><div class="line">&lt;value&gt;</div><div class="line">org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</div><div class="line">&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.ha.fencing.methods&lt;/name&gt;</div><div class="line">&lt;value&gt;</div><div class="line">sshfence</div><div class="line">shell(/bin/true)</div><div class="line">&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.ha.fencing.ssh.private-key-files&lt;/name&gt;</div><div class="line">&lt;value&gt;/root/.ssh/id_rsa&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;dfs.ha.fencing.ssh.connect-timeout&lt;/name&gt;</div><div class="line">&lt;value&gt;30000&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line"></div><div class="line">mv mapred-site.xml.template mapred-site.xml</div><div class="line">vim mapred-site.xml</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;mapreduce.framework.name&lt;/name&gt;</div><div class="line">&lt;value&gt;yarn&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line"></div><div class="line">vim yarn-site.xml</div><div class="line"></div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;yarn.resourcemanager.hostname&lt;/name&gt;</div><div class="line">&lt;value&gt;cloud3&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt; </div><div class="line">&lt;name&gt;yarn.nodemanager.aux-services&lt;/name&gt; </div><div class="line">&lt;value&gt;mapreduce_shuffle&lt;/value&gt; </div><div class="line">&lt;/property&gt;                   </div><div class="line"></div><div class="line">vim slaves</div><div class="line"></div><div class="line">cloud1</div><div class="line">cloud2</div><div class="line">cloud3</div><div class="line">cloud4</div><div class="line">cloud5</div><div class="line">cloud6</div></pre></td></tr></table></figure>
+<p><strong>安装Spark</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div></pre></td><td class="code"><pre><div class="line">mv /software/scala-2.10.5.tgz ~ </div><div class="line"></div><div class="line">tar -zxvf scala-2.10.5.tgz</div><div class="line"></div><div class="line">mv scala-2.10.5 scala</div><div class="line"></div><div class="line">vim ~/.bashrc</div><div class="line"></div><div class="line">export JAVA_HOME=/usr/java/jdk</div><div class="line">export HADOOP_HOME=/root/hadoop</div><div class="line">export SCALA_HOME=/root/scala      </div><div class="line">export SPARK_HOME=/root/spark      </div><div class="line">export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SCALA_HOME/bin:$SPARK_HOME/bin</div><div class="line"></div><div class="line">mv /software/spark-1.3.0-bin-hadoop2.3.tgz ~</div><div class="line"></div><div class="line">tar -zxvf spark-1.3.0-bin-hadoop2.3.tgz </div><div class="line"></div><div class="line">mv spark-1.3.0-bin-hadoop2.3 spark</div><div class="line"></div><div class="line">#修改spark文件slaves </div><div class="line">vim ~/spark/conf/slaves </div><div class="line"></div><div class="line">cloud1 </div><div class="line">cloud2 </div><div class="line">cloud3 </div><div class="line">cloud4 </div><div class="line">cloud5 </div><div class="line">cloud6</div><div class="line"></div><div class="line">mv spark-env.sh.template spark-env.sh</div><div class="line">vim ~/spark/conf/spark-env.sh </div><div class="line"></div><div class="line">export SPARK_MASTER_IP=cloud1 </div><div class="line">export SPARK_WORKER_MEMORY=128m </div><div class="line">export JAVA_HOME=/usr/java/jdk </div><div class="line">export SCALA_HOME=/root/scala </div><div class="line">export SPARK_HOME=/root/spark </div><div class="line">export HADOOP_CONF_DIR=/root/hadoop/etc/hadoop </div><div class="line">export SPARK_LIBRARY_PATH=$$SPARK_HOME/lib </div><div class="line">export SCALA_LIBRARY_PATH=$SPARK_LIBRARY_PATH </div><div class="line">export SPARK_WORKER_CORES=1 </div><div class="line">export SPARK_WORKER_INSTANCES=1 </div><div class="line">export SPARK_MASTER_PORT=7077</div></pre></td></tr></table></figure>
+<p>在宿主机中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">docker commit &#123;containerId&#125;</div><div class="line">#会返回一个id</div><div class="line">docker tag &#123;id&#125; jchubby/spark:1.0</div></pre></td></tr></table></figure>
+<p>将这个容器commit成一个新的image</p>
+<p>然后用这个image运行6个容器，分别是cloud1~cloud6</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#-h指定容器运行起来后的hostname</div><div class="line">docker run --name cloud1 -h cloud1 -it jchubby/spark:1.0</div><div class="line">...</div><div class="line">docker run --name cloud6 -h cloud6 -it jchubby/spark:1.0</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">#在cloud5~cloud6中分别手动修改myid</div><div class="line">echo 2 &gt; ~/zookeeper/tmp/myid</div><div class="line">echo 3 &gt; ~/zookeeper/tmp/myid</div><div class="line"></div><div class="line">#修改/etc/hosts文件，之后在通过scp传到其他容器中</div><div class="line"></div><div class="line">#启动zookeeper集群（分别在cloud4、cloud5、cloud6上启动zk）</div><div class="line">~/zookeeper/bin/zkServer.sh start</div><div class="line"></div><div class="line">#使用status查看是否启动</div><div class="line">~/zookeeper/bin/zkServer.sh status</div><div class="line"></div><div class="line">#启动journalnode（在cloud1上启动所有journalnode，注意：是调用的hadoop-daemons.sh这个脚本，注意是复数s的那个脚本）</div><div class="line">#运行jps命令检验，cloud4、cloud5、cloud6上多了JournalNode进程</div><div class="line">~/hadoop/sbin/hadoop-daemons.sh start journalnode</div><div class="line"></div><div class="line">#格式化HDFS(在bin目录下),在cloud1上执行命令:</div><div class="line">~/hadoop/bin/hdfs namenode -format</div><div class="line"></div><div class="line">#格式化ZK(在cloud1上执行即可，在bin目录下)</div><div class="line">~/hadoop/bin/hdfs zkfc -formatZK</div><div class="line"></div><div class="line">#启动HDFS(在cloud1上执行)</div><div class="line">~/hadoop/sbin/start-dfs.sh</div><div class="line"></div><div class="line">#在cloud3上执行start-yarn.sh</div><div class="line">~/hadoop/sbin/start-yarn.sh</div><div class="line"></div><div class="line">#启动spark集群</div><div class="line">~/spark/sbin/start-all.sh</div></pre></td></tr></table></figure>
+<p>启动之后可以在宿主机的浏览器中访问<br>HDFS：cloud1:50070<br>YARN：cloud3:8088<br>SPARK：cloud1:8080<br>（如果宿主机中的hosts文件没有配置docker容器的主机名和IP地址映射关系的话要换成用IP访问）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#在cloud4/5/6其中一个，将hadoop目录下的journal复制到cloud1</div><div class="line">scp -r ~/hadoop/journal cloud1:~/haoop</div><div class="line"></div><div class="line">#将完成所有配置的cloud1 commit成一个镜像</div><div class="line">docker commit cloud1</div><div class="line"></div><div class="line">docker tag id jchubby/spark_n</div></pre></td></tr></table></figure>
+<p>之后直接用这个镜像运行容器，分别启动zookeeper，hadoop，spark即可</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Docker/" rel="tag">#Docker</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/31/docker-paas-4/" rel="next" title="Docker解析及轻量级PaaS平台演练（四）--Fig相关介绍">
+                <i class="fa fa-chevron-left"></i> Docker解析及轻量级PaaS平台演练（四）--Fig相关介绍
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/06/28/spark-recommend-baseon-sparkstreaming/" rel="prev" title="基于Spark机器学习和实时流计算的智能推荐系统">
+                基于Spark机器学习和实时流计算的智能推荐系统 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/06/03/docker-spark-install/"
+           data-title="在Docker中从头部署自己的Spark集群" data-url="http://xiaohei.info/2015/06/03/docker-spark-install/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

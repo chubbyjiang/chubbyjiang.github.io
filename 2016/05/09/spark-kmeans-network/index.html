@@ -1,0 +1,840 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="非监督学习技术在决策树算法预测森林植被中我们可以体会到属于监督学习的分类和回归技术的强大，可以预测“即将发生”的事情使用监督学习技术有一个很关键的前提：需要大量的数据对模型进行训练，模型能够从已知的数据中学习规律进而预测未知的数据
+然而在某些场景下，并不是都能提供监督学习所需要的样本数据来训练模型，有可能只能给出部分正确的输出，甚至一个输出都没有这种情况下，监督学习的技术就不能够使用了
+此时，对应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KMeans算法检测网络异常入侵">
+<meta property="og:url" content="http://xiaohei.info/2016/05/09/spark-kmeans-network/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="非监督学习技术在决策树算法预测森林植被中我们可以体会到属于监督学习的分类和回归技术的强大，可以预测“即将发生”的事情使用监督学习技术有一个很关键的前提：需要大量的数据对模型进行训练，模型能够从已知的数据中学习规律进而预测未知的数据
+然而在某些场景下，并不是都能提供监督学习所需要的样本数据来训练模型，有可能只能给出部分正确的输出，甚至一个输出都没有这种情况下，监督学习的技术就不能够使用了
+此时，对应">
+<meta property="og:updated_time" content="2016-07-14T04:40:42.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="KMeans算法检测网络异常入侵">
+<meta name="twitter:description" content="非监督学习技术在决策树算法预测森林植被中我们可以体会到属于监督学习的分类和回归技术的强大，可以预测“即将发生”的事情使用监督学习技术有一个很关键的前提：需要大量的数据对模型进行训练，模型能够从已知的数据中学习规律进而预测未知的数据
+然而在某些场景下，并不是都能提供监督学习所需要的样本数据来训练模型，有可能只能给出部分正确的输出，甚至一个输出都没有这种情况下，监督学习的技术就不能够使用了
+此时，对应">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/09/spark-kmeans-network/"/>
+
+  <title> KMeans算法检测网络异常入侵 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                KMeans算法检测网络异常入侵
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-09T09:53:49+08:00" content="2016-05-09">
+              2016-05-09
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/09/spark-kmeans-network/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/09/spark-kmeans-network/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/09/spark-kmeans-network/" class="leancloud_visitors" data-flag-title="KMeans算法检测网络异常入侵">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="非监督学习技术"><a href="#非监督学习技术" class="headerlink" title="非监督学习技术"></a>非监督学习技术</h2><p>在<a href="http://www.xiaohei.info/2016/05/06/spark-decisiontree-predict/" target="_blank" rel="external">决策树算法预测森林植被</a>中<br>我们可以体会到属于<strong>监督学习</strong>的分类和回归技术的强大，可以预测“即将发生”的事情<br>使用监督学习技术有一个<strong>很关键的前提：</strong>需要大量的数据对模型进行训练，模型能够从已知的数据中学习规律进而预测未知的数据</p>
+<p>然而在某些场景下，并不是都能提供监督学习所需要的样本数据来训练模型，有可能只能给出部分正确的输出，甚至一个输出都没有<br>这种情况下，监督学习的技术就不能够使用了</p>
+<p>此时，对应监督学习，另一种非监督学习技术就可以排上用场了</p>
+<h3 id="异常检查"><a href="#异常检查" class="headerlink" title="异常检查"></a>异常检查</h3><p>顾名思义，异常检测就是要找出不同寻常的情况，<strong>异常是一种未知的情况</strong>，也就是说，无论何时何地，我们都无法归纳总结出所有的异常分类<br>如果可以，那么使用监督学习技术可以轻易的将网站的每个访问划分为“正常”或者“异常”<br>举个例子来说，我们永远不知道黑客有什么新的技术手段可以入侵你的网站系统，即使今天你有所有已知的黑客手段，但是谁知道明天又会有新的漏洞被黑客利用？<br>所以说，当一个访问请求被处理的时候，如果使用监督学习技术，恰好这是一个异常访问的请求，又恰好这是一种全新的异常类别<br>此时监督学习技术就会束手无策</p>
+<p>在这种场景下，使用非监督学习技术可以有效的解决这个问题，通过学习，它们能够知道什么是正常的输入<br>从而能够判别出新数据和历史数据的差别，注意，<strong>这里的有差别并不意味着该数据就是异常数据，只是说它和历史的正常数据有差异，值得进一步调查</strong></p>
+<p>所以，<strong>非监督学习并不是要将数据精确地划分到哪个类别中，而是对历史数据进行对比分析找出差异</strong></p>
+<h3 id="KMeans均值聚类"><a href="#KMeans均值聚类" class="headerlink" title="KMeans均值聚类"></a>KMeans均值聚类</h3><p>聚类是最有名的非监督学习技术，它试图找到数据中的自然群组<br>一群特征相似而又与其他数据不同的数据点往往代表某种意义，从而将这些数据点划分为一个族群<br><strong>聚类算法就是要将所有数据中的相似数据划分到同一个族群中</strong><br>在网络的异常检测中，聚类算法是十分合适的，通过其将所有访问请求划分为一个个族群，将正常和异常的访问隔离开<br>我们可以进一步在异常的族群中分析这些数据是否属于网络入侵</p>
+<p>K均值聚类是运行的最广泛的聚类算法，根据人为定义的一个k值，该算法会将数据聚类为k个族群<br>关于k值的确定需要结合业务场景和数据特性，并在反复的实验中得到一个最优的参数<br>KMeans聚类的详细说明可以参考：<br><a href="http://www.xiaohei.info/2015/04/10/datamining-mahout-clustering-kmeans/" target="_blank" rel="external">mahout运行测试与数据挖掘算法之聚类分析（一）kmeans算法解析</a></p>
+<h2 id="程序开发"><a href="#程序开发" class="headerlink" title="程序开发"></a>程序开发</h2><h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><p>案例中使用的是KDD Cup1999的数据集，可以在这里<a href="http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html" target="_blank" rel="external">下载</a><br>进入下载页面后可以看到有很多数据集，本篇只用到kddcup.data.*数据文件，一个是完整数据集，解压缩之后有743M，一个是10%的数据集，解压缩之后只有45M<br>可以先使用10%的数据集进行代码测试，得到一个比较好的结果之后再运用到全部数据集中</p>
+<p>数据集中的每一行代表一个网络请求，描述了该请求的所有信息，在<a href="http://www.xiaohei.info/2016/05/06/spark-decisiontree-predict/" target="_blank" rel="external">决策树算法预测森林植被</a>中<br>我们知道特征分为数值型和类别型，该数据集中也包含了这两种特征<br>每行数据的最后一个特征是目标特征，例如大部分请求被标记为normal表示正常访问<br>还有其他各种异常标记<br>正如之前讨论的，我们完全可以使用特征向量+目标特征的形式使用监督学习技术来训练模型进行预测<br>但是如果出现一个异常请求不在所有的目标类别中，这不糟糕了~</p>
+<p>所以为了找出“未知的攻击”，我们先不在算法中使用这些目标特征</p>
+<h3 id="聚类的初步尝试"><a href="#聚类的初步尝试" class="headerlink" title="聚类的初步尝试"></a>聚类的初步尝试</h3><p>将要使用的数据集上传到HDFS之后，我们先来看看这些数据的基本信息：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> conf = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">"KMeans"</span>)</div><div class="line"><span class="keyword">val</span> sc = <span class="keyword">new</span> <span class="type">SparkContext</span>(conf)</div><div class="line"><span class="comment">//读取数据</span></div><div class="line"><span class="keyword">val</span> rawData = sc.textFile(<span class="string">"/spark_data/ch05/kddcup.data"</span>)</div><div class="line"><span class="comment">//根据类别查看统计信息,各个类别下有多少数据</span></div><div class="line"><span class="comment">//根据","分割,只保留最后的类别</span></div><div class="line"><span class="keyword">val</span> catStatsData = rawData.map(_.split(<span class="string">","</span>).last)</div><div class="line">  <span class="comment">//对类别的数目进行统计,并根据统计的数量从小打到排序</span></div><div class="line">  .countByValue().toSeq.sortBy(_._2)</div><div class="line">  <span class="comment">//转换为从大到小排序</span></div><div class="line">  .reverse</div><div class="line">catStatsData.foreach(println)</div></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">(smurf.,280790)</div><div class="line">(neptune.,107201)</div><div class="line">(normal.,97278)</div><div class="line">(back.,2203)</div><div class="line">(satan.,1589)</div><div class="line">(ipsweep.,1247)</div><div class="line">(portsweep.,1040)</div><div class="line">(warezclient.,1020)</div><div class="line">(teardrop.,979)</div><div class="line">(pod.,264)</div><div class="line">(nmap.,231)</div><div class="line">(guess_passwd.,53)</div><div class="line">(buffer_overflow.,30)</div><div class="line">(land.,21)</div><div class="line">(warezmaster.,20)</div><div class="line">(imap.,12)</div><div class="line">(rootkit.,10)</div><div class="line">(loadmodule.,9)</div><div class="line">(ftp_write.,8)</div><div class="line">(multihop.,7)</div><div class="line">(phf.,4)</div><div class="line">(perl.,3)</div><div class="line">(spy.,2)</div></pre></td></tr></table></figure>
+<p>总共有23种不同类型，其中smurf和neptune的攻击类型最多，竟然比normal的正常访问还要多   </p>
+<p>之前提到的，由于样本数据中包含有类别型特征（下标为1，2，3和最后一个目标特征）<br>但是KMeans算法要求特征都要为数值型，我们首先不对这些类别型特征做处理，直接跳过：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> labelsAndData = rawData.map &#123; line =&gt;</div><div class="line">  <span class="comment">//buffer是一个可变列表</span></div><div class="line">  <span class="keyword">val</span> buffer = line.split(<span class="string">","</span>).toBuffer</div><div class="line">  <span class="comment">//下标1-3的元素</span></div><div class="line">  buffer.remove(<span class="number">1</span>, <span class="number">3</span>)</div><div class="line">  <span class="comment">//最后一个元素为label</span></div><div class="line">  <span class="keyword">val</span> label = buffer.remove(buffer.length - <span class="number">1</span>)</div><div class="line">  <span class="comment">//转换为Vector</span></div><div class="line">  <span class="keyword">val</span> vector = <span class="type">Vectors</span>.dense(buffer.map(_.toDouble).toArray)</div><div class="line">  (label, vector)</div><div class="line">&#125;</div><div class="line"><span class="comment">//数据只用到values部分</span></div><div class="line"><span class="keyword">val</span> data=labelsAndData.values.cache()</div></pre></td></tr></table></figure>
+<p>拿到可以进行模型训练的数据之后就可以编写聚类的代码了：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//训练模型</span></div><div class="line"><span class="keyword">val</span> kmeans = <span class="keyword">new</span> <span class="type">KMeans</span>()</div><div class="line"><span class="keyword">val</span> model = kmeans.run(data)</div><div class="line"><span class="comment">//输出所有聚类中心</span></div><div class="line">model.clusterCenters.foreach(println)</div></pre></td></tr></table></figure>
+<p>输出结果为两个向量：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[47.979395571029514,1622.078830816566,868.5341828266062,4.453261001578883E-5,0.006432937937735314,1.4169466823205539E-5,0.03451682118132869,1.5181571596291647E-4,0.14824703453301485,0.01021213716043885,1.1133152503947209E-4,3.6435771831099954E-5,0.011351767134933808,0.0010829521072021374,1.0930731549329986E-4,0.0010080563539937655,0.0,0.0,0.0013865835391279706,332.2862475203433,292.9071434354884,0.17668541759442943,0.17660780940042914,0.05743309987449898,0.05771839196793656,0.7915488441762945,0.020981640419421355,0.028996862475203923,232.4707319541719,188.6660459090725,0.7537812031901686,0.030905611108870867,0.6019355289259973,0.006683514837454898,0.17675395732966057,0.1764416217966883,0.05811762681672766,0.057411116958826745]</div><div class="line"></div><div class="line">[2.0,6.9337564E8,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,57.0,3.0,0.79,0.67,0.21,0.33,0.05,0.39,0.0,255.0,3.0,0.01,0.09,0.22,0.0,0.18,0.67,0.05,0.33]</div></pre></td></tr></table></figure>
+<p>现在我们用这个模型来为每个数据分配族群，并输出每个聚类中心有哪些类别，各有多少个数据：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//输出每个聚类中心有哪些类别各有多少个数据</span></div><div class="line"><span class="keyword">val</span> clusterLabelCount = labelsAndData.map &#123; <span class="keyword">case</span> (label, datum) =&gt;</div><div class="line">  <span class="comment">//为样本数据划分聚类中心</span></div><div class="line">  <span class="keyword">val</span> cluster = model.predict(datum)</div><div class="line">  <span class="comment">//返回数据的中心和类别二元组</span></div><div class="line">  (cluster, label)</div><div class="line">&#125;.countByValue()</div><div class="line"><span class="comment">//排序之后格式化输出</span></div><div class="line">clusterLabelCount.toSeq.sorted.foreach &#123; <span class="keyword">case</span> ((cluster, label), count) =&gt;</div><div class="line">  println(<span class="string">f"<span class="subst">$cluster</span>%1s<span class="subst">$label</span>%1s<span class="subst">$count</span>"</span>)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>由于我们没有人为设置k的值，程序就自作主张设置了k=2，但是我们知道，数据的类别有23个，因此这个模型肯定是错误的<br>可以看到输出的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">0	back.				2203</div><div class="line">0	buffer_overflow.	30</div><div class="line">0	ftp_write.			8</div><div class="line">0	guess_passwd.		53</div><div class="line">0	imap.				12</div><div class="line">0	ipsweep.			1247</div><div class="line">0	land.				21</div><div class="line">0	loadmodule.			9</div><div class="line">0	multihop.			7</div><div class="line">0	neptune.			107201</div><div class="line">0	nmap.				231</div><div class="line">0	normal.				97278</div><div class="line">0	perl.				3</div><div class="line">0	phf.				4</div><div class="line">0	pod.				264</div><div class="line">0	portsweep.			1039</div><div class="line">0	rootkit.			10</div><div class="line">0	satan.				1589</div><div class="line">0	smurf.				280790</div><div class="line">0	spy.				2</div><div class="line">0	teardrop.			979</div><div class="line">0	warezclient.		1020</div><div class="line">0	warezmaster.		20</div><div class="line">1	portsweep.			1</div></pre></td></tr></table></figure>
+<p>族群1只有一个数据点</p>
+<h3 id="K值的选择"><a href="#K值的选择" class="headerlink" title="K值的选择"></a>K值的选择</h3><p>k的值到底设置为多少比较合适呢？<br>在示例的样本数据中，有23个类别，那么意味着k至少等于23<br>通常情况下我们要通过多次尝试才能找到最好的k值</p>
+<p>那么什么样的k值才是“最好”的呢？<br><strong>如果每个数据点都紧靠最近的质心，那么这个聚类是较优的</strong></p>
+<p>为了能够判断每个数据点到质心的距离，我们可以编写以下函数来判断：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">  * 计算两个向量之间的距离</div><div class="line">  *</div><div class="line">  * @param a 向量1</div><div class="line">  * @param b 向量2</div><div class="line">  *          欧式距离:空间上两个点的距离=两个向量相应元素的差的平方和的平方根</div><div class="line">  **/</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">distance</span></span>(a: <span class="type">Vector</span>, b: <span class="type">Vector</span>) = &#123;</div><div class="line">  <span class="comment">//求平方根</span></div><div class="line">  math.sqrt(</div><div class="line">    <span class="comment">//将两个向量合并</span></div><div class="line">    a.toArray.zip(b.toArray)</div><div class="line">      <span class="comment">//两个向量中的每个值相减</span></div><div class="line">      .map(d =&gt; d._1 - d._2)</div><div class="line">      <span class="comment">//相间的值平方</span></div><div class="line">      .map(d =&gt; d * d)</div><div class="line">      <span class="comment">//之后相加</span></div><div class="line">      .sum)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line">  * 计算数据点到聚类中心质心的距离</div><div class="line">  *</div><div class="line">  * @param datum 数据点</div><div class="line">  * @param model kmeans模型</div><div class="line">  **/</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">distToCentrolid</span></span>(datum: <span class="type">Vector</span>, model: <span class="type">KMeansModel</span>) = &#123;</div><div class="line">  <span class="comment">//得到该数据点的聚类中心</span></div><div class="line">  <span class="keyword">val</span> cluster = model.predict(datum)</div><div class="line">  <span class="comment">//得到该聚类中心的质心</span></div><div class="line">  <span class="keyword">val</span> centrolid = model.clusterCenters(cluster)</div><div class="line">  <span class="comment">//计算距离</span></div><div class="line">  distance(centrolid, datum)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line">  * 根据各个数据点到该数据点聚类中心质心的距离来判断该模型优劣</div><div class="line">  * @param data 样本数据</div><div class="line">  * @param k k值</div><div class="line">  * */</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">clusteringScore</span></span>(data: <span class="type">RDD</span>[<span class="type">Vector</span>], k: <span class="type">Int</span>) = &#123;</div><div class="line">  <span class="keyword">val</span> kmeans = <span class="keyword">new</span> <span class="type">KMeans</span>()</div><div class="line">  <span class="comment">//设置k值</span></div><div class="line">  kmeans.setK(k)</div><div class="line">  <span class="keyword">val</span> model = kmeans.run(data)</div><div class="line">  <span class="comment">//计算样本数据到其各自质心的记录的平均值</span></div><div class="line">  data.map &#123; datum =&gt;</div><div class="line">    distToCentrolid(datum, model)</div><div class="line">  &#125;.mean()</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>有了判断模型优劣的标准之后，就可以通过取不同的k值来观察模型：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//取不同k值观察模型优劣</span></div><div class="line">(<span class="number">5</span> to <span class="number">40</span> by <span class="number">5</span>).map &#123; k =&gt;</div><div class="line">  (k, clusteringScore(data, k))</div><div class="line">&#125;.foreach(println)</div></pre></td></tr></table></figure>
+<p>输出结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">(5,1779.3473960726312)</div><div class="line">(10,1054.5660956505587)</div><div class="line">(15,998.6026754769782)</div><div class="line">(20,438.0714456623944)</div><div class="line">(25,386.70458251397577)</div><div class="line">(30,329.4472646112194)</div><div class="line">(35,644.939843705805)</div><div class="line">(40,221.3547720824891)</div></pre></td></tr></table></figure>
+<p>可以看到，平均距离随着k的增大而降低<br>这点是毫无疑问的，因为随着族群点的增加，数据点离最近的质心肯定更近，当族群点等于数据量的时候平均距离为0，每个数据点都是自己构成的质心</p>
+<p>而一个很奇怪的现象是，k=35时的距离竟然比k=30的时候要大<br>这是<strong>因为KMeans的迭代过程是从一个随机点开始的，因此可能收敛于一个局部最小值</strong><br>k=35的情况可能是随机初始的质心造成的，也可能是由于算法在达到局部最小值之前就结束了<br>为了解决这个可能存在的问题，我们可以通过<strong>对固定的k值多次聚类</strong>，每次都随机不同的初始质心，然后在其中<strong>选择最优的</strong><br>Spark Mllib提供了设置KMeans运行次数的方法，在clusteringSore函数中加入：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//设置该k值的聚类次数</span></div><div class="line">kmeans.setRuns(<span class="number">10</span>)</div><div class="line"><span class="comment">//设置迭代过程中,质心的最小移动值,默认为1.0e-4</span></div><div class="line">kmeans.setEpsilon(<span class="number">1.0e-6</span>)</div></pre></td></tr></table></figure>
+<p>setEpsilon设置迭代过程中,质心的最小移动值，移动值越小使得迭代的时间越多，聚类的结果更优化<br>现在我们重新选择k值进行评估：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">(<span class="number">50</span> to <span class="number">130</span> by <span class="number">10</span>).map &#123; k =&gt;</div><div class="line">  (k, clusteringScore(data, k))</div><div class="line">&#125;.foreach(println)</div></pre></td></tr></table></figure>
+<p>输出结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">(50,186.72154668205906)</div><div class="line">(60,144.68385906795461)</div><div class="line">(70,119.93958735623515)</div><div class="line">(80,109.46520683932486)</div><div class="line">(90,94.08809036196241)</div><div class="line">(100,76.37377878951273)</div><div class="line">(110,74.78271035271912)</div><div class="line">(120,71.515517236215)</div><div class="line">(130,65.13241545688685)</div></pre></td></tr></table></figure>
+<p>这个时候随着k的增大，平均距离在持续减小<br>但是<strong>这个减少的幅度是有临界点的</strong>，当k值超过这个临界点，即使继续增大，也不会显著地降低距离<br><strong>这个临界点就是我们要找的最好的k值</strong></p>
+<p>从输出结果中可以看到，k值应该取130<br>我们再次打印出每个族群包含的类别和个数信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">0	neptune.	48517</div><div class="line">0	nmap.	93</div><div class="line">0	normal.	2974</div><div class="line">0	portsweep.	904</div><div class="line">0	rootkit.	3</div><div class="line">0	satan.	222</div><div class="line">0	teardrop.	865</div><div class="line">0	warezmaster.	1</div><div class="line">1	portsweep.	1</div><div class="line">2	warezclient.	59</div><div class="line">3	multihop.	1</div><div class="line">3	normal.	1</div><div class="line">4	normal.	1</div><div class="line">5	normal.	310</div><div class="line">6	normal.	1</div><div class="line">6	warezmaster.	15</div><div class="line">7	normal.	22</div><div class="line">8	normal.	713</div><div class="line">9	normal.	19</div><div class="line">10	normal.	1</div><div class="line">11	normal.	6</div><div class="line">12	normal.	1</div><div class="line">13	normal.	2</div><div class="line">14	back.	2155</div><div class="line">15	normal.	1</div><div class="line">16	normal.	102</div><div class="line">17	normal.	17</div><div class="line">18	smurf.	227840</div><div class="line">19	normal.	1</div><div class="line">...</div><div class="line">...</div><div class="line">117	warezmaster.	1</div><div class="line">118	normal.	3</div><div class="line">119	normal.	2</div><div class="line">120	back.	9</div><div class="line">120	normal.	23</div><div class="line">121	back.	1</div><div class="line">121	normal.	362</div><div class="line">122	multihop.	1</div><div class="line">122	normal.	5174</div><div class="line">122	smurf.	177</div><div class="line">122	warezclient.	31</div><div class="line">123	normal.	1242</div><div class="line">124	normal.	351</div><div class="line">125	back.	18</div><div class="line">125	normal.	5</div><div class="line">126	normal.	2</div><div class="line">127	normal.	1</div><div class="line">128	multihop.	1</div><div class="line">128	normal.	376</div><div class="line">128	rootkit.	1</div><div class="line">129	normal.	7</div></pre></td></tr></table></figure>
+<p>结果比第一次好上很多了<br>现在可以使用这个模型对全体数据进行聚类了，使用这个模型可以将数据中离质心最远的点找出来<br><strong>将这个点到质心的距离设置为阈值</strong><br>当有新的数据进来时，<strong>判断这个数据到其质心的距离是否超过这个阈值</strong><br>超过就发出警报进行异常检车</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在本篇中，样本数据的类别型特征被直接跳过，但是在实际场景中是不能这么做的<br>正确的做法应该是讲类别型特征转换为数值型特征来训练，得到的模型和之前讨论过的将不太一样<br>但是模型模型的训练和寻找最优k值的过程是一致的</p>
+<p>KMeans训练出来的模型还可以和Spark Streaming相结合，搭建出实时的网络流量异常预警系统</p>
+<p><a href="https://github.com/chubbyjiang/spark-demo/tree/master/src/main/scala/info/xiaohei/www/spark/examples/kmeans" target="_blank" rel="external">Github源码地址</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/09/mapreduce-features/" rel="next" title="MapReduce高级特性">
+                <i class="fa fa-chevron-left"></i> MapReduce高级特性
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/11/hadoop-settingup-cluster/" rel="prev" title="构建Hadoop集群">
+                构建Hadoop集群 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/09/spark-kmeans-network/"
+           data-title="KMeans算法检测网络异常入侵" data-url="http://xiaohei.info/2016/05/09/spark-kmeans-network/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#非监督学习技术"><span class="nav-number">1.</span> <span class="nav-text">非监督学习技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#异常检查"><span class="nav-number">1.1.</span> <span class="nav-text">异常检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#KMeans均值聚类"><span class="nav-number">1.2.</span> <span class="nav-text">KMeans均值聚类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序开发"><span class="nav-number">2.</span> <span class="nav-text">程序开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#数据集"><span class="nav-number">2.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#聚类的初步尝试"><span class="nav-number">2.2.</span> <span class="nav-text">聚类的初步尝试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#K值的选择"><span class="nav-number">2.3.</span> <span class="nav-text">K值的选择</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

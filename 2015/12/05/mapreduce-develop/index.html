@@ -1,0 +1,850 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="通过API操作之前要先了解几个基本知识
+基本数据类型Hadoop的基本数据类型和Java的基本数据类型是不一样的，但是都存在对应的关系
+如下图
+如果需要定义自己的数据类型，则必须实现Writablehadoop的数据类型可以通过get方法获得对应的java数据类型而java的数据类型可以通过hadoop数据类名的构造函数，或者set方法转换
+关于Hadoop的Writable接口，详情请看Hado">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce程序开发">
+<meta property="og:url" content="http://xiaohei.info/2015/12/05/mapreduce-develop/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="通过API操作之前要先了解几个基本知识
+基本数据类型Hadoop的基本数据类型和Java的基本数据类型是不一样的，但是都存在对应的关系
+如下图
+如果需要定义自己的数据类型，则必须实现Writablehadoop的数据类型可以通过get方法获得对应的java数据类型而java的数据类型可以通过hadoop数据类名的构造函数，或者set方法转换
+关于Hadoop的Writable接口，详情请看Hado">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211170558307?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211155110692?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211155120379?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211155119399?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211155131783?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:image" content="http://img.blog.csdn.net/20150211155129352?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+<meta property="og:updated_time" content="2016-07-14T03:40:16.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce程序开发">
+<meta name="twitter:description" content="通过API操作之前要先了解几个基本知识
+基本数据类型Hadoop的基本数据类型和Java的基本数据类型是不一样的，但是都存在对应的关系
+如下图
+如果需要定义自己的数据类型，则必须实现Writablehadoop的数据类型可以通过get方法获得对应的java数据类型而java的数据类型可以通过hadoop数据类名的构造函数，或者set方法转换
+关于Hadoop的Writable接口，详情请看Hado">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150211170558307?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/12/05/mapreduce-develop/"/>
+
+  <title> MapReduce程序开发 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                MapReduce程序开发
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-12-05T11:39:20+08:00" content="2015-12-05">
+              2015-12-05
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/12/05/mapreduce-develop/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/12/05/mapreduce-develop/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/12/05/mapreduce-develop/" class="leancloud_visitors" data-flag-title="MapReduce程序开发">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>通过API操作之前要先了解几个基本知识</p>
+<h2 id="基本数据类型"><a href="#基本数据类型" class="headerlink" title="基本数据类型"></a>基本数据类型</h2><p>Hadoop的基本数据类型和Java的基本数据类型是不一样的，但是都存在对应的关系</p>
+<p>如下图<br><img src="http://img.blog.csdn.net/20150211170558307?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="数据类型关系"></p>
+<p>如果需要定义自己的数据类型，则必须实现<strong>Writable</strong><br>hadoop的数据类型可以通过get方法获得对应的java数据类型<br>而java的数据类型可以通过hadoop数据类名的构造函数，或者set方法转换</p>
+<p>关于Hadoop的Writable接口，详情请看<a href="http://www.xiaohei.info/2016/05/04/hadoop-io-summary/" target="_blank" rel="external">Hadoop I/O</a>中的序列化部分</p>
+<h2 id="MapReduce执行的基本步骤"><a href="#MapReduce执行的基本步骤" class="headerlink" title="MapReduce执行的基本步骤"></a>MapReduce执行的基本步骤</h2><p>Hadoop提交作业的的步骤分为八个，可以理解为天龙八步</p>
+<h3 id="Map端工作"><a href="#Map端工作" class="headerlink" title="Map端工作"></a>Map端工作</h3><blockquote>
+<ul>
+<li><strong>1.1 读取要操作的文件</strong>–这步会将文件的内容格式化成键值对的形式，键为每一行的起始位置偏移，值为每一行的内容。</li>
+<li><strong>1.2 调用map进行处理</strong>–在这步使用自定义的Mapper类来实现自己的逻辑，输入的数据为1.1格式化的键值对，输入的数据也是键值对的形式。</li>
+<li><strong>1.3 对map的处理结果进行分区</strong>–map处理完毕之后可以根据自己的业务需求来对键值对进行分区处理，比如，将类型不同的结果保存在不同的文件中等。这里设置几个分区，后面就会有对应的几个Reducer来处理相应分区中的内容。</li>
+<li><strong>1.4 分区之后，对每个分区的数据进行排序，分组</strong>–排序按照从小到大进行排列，排序完毕之后，会将键值对中，key相同的选项 的value进行合并。如，所有的键值对中，可能存在<br>hello 1<br>hello 1<br>key都是hello，进行合并之后变成<br>hello 2<br>可以根据自己的业务需求对排序和合并的处理进行干涉和实现。</li>
+<li><strong>1.5 归约（combiner）</strong>–简单的说就是在map端进行一次reduce处理，但是和真正的reduce处理不同之处在于：combiner只能处理本地数据，不能跨网络处理。通过map端的combiner处理可以减少输出的数据，因为数据都是通过网络传输的，其目的是为了减轻网络传输的压力和后边reduce的工作量。并不能取代reduce。</li>
+</ul>
+</blockquote>
+<h3 id="Reduce端工作"><a href="#Reduce端工作" class="headerlink" title="Reduce端工作"></a>Reduce端工作</h3><blockquote>
+<ul>
+<li><strong>2.1 通过网络将数据copy到各个reduce。</strong></li>
+<li><strong>2.2 调用reduce进行处理</strong>–reduce接收的数据是整个map端处理完毕之后的键值对，输出的也是键值对的集合，是最终的结果。</li>
+<li><strong>2.3 将结果输出到hdfs文件系统的路径中。</strong></li>
+</ul>
+</blockquote>
+<h2 id="程序开发"><a href="#程序开发" class="headerlink" title="程序开发"></a>程序开发</h2><h3 id="开发流程"><a href="#开发流程" class="headerlink" title="开发流程"></a>开发流程</h3><p>一般情况下我们不可能直接在生产环境中直接拿海量数据进行程序开发，不说程序有没有bug，能不能跑起来都是一个问题<br>所以通常步骤是：</p>
+<blockquote>
+<p>1.本地程序开发测试：从海量数据中抽取小部分数据到本地，使用IDE等工具进行开发，并在测试数据集上进行程序运行、逻辑等测试<br>2.集群环境运行：本地测试通过后，就可以将代码运行在海量数据中，这时候90%的小bug已经得到修复了，剩余要解决的就是生产环境中的问题了<br>3.调优：程序能够在集群中运行起来并不代表成功，通过一些集群、程序调优方式可以让你的代码跑的更好、更快</p>
+</blockquote>
+<h3 id="导包"><a href="#导包" class="headerlink" title="导包"></a>导包</h3><p>新建一个java项目，并导入hadoop包，在项目选项上右键，如图选择<br><img src="http://img.blog.csdn.net/20150211155110692?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="示例"></p>
+<p>找到hadoop的安装目录，选择所有的包<br><img src="http://img.blog.csdn.net/20150211155120379?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="示例"></p>
+<p>在找到hadoop安装目录下的lib，导入其中的所有包<br><img src="http://img.blog.csdn.net/20150211155119399?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="示例"></p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>新建JMapper类为自定义的Mapper类</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">import org.apache.hadoop.io.LongWritable;  </div><div class="line">import org.apache.hadoop.io.Text;  </div><div class="line">import org.apache.hadoop.mapreduce.Mapper;  </div><div class="line">  </div><div class="line">//自定义的Mapper类必须继承Mapper类，并重写map方法实现自己的逻辑  </div><div class="line">public class JMapper extends Mapper&lt;LongWritable, Text, Text, LongWritable&gt; &#123;  </div><div class="line">    //处理输入文件的每一行都会调用一次map方法，文件有多少行就会调用多少次  </div><div class="line">    protected void map(  </div><div class="line">            LongWritable key,  </div><div class="line">            Text value,  </div><div class="line">            org.apache.hadoop.mapreduce.Mapper&lt;LongWritable, Text, Text, LongWritable&gt;.Context context)  </div><div class="line">            throws java.io.IOException, InterruptedException &#123;  </div><div class="line">        //key为每一行的起始偏移量  </div><div class="line">        //value为每一行的内容  </div><div class="line">          </div><div class="line">        //每一行的内容分割，如hello   world，分割成一个String数组有两个数据，分别是hello，world  </div><div class="line">        String[] ss = value.toString().toString().split(&quot;\t&quot;);  </div><div class="line">        //循环数组，将其中的每个数据当做输出的键，值为1，表示这个键出现一次  </div><div class="line">        for (String s : ss) &#123;  </div><div class="line">            //context.write方法可以将map得到的键值对输出  </div><div class="line">            context.write(new Text(s), new LongWritable(1));  </div><div class="line">        &#125;  </div><div class="line">    &#125;;  </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>新建JReducer类为自定义的Reducer<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">import org.apache.hadoop.io.LongWritable;  </div><div class="line">import org.apache.hadoop.io.Text;  </div><div class="line">import org.apache.hadoop.mapreduce.Reducer;  </div><div class="line">  </div><div class="line">//自定义的Reducer类必须继承Reducer，并重写reduce方法实现自己的逻辑，泛型参数分别为输入的键类型，值类型；输出的键类型，值类型；之后的reduce类似  </div><div class="line">public class JReducer extends Reducer&lt;Text, LongWritable, Text, LongWritable&gt; &#123;  </div><div class="line">    //处理每一个键值对都会调用一次reduce方法，有多少个键值对就调用多少次  </div><div class="line">    protected void reduce(  </div><div class="line">            Text key,  </div><div class="line">            java.lang.Iterable&lt;LongWritable&gt; value,  </div><div class="line">            org.apache.hadoop.mapreduce.Reducer&lt;Text, LongWritable, Text, LongWritable&gt;.Context context)  </div><div class="line">            throws java.io.IOException, InterruptedException &#123;  </div><div class="line">        //key为每一个单独的单词，如：hello，world，you，me等  </div><div class="line">        //value为这个单词在文本中出现的次数集合，如&#123;1,1,1&#125;，表示总共出现了三次  </div><div class="line">        long sum = 0;  </div><div class="line">        //循环value，将其中的值相加，得到总次数  </div><div class="line">        for (LongWritable v : value) &#123;  </div><div class="line">            sum += v.get();  </div><div class="line">        &#125;  </div><div class="line">        //context.write输入新的键值对（结果）  </div><div class="line">        context.write(key, new LongWritable(sum));  </div><div class="line">    &#125;;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>新建执行提交作业的类，取名JSubmit<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line">import java.io.IOException;  </div><div class="line">import java.net.URI;  </div><div class="line">import java.net.URISyntaxException;  </div><div class="line">  </div><div class="line">import org.apache.hadoop.conf.Configuration;  </div><div class="line">import org.apache.hadoop.fs.FileSystem;  </div><div class="line">import org.apache.hadoop.fs.Path;  </div><div class="line">import org.apache.hadoop.io.LongWritable;  </div><div class="line">import org.apache.hadoop.io.Text;  </div><div class="line">import org.apache.hadoop.mapreduce.Job;  </div><div class="line">import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;  </div><div class="line">import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;  </div><div class="line">import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;  </div><div class="line">import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;  </div><div class="line">  </div><div class="line">public class JSubmit &#123;  </div><div class="line">    public static void main(String[] args) throws IOException,  </div><div class="line">            URISyntaxException, InterruptedException, ClassNotFoundException &#123;  </div><div class="line">        //Path类为hadoop API定义，创建两个Path对象，一个输入文件的路径，一个输入结果的路径  </div><div class="line">        Path outPath = new Path(&quot;hdfs://localhost:9000/out&quot;);  </div><div class="line">        //输入文件的路径为本地linux系统的文件路径  </div><div class="line">        Path inPath = new Path(&quot;/home/hadoop/word&quot;);  </div><div class="line">        //创建默认的Configuration对象  </div><div class="line">        Configuration conf = new Configuration();  </div><div class="line">        //根据地址和conf得到hadoop的文件系统独享  </div><div class="line">        //如果输入路径已经存在则删除  </div><div class="line">        FileSystem fs = FileSystem.get(new URI(&quot;hdfs://localhost:9000&quot;), conf);  </div><div class="line">        if (fs.exists(outPath)) &#123;  </div><div class="line">            fs.delete(outPath, true);  </div><div class="line">        &#125;  </div><div class="line">        //根据conf创建一个新的Job对象，代表要提交的作业，作业名为JSubmit.class.getSimpleName()  </div><div class="line">        Job job = new Job(conf, JSubmit.class.getSimpleName());  </div><div class="line">        //1.1  </div><div class="line">        //FileInputFormat类设置要读取的文件路径  </div><div class="line">        FileInputFormat.setInputPaths(job, inPath);  </div><div class="line">        //setInputFormatClass设置读取文件时使用的格式化类  </div><div class="line">        job.setInputFormatClass(TextInputFormat.class);  </div><div class="line">          </div><div class="line">        //1.2调用自定义的Mapper类的map方法进行操作  </div><div class="line">        //设置处理的Mapper类  </div><div class="line">        job.setMapperClass(JMapper.class);  </div><div class="line">        //设置Mapper类处理完毕之后输出的键值对 的 数据类型  </div><div class="line">        job.setMapOutputKeyClass(Text.class);  </div><div class="line">        job.setMapOutputValueClass(LongWritable.class);  </div><div class="line">          </div><div class="line">        //1.3分区，下面的两行代码写和没写都一样，默认的设置  </div><div class="line">        job.setPartitionerClass(HashPartitioner.class);  </div><div class="line">        job.setNumReduceTasks(1);  </div><div class="line">        //1.4排序，分组  </div><div class="line">          </div><div class="line">        //1.5归约，这三步都有默认的设置，如果没有特殊的需求可以不管</div><div class="line">        //2.1将数据传输到对应的Reducer  </div><div class="line">      </div><div class="line">        //2.2使用自定义的Reducer类操作  </div><div class="line">        //设置Reducer类  </div><div class="line">        job.setReducerClass(JReducer.class);  </div><div class="line">        //设置Reducer处理完之后 输出的键值对 的数据类型  </div><div class="line">        job.setOutputKeyClass(Text.class);  </div><div class="line">        job.setOutputValueClass(LongWritable.class);  </div><div class="line">      </div><div class="line">        //2.3将结果输出  </div><div class="line">        //FileOutputFormat设置输出的路径  </div><div class="line">        FileOutputFormat.setOutputPath(job, outPath);  </div><div class="line">        //setOutputFormatClass设置输出时的格式化类  </div><div class="line">        job.setOutputFormatClass(TextOutputFormat.class);  </div><div class="line">      </div><div class="line">        //将当前的job对象提交  </div><div class="line">        job.waitForCompletion(true);  </div><div class="line">    &#125;</div></pre></td></tr></table></figure></p>
+<h3 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h3><p>运行java程序，可以再控制台看到提交作业的提示<br><img src="http://img.blog.csdn.net/20150211155131783?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="示例"></p>
+<p>在hdfs中查看输出的文件<br><img src="http://img.blog.csdn.net/20150211155129352?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXExMDEwODg1Njc4/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt="示例"></p>
+<h2 id="程序调试"><a href="#程序调试" class="headerlink" title="程序调试"></a>程序调试</h2><p>在集群上调试程序是十分困难的，就算采用最常见的println打印信息你也不知道该信息会在集群上哪个节点打印出来</p>
+<p>在MapReduce中，可以使用<strong>系统错误信息+计数器</strong>的组合来进行调试，在map或者reduce函数中，我们可以这样做：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">System.out.println(<span class="string">"一些错误信息"</span>);</div><div class="line">context.setStatus(<span class="string">"关于错误的一些提示"</span>)</div><div class="line">context.getCounter(计数器组名一般为枚举类型).increment(<span class="number">1</span>);</div></pre></td></tr></table></figure>
+<p>在CLI中可以通过以下命令查看计数器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mapred job -counter jobId counterGroup counterName</div></pre></td></tr></table></figure>
+<p>counterGroup：计数器组名，一般为枚举类型的全类名<br>counterName：计数器名，一般为枚举类型的值</p>
+<h2 id="性能调优"><a href="#性能调优" class="headerlink" title="性能调优"></a>性能调优</h2><p>参考：<a href="http://www.xiaohei.info/2016/03/15/mapreduce-tunning/" target="_blank" rel="external">MapReduce性能调优记录</a></p>
+<h2 id="JobControl"><a href="#JobControl" class="headerlink" title="JobControl"></a>JobControl</h2><p>开发MapReduce程序的时候，我们需要考虑如何<strong>把需求转换为MapReduce模型</strong>来解决问题<br>对于一些复杂的场景，我们通常是使用多个Job来完成任务，而不是一个非常复杂的单一Job</p>
+<p>所以一个完成的任务就可能会有多个Job，一个Job有可能有多个Mapper的情况，参考：<br><a href="http://www.xiaohei.info/2016/02/22/mapreduce-multi-input-mapper-reducer/" target="_blank" rel="external">多个Mapper和Reducer处理多个输入</a></p>
+<h2 id="开发技巧"><a href="#开发技巧" class="headerlink" title="开发技巧"></a>开发技巧</h2><p>参考：<a href="http://www.xiaohei.info/2016/03/17/mapreduce-development-skills/" target="_blank" rel="external">MapReduce开发技巧</a></p>
+<h2 id="更多应用场景"><a href="#更多应用场景" class="headerlink" title="更多应用场景"></a>更多应用场景</h2><p>下面是自己在学习过程中收集整理的一些MapReduce场景Demo，可以提供参考和帮助：<br><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">GitHub - chubbyjiang/MapReduce: MapReduce Demo</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/09/docker-core-technology/" rel="next" title="Docker核心技术">
+                <i class="fa fa-chevron-left"></i> Docker核心技术
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/12/24/others-easyuse-gfw/" rel="prev" title="简单易用的科学上网工具">
+                简单易用的科学上网工具 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/12/05/mapreduce-develop/"
+           data-title="MapReduce程序开发" data-url="http://xiaohei.info/2015/12/05/mapreduce-develop/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本数据类型"><span class="nav-number">1.</span> <span class="nav-text">基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MapReduce执行的基本步骤"><span class="nav-number">2.</span> <span class="nav-text">MapReduce执行的基本步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Map端工作"><span class="nav-number">2.1.</span> <span class="nav-text">Map端工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reduce端工作"><span class="nav-number">2.2.</span> <span class="nav-text">Reduce端工作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序开发"><span class="nav-number">3.</span> <span class="nav-text">程序开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#开发流程"><span class="nav-number">3.1.</span> <span class="nav-text">开发流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#导包"><span class="nav-number">3.2.</span> <span class="nav-text">导包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码"><span class="nav-number">3.3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运行"><span class="nav-number">3.4.</span> <span class="nav-text">运行</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序调试"><span class="nav-number">4.</span> <span class="nav-text">程序调试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#性能调优"><span class="nav-number">5.</span> <span class="nav-text">性能调优</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JobControl"><span class="nav-number">6.</span> <span class="nav-text">JobControl</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开发技巧"><span class="nav-number">7.</span> <span class="nav-text">开发技巧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更多应用场景"><span class="nav-number">8.</span> <span class="nav-text">更多应用场景</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark,Scala," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Scala作为Spark的开发语言，想要成为Spark高手，精通Scala是必须要走的一条路然后一门语言并不是你想精通就能够精通的，更何况是Scala这种面向对象又面向函数的编程语言，个人觉得其学习的门槛会比C#，Java等面向对象语言要高所以，这篇文章是建立在有一点编程语言知识的基础上的（如学过C#或者Java等），其实所有语言都是大同小异的，学会了一门语言在学其他的就不会像刚开始那么吃力了，因">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（七） -- Scala快速入门">
+<meta property="og:url" content="http://xiaohei.info/2015/05/18/spark-7-scala-quickstart/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="Scala作为Spark的开发语言，想要成为Spark高手，精通Scala是必须要走的一条路然后一门语言并不是你想精通就能够精通的，更何况是Scala这种面向对象又面向函数的编程语言，个人觉得其学习的门槛会比C#，Java等面向对象语言要高所以，这篇文章是建立在有一点编程语言知识的基础上的（如学过C#或者Java等），其实所有语言都是大同小异的，学会了一门语言在学其他的就不会像刚开始那么吃力了，因">
+<meta property="og:image" content="http://img.blog.csdn.net/20150518205610754">
+<meta property="og:updated_time" content="2016-07-15T02:47:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（七） -- Scala快速入门">
+<meta name="twitter:description" content="Scala作为Spark的开发语言，想要成为Spark高手，精通Scala是必须要走的一条路然后一门语言并不是你想精通就能够精通的，更何况是Scala这种面向对象又面向函数的编程语言，个人觉得其学习的门槛会比C#，Java等面向对象语言要高所以，这篇文章是建立在有一点编程语言知识的基础上的（如学过C#或者Java等），其实所有语言都是大同小异的，学会了一门语言在学其他的就不会像刚开始那么吃力了，因">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150518205610754">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/18/spark-7-scala-quickstart/"/>
+
+  <title> Spark（七） -- Scala快速入门 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（七） -- Scala快速入门
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-18T10:47:31+08:00" content="2015-05-18">
+              2015-05-18
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/18/spark-7-scala-quickstart/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/18/spark-7-scala-quickstart/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/18/spark-7-scala-quickstart/" class="leancloud_visitors" data-flag-title="Spark（七） -- Scala快速入门">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Scala作为Spark的开发语言，想要成为Spark高手，精通Scala是必须要走的一条路<br>然后一门语言并不是你想精通就能够精通的，更何况是Scala这种面向对象又面向函数的编程语言，个人觉得其学习的门槛会比C#，Java等面向对象语言要高<br>所以，这篇文章是建立在有一点编程语言知识的基础上的（如学过C#或者Java等），其实所有语言都是大同小异的，学会了一门语言在学其他的就不会像刚开始那么吃力了，因为它们很多概念都是相通的<br>本篇文章主要是介绍Scala本身的一些特性，以便以能够快速的上手开发，而对于真正要精通Scala，显然要付出的努力还要很多</p>
+<p>安装Scala的开发环境就不具体介绍了，请自行百度之。IDE使用的是Eclipse For Scala，下载地址：<br><a href="http://scala-ide.org/download/sdk.html" target="_blank" rel="external">Eclipse For Scala</a></p>
+<p>本文大概从以下几个方面来介绍Scala：</p>
+<ol>
+<li>声明变量的关键字</li>
+<li>方法的定义格式</li>
+<li>条件表达式</li>
+<li>默认参数，带名参数和变长参数</li>
+<li>lazy变量</li>
+<li>数组</li>
+<li>Map操作</li>
+<li>元组</li>
+<li>值函数</li>
+<li>匿名函数</li>
+<li>函数柯里化</li>
+<li>高阶函数示例</li>
+<li>List序列</li>
+<li>case class和模式匹配</li>
+</ol>
+<p><strong>Scala中声明变量的关键字只有两种：</strong><br>val和var，分别表示常量和变量的声明（在Scala提倡中尽量使用val而不是var）</p>
+<p><strong>方法的定义格式：</strong><br>def 方法名（参数名：参数类型,…）：返回值类型={方法体}<br>如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">def add(x:Int,y:Int):Int=&#123;</div><div class="line">	x + y</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>定义了一个参数为两个Int类型，返回值也为Int类型的方法add，返回x+y的值<br>相信已经有人注意到了，在Scala中，每个句子是不用以分号结束的（当然加上分号也没事），而且方法中不用return来返回，默认返回的是最后一行的值<br>当方法没有返回值时表现形式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def add():Unit=&#123;...&#125;</div></pre></td></tr></table></figure>
+<p>或者直接省略：Unit</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def add()=&#123;...&#125;</div></pre></td></tr></table></figure>
+<p>在调用方法的时候，如果该方法没有参数，可以省略括号，如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">add//加上括号也没事，如add()</div></pre></td></tr></table></figure>
+<p><strong>条件表达式：</strong></p>
+<p>和其他语言的if/else唯一的却别就是，Scala的if/else是有返回值的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val x = 8</div><div class="line">val res = if(x &gt; 7) 1 else 0</div></pre></td></tr></table></figure>
+<p>如果x&gt;7就返回1，否则返回0，赋值给res</p>
+<p>Scala中的while和do-while用法是和其他语言一样的，但是for的用法就不同了<br>for循环语句的格式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">for(i &lt;- 表达式)&#123;</div><div class="line">	循环体</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">for(i &lt;- 1 to 10)&#123;</div><div class="line">	println(i)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面代码中，1 to 10会产生1-10中的每个数，i会迭代循环这10个数，迭代一次执行一次循环体。<br>刚开始看肯定会很奇怪，&lt;-这个符号是必须的，现在假设我们有一个arr数组，里面有1-10这10个数<br>首先用C#的循环方式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">for(int i = 0;i &lt; arr.Length;i++)</div><div class="line">&#123;</div><div class="line">	Console.WriteLine(arr[i]);</div><div class="line">&#125;</div><div class="line">//或者foreach方式</div><div class="line">foreach(var i in arr)</div><div class="line">&#123;</div><div class="line">	Console.WriteLine(i);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在对比一下Scala的for循环：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">for(i &lt;- 0 to arr.length)&#123;</div><div class="line">	println(arr[i])</div><div class="line">&#125;</div><div class="line">//for同时也可以当foreach使用</div><div class="line">for(i &lt;- arr)&#123;</div><div class="line">	println(i)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>并且，在Scala中，for循环是可以添加if判断语句的，如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">for(i &lt;- 0 to 10 if i % 2 == 0)&#123;</div><div class="line">	println(i)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面代码的意思是，循环0-10，只打印出偶数<br>Scala的循环表达式中没有continue和break语句，但是可以通过一个Boolean变量和嵌套函数中return来实现</p>
+<p><strong>默认参数，带名参数和变长参数：</strong></p>
+<p>这几个概念很简单，通过几行实例代码基本可以了解<br>默认参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def getName(name:String = &quot;JChubby&quot;) = &#123;...&#125;</div></pre></td></tr></table></figure>
+<p>调用getName时如果没有传参数，则会使用默认的JChubby</p>
+<p>带名参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def showNum(x:Int,y:Int):Unit = &#123;...&#125;</div></pre></td></tr></table></figure>
+<p>调用该方法时，参数可以不按顺序，但是要执行参数名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">showNum(y = 2,x = 4)</div></pre></td></tr></table></figure>
+<p>变长参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">def canChangeLength(x:Int*) = &#123;...&#125;</div></pre></td></tr></table></figure>
+<p>调用时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">canChangeLength(1,2,3,4,...)</div></pre></td></tr></table></figure>
+<p><strong>lazy变量：</strong></p>
+<p>正常情况下使用val或者var声明变量时是直接分配内存空间使用的<br>当使用lazy关键字时，这个常/变量只有在使用的时候才会被分配内存<br>如在Scala命令行中输入下面的代码之后回车：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">lazy val a = 1</div></pre></td></tr></table></figure>
+<p><img src="http://img.blog.csdn.net/20150518205610754" alt="这里写图片描述"></p>
+<p>lazy（懒值）对应开销很大的初始化操作非常有用，如在读取一个很大的文件的时候，如果一开始并不马上使用，可以将其标记为lazy，直到文件真正使用的时候才分配内存空间</p>
+<p><strong>数组：</strong></p>
+<p>Scala中分为两种：<br>定长数组：scala.collection.immutable.Array，一旦声明之后长度不可变<br>变长数组：scala.collection.mutable.ArrayBuffer，动态数组</p>
+<p>定长数组使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">val arr = new Array[Int](3)//声明长度为3，类型为Int的Array数组（new可省略）</div><div class="line"></div><div class="line">//或者声明时直接赋值</div><div class="line">//编译器会自动推断类型为Int</div><div class="line">val arr = Array(1,2,3)</div><div class="line"></div><div class="line">//通过下标访问数组的方式为()而不是[]，请注意！</div><div class="line">val a = arr(0)</div></pre></td></tr></table></figure>
+<p>变长数组使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">val arrBuf = scala.collection.mutable.ArrayBuffer[Int]()</div><div class="line">//添加元素，相当于add</div><div class="line">arrBuf += 1</div><div class="line">//也可以一次性添加多个</div><div class="line">arrBuf += (1,2,3)</div><div class="line">//使用++=可以直接添加一个数组</div><div class="line">arrBuf ++= Array(1,2,3)</div><div class="line">//在指定位置插入若干个元素，在0位置插入1,2,3</div><div class="line">arrBuf.insert(0,1,2,3)</div><div class="line">//Scala中的函数除了通过.来调用之外也可以直接写成一下形式</div><div class="line">arrBuf insert (0,1,2,3)</div><div class="line">//之前的1 to 10 其实就是调用了1.to(10)这个to方法</div><div class="line"></div><div class="line">//移除指定位置的元素</div><div class="line">arrBuf remove 0</div><div class="line">//移除指定位置后的连续n个元素</div><div class="line">arrBuf remove 0,3</div><div class="line">//删除末尾的n个元素</div><div class="line">arrBuf trimEnd 3</div></pre></td></tr></table></figure>
+<p>此外还有例如min，max等函数求最大最小等常用操作</p>
+<p><strong>Map操作：</strong></p>
+<p>和数组一样，Map同样也分为可变和不可变两种</p>
+<p>不可变Map的使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">//声明一个Map，包含两个键值对，-&gt;表示键值对应的关系</div><div class="line">val myMap = Map(&quot;JChubby&quot; -&gt; 22,&quot;Looky&quot; -&gt; 21)</div></pre></td></tr></table></figure>
+<p>不可变的Map中，一旦声明之后，该Map不可添加不可删除不可修改，只能查看，查看方式与可变Map一致</p>
+<p>可变Map的使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">val myMap = scala.collection.mutable.Map(&quot;JChubby&quot; -&gt; 22,&quot;Looky&quot; -&gt; 21)</div><div class="line">//添加元素</div><div class="line">myMap += (&quot;abc&quot; -&gt; 12,&quot;bcd&quot; -&gt; 13)</div><div class="line">//删除元素</div><div class="line">myMap -= &quot;abc&quot;</div><div class="line">//修改元素</div><div class="line">myMap(&quot;JChubby&quot;) = 10</div><div class="line">//或者</div><div class="line">myMap += (&quot;JChubby&quot; -&gt; 10)</div><div class="line">//查找元素</div><div class="line">myMap(&quot;JChubby&quot;)</div><div class="line">//或者使用getOrElse,该方法在取不到值的时候返回一个默认值，以免出现异常</div><div class="line">myMap getOrElse (&quot;JChubby&quot;,-1)</div><div class="line">//遍历，使用的是k，v格式来进行遍历</div><div class="line">for((k,v) &lt;- myMap)&#123;</div><div class="line">	println(k + &quot;:&quot; + v)</div><div class="line">&#125;</div><div class="line">//如果只要遍历k或者v，可以使用_占位符</div><div class="line">for((k,_) &lt;- myMap)&#123;</div><div class="line">	println(k)</div><div class="line">&#125;</div><div class="line">//获取所有的key</div><div class="line">myMap.keySet</div><div class="line">//获取所有的value</div><div class="line">myMap.values</div></pre></td></tr></table></figure>
+<p><strong>元组：</strong></p>
+<p>元组其实就是一个集合，但是可以存放各种不同类型的数据<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">val group = (1,2,&quot;JChubby&quot;,3.0)</div><div class="line">//通过下标访问元组的格式为：元组名._下标 或者 元组名 _下标。如：</div><div class="line">group._0</div><div class="line">group _0</div><div class="line">//遍历元组格式为,productIterator为固定格式不可少</div><div class="line">for(element &lt;- group.productIterator)&#123;</div><div class="line">	...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>值函数：</strong></p>
+<p>Scala中可以将函数赋值给一个变量，这个变量就称为值函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">def add(x:Int,y:Int):Int = &#123;</div><div class="line">	x + y</div><div class="line">&#125;</div><div class="line"></div><div class="line">//格式为方法名+空格+_</div><div class="line">var res = add _</div><div class="line">//之后可以将这个变量当做方法来用</div><div class="line">res(1,2)</div></pre></td></tr></table></figure>
+<p><strong>匿名函数：</strong></p>
+<p>顾名思义，没有名字的函数，定义格式如下：<br>(参数名：参数类型,…) =&gt; 表达式<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(x:Int) =&gt; x + 3</div></pre></td></tr></table></figure>
+<p>可以将匿名函数赋值给一个常量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">val func = (x:Int) =&gt; x + 3</div><div class="line">//直接调用常量</div><div class="line">func(7)</div></pre></td></tr></table></figure>
+<p>上面的用法其实和直接定义一个有名的函数是一样的，匿名函数主要是当做函数的参数来传递使用<br>例如scala.collection.mutable.ArrayBuffer的map方法，其参数要求是一个匿名函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">scala.collection.mutable.ArrayBuffer.map((x:Int) =&gt; x +3)</div></pre></td></tr></table></figure>
+<p>执行的结果是ArrayBuffer里面每个值都加3（map函数之后会介绍）</p>
+<p><strong>函数柯里化：</strong></p>
+<p>函数柯里化就是将原本有 很多参数 的函数，分成一个个只有 一个参数 的函数，每个函数的返回值都是 一个表达式 并且当做参数 传到下一个函数<br>例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">def mul(x:Int,y:Int) = x + y</div><div class="line">//调用方式为</div><div class="line">mul(1,2)</div><div class="line">//柯里化后的函数为</div><div class="line">def mul(x:Int)(y:Int) = x + y</div><div class="line">//调用当时为</div><div class="line">mul(1)(2)</div><div class="line">//执行mul(1)时，返回的是1 + y，在将这个函数应用到2，得到 1 + 2</div></pre></td></tr></table></figure>
+<p>柯里化是闭包的典型体现，具体柯里化的概念请百度之~</p>
+<p><strong>高阶函数示例：</strong></p>
+<p>数组的map函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">val arr = Array(1,2,3)</div><div class="line">arr.map(1 + _)</div></pre></td></tr></table></figure>
+<p>_表示数组中的每个元素，执行的结果为每个元素+1</p>
+<p>数组的filter函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">arr.filter(_ &gt; 2)</div></pre></td></tr></table></figure>
+<p>_ &gt; 2会将数组中大于2的元素过滤出来</p>
+<p>数组的reduce函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">arr.reduce(_ + _)</div></pre></td></tr></table></figure>
+<p>reduce是迭代运算，将数组中两个元素先执行操作，把结果作为一个元素继续和下一个元素进行操作，执行结果为：1+2=3,3+3=9，也就是求和</p>
+<p><strong>List序列：</strong></p>
+<p>List操作：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">val list = List(1,2,3)</div><div class="line">//获取头元素</div><div class="line">list.head</div><div class="line">//获取除了头元素之外的其他元素</div><div class="line">list.tail</div><div class="line">//新增元素</div><div class="line">7::list</div><div class="line">//注意，::运算符是从右向左的</div><div class="line"></div><div class="line">//获取前n个元素</div><div class="line">list.take(n)</div><div class="line">//list的zip操作</div><div class="line">val list1 = List(a,b,c)</div><div class="line">list.zip(list1)</div><div class="line">//得到的结果为List((1,a),(2,b),(3,c))，如果两个list的长度不同，以比较短的为基础</div><div class="line"></div><div class="line">//flatten操作</div><div class="line">val list2 = List(List(1,2),List(2,3),List(3,4))</div><div class="line">list2.flatten</div><div class="line">//得到的结果为List(1,2,2,3,3,4)，用于将嵌套List组合成一个新的List</div><div class="line"></div><div class="line">//flatmap操作</div><div class="line">list2.flatmap(_.map(_ * 2))</div><div class="line">//跟flatten相比，flatmap在组合之前，会先对每个子List进行map操作</div></pre></td></tr></table></figure></p>
+<p><strong>case class和模式匹配：</strong></p>
+<p>case class又称为样例类，和普通的类相比，样例类不用new就可以实例化，默认执行的是apply方法来构造对象</p>
+<p>模式匹配：</p>
+<p>和其他语言的switch功能差不多，但是Scala里面使用的是match<br>使用示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">val res = 1</div><div class="line">res match&#123;</div><div class="line">	case 0 =&gt; println(0)</div><div class="line">	case 1 =&gt; println(1)</div><div class="line">	case 2 =&gt; println(2)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>除了用法格式上略有不同，其余的基本类似，并且不需要使用break关键字</p>
+<p>样例类和模式匹配结合使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">//定义抽象类Human</div><div class="line">abstract class Human</div><div class="line">//分别定义用例类Chinese，Japanese，American都继承自Human</div><div class="line">case class Chinese(name:String) extends Human</div><div class="line">case class Japanese(name:String) extends Human</div><div class="line">case class American(name:String) extends Human</div><div class="line"></div><div class="line">//定义模式匹配方法</div><div class="line">def caseMatch(human:Human)&#123;</div><div class="line">	//human参数类型不同，做出不同处理，Chinese(_)表示只关心是不是Chinese而不关心叫什么名字</div><div class="line">	case Chinese(_) =&gt; println(&quot;Chinese&quot;)</div><div class="line">	case Japanese(_) =&gt; println(&quot;Japanese&quot;)</div><div class="line">	case American(_) =&gt; println(&quot;American&quot;)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+            <a href="/tags/Scala/" rel="tag">#Scala</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/17/spark-6-calculation-model/" rel="next" title="Spark（六） -- Spark计算模型">
+                <i class="fa fa-chevron-left"></i> Spark（六） -- Spark计算模型
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/24/spark-8-idea-development-env/" rel="prev" title="Spark（八） -- 使用Intellij Idea搭建Spark开发环境">
+                Spark（八） -- 使用Intellij Idea搭建Spark开发环境 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/18/spark-7-scala-quickstart/"
+           data-title="Spark（七） -- Scala快速入门" data-url="http://xiaohei.info/2015/05/18/spark-7-scala-quickstart/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Spark On Yarn：
+从0.6.0版本其，就可以在在Yarn上运行Spark通过Yarn进行统一的资源管理和调度进而可以实现不止Spark，多种处理框架并存工作的场景
+部署Spark On Yarn的方式其实和Standalone是差不多的，区别就是需要在spark-env.sh中添加一些yarn的环境配置，在提交作业的时候会根据这些配置加载yarn的信息，然后将作业提交到yarn上进行管">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon">
+<meta property="og:url" content="http://xiaohei.info/2015/05/29/spark-others/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="Spark On Yarn：
+从0.6.0版本其，就可以在在Yarn上运行Spark通过Yarn进行统一的资源管理和调度进而可以实现不止Spark，多种处理框架并存工作的场景
+部署Spark On Yarn的方式其实和Standalone是差不多的，区别就是需要在spark-env.sh中添加一些yarn的环境配置，在提交作业的时候会根据这些配置加载yarn的信息，然后将作业提交到yarn上进行管">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529191246689">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529191916072">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529220856526">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529221006155">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529221300095">
+<meta property="og:image" content="http://img.blog.csdn.net/20150529221501542">
+<meta property="og:updated_time" content="2016-07-15T02:42:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon">
+<meta name="twitter:description" content="Spark On Yarn：
+从0.6.0版本其，就可以在在Yarn上运行Spark通过Yarn进行统一的资源管理和调度进而可以实现不止Spark，多种处理框架并存工作的场景
+部署Spark On Yarn的方式其实和Standalone是差不多的，区别就是需要在spark-env.sh中添加一些yarn的环境配置，在提交作业的时候会根据这些配置加载yarn的信息，然后将作业提交到yarn上进行管">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150529191246689">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/29/spark-others/"/>
+
+  <title> Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-29T10:42:08+08:00" content="2015-05-29">
+              2015-05-29
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/29/spark-others/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/29/spark-others/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/29/spark-others/" class="leancloud_visitors" data-flag-title="Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>Spark On Yarn：</strong></p>
+<p>从0.6.0版本其，就可以在在Yarn上运行Spark<br>通过Yarn进行统一的资源管理和调度<br>进而可以实现不止Spark，多种处理框架并存工作的场景</p>
+<p>部署Spark On Yarn的方式其实和Standalone是差不多的，区别就是需要在spark-env.sh中添加一些yarn的环境配置，在提交作业的时候会根据这些配置加载yarn的信息，然后将作业提交到yarn上进行管理</p>
+<p>首先请确保已经部署了Yarn，相关操作请参考：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/44492747" target="_blank" rel="external">hadoop2.2.0集群安装和配置</a></p>
+<p>部署完成之后可以通过<br>yarn-master:8088<br>查看yarn的web管理界面<br>yarn-master为配置的yarn主机名或ip地址</p>
+<p>Spark的一些配置如下：<br>修改spark-env.sh文件<br>必须添加的是<br>HADOOP_CONF_DIR 或者 YARN_CONF_DIR指向hadoop的conf配置文件目录</p>
+<p>其余的和Spark Standalone部署是一样的，具体请参考：</p>
+<p><a href="http://blog.csdn.net/qq1010885678/article/details/45629643" target="_blank" rel="external">Spark（一）– Standalone HA的部署</a></p>
+<p>另外，可以通过<br>SPARK_YARN_USER_ENV<br>来配置要传给Spark进程的环境变量，如JAVA_HOME等</p>
+<p>通过export SPARK_JAR=hdfs://some/path<br>来将jar文件放在全局可读的HDFS上，缓存在各个节点中，这样一来，运行应用时就无需每次都分发jar文件到各个节点上</p>
+<p>两种方式作业提交方式：<br>1.yarn-cluster<br>在spark目录下执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-cluster lib/spark-examples*.jar 10</div></pre></td></tr></table></figure>
+<p>来运行SparkPi这个example</p>
+<p>2.yarn-client</p>
+<p>和之前的方式一模一样，只是将yarn-cluster换成yarn-client，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client lib/spark-examples*.jar 10</div></pre></td></tr></table></figure>
+<p>两种方式的区别：<br>client方式下，Spark的Driver会在客户端进程中，Application Master仅仅是向Yarn申请资源，同时会在客户端（终端）上打印出具体的执行log</p>
+<p>cluster方式下，Driver会在Application Master进程中运行，受到Yarn的管理。客户端在应用初始化之后就可以脱离，这时候在客户端不能收到执行的log信息，但是可以通过Yarn的WebUI来查看作业的运行情况</p>
+<p>Spark On Yarn作业的提交方式和Standalone相比仅仅是将–master这个参数由具体的spark主节点，换成了yarn-cluster/client</p>
+<p><strong>Spark as a Service：</strong></p>
+<p>将部署好的Spark集群作为一种服务通过REST接口向外提供<br>这就很像云计算模型</p>
+<p>我们将Spark集群部署好，将适用于各种场景作业的jar包分配上去，而外面的人通过REST接口来调用我们提供的各种服务，这就是Spark as a Service</p>
+<p>其中典型的实现是JobServer</p>
+<p>JobServer其实就是一套软件，将其下载下来之后部署在Spark集群上</p>
+<p>它会想外界提供REST接口，Spark上的各个资源都可以通过一个唯一的URL来访问</p>
+<p>构架图如下：</p>
+<p><img src="http://img.blog.csdn.net/20150529191246689" alt="这里写图片描述"></p>
+<p>特性<br>“Spark as a Service”: 简单的面向job和context管理的REST接口<br>通过长期运行的job context支持亚秒级低延时作业(job)<br>可以通过结束context来停止运行的作业(job)<br>分割jar上传步骤以提高job的启动<br>异步和同步的job API，其中同步API对低延时作业非常有效<br>支持Standalone Spark和Mesos<br>Job和jar信息通过一个可插拔的DAO接口来持久化<br>命名RDD以缓存，并可以通过该名称获取RDD。这样可以提高作业间RDD的共享和重用</p>
+<p>部署JobServer需要sbt</p>
+<p><a href="https://github.com/ooyala/spark-jobserver" target="_blank" rel="external">JobServer下载地址</a></p>
+<p>装好sbt之后，将JobServer解压，进入其根目录<br>敲sbt<br>进入sbt命令之后（第一次启动要下载很多jar包，可能会因为网络的问题卡很久。。）<br>执行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">re-start --- -Xmx4g</div></pre></td></tr></table></figure>
+<p>此时会下载spark-core，jetty和liftweb等相关模块<br>完成之后可以通过访问<a href="http://localhost:8090" target="_blank" rel="external">http://localhost:8090</a> 可以看到Web UI</p>
+<p><img src="http://img.blog.csdn.net/20150529191916072" alt="这里写图片描述"></p>
+<p>相关的API如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">curl --data-binary @job-server-tests/target/job-</div><div class="line">server-tests-0.3.1.jar localhost:8090/jars/test</div><div class="line">//运行指定的jar包</div><div class="line"></div><div class="line">curl localhost:8090/jars/</div><div class="line">//查看提交的jar</div><div class="line"></div><div class="line">curl -d &quot;input.string = hello job server&quot; &apos;localhost:8090/jobs?appName=test&amp;classPath=spark.jobserver.WordCountExample&apos;</div><div class="line">//提交的appName为test，class为spark.jobserver.WordCountExample</div><div class="line"></div><div class="line">curl localhost:8090/jobs/34ce0666-0148-46f7-8bcf-a7a19b5608b2</div><div class="line">curl localhost:8090/jobs/34ce0666-0148-46f7-8bcf-a7a19b5608b2/config</div><div class="line">//通过job-id查看结果和配置信息</div><div class="line"></div><div class="line">curl -d &quot;input.string = hello job server&quot; &apos;localhost:8090/jobs?appName=test&amp;classPath=spark.jobserver.WordCountExample&amp;sync=true&apos;</div><div class="line">//sync=true会直接将执行接口返回，如果没有设置，那么将会分配一个jobId，等作业完成后可以通过jobId在查看信息</div><div class="line"></div><div class="line"></div><div class="line">curl -d &quot;&quot; ‘localhost:8090/contexts/test-context?</div><div class="line">num-cpu-cores=4&amp;mem-per-node=512m&apos;</div><div class="line">//启动一个context</div><div class="line"></div><div class="line">curl localhost:8090/contexts</div><div class="line">//查询所有的context</div><div class="line"></div><div class="line">curl -d &quot;input.string = a b c a b see&quot; &apos;localhost:8090/jobs?appName=test&amp;classPath=spark.jobserver.WordCountExample&amp;context=test-context&amp;sync=true&apos;</div><div class="line">//在某个指定的context上执行作业</div></pre></td></tr></table></figure>
+<p>配置文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">vim spark-jobserver/config/local.conf.template</div><div class="line">master = &quot;local[4]&quot;//将这里改为集群的地址</div><div class="line"></div><div class="line">jobdao = spark.jobserver.io.JobFileDAO</div><div class="line">    filedao &#123;</div><div class="line">      rootdir = /tmp/spark-job-server/filedao/data</div><div class="line">    &#125;</div><div class="line">//数据对象的存储方法和存储路径</div><div class="line"></div><div class="line">context-settings &#123;</div><div class="line">    num-cpu-cores = 2  </div><div class="line">    memory-per-node = 512m</div><div class="line">    &#125;</div><div class="line">//context的默认设置，如果在REST接口中显示的指明了context的配置，那么这里将会被覆盖</div><div class="line"></div><div class="line">POST /contexts/my-new-context?num-cpu-cores=10</div><div class="line">//在REST中设置一个新的context，以参数的形式放在url中</div></pre></td></tr></table></figure>
+<p>JobServer部署：</p>
+<p>复制conﬁg/local.sh.template到env.sh ，并且设置相关参数如：指定安装路径，Spark Home, Spark Conf等。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">DEPLOY_HOSTS=&quot;spark1</div><div class="line">			  spark2</div><div class="line">			  spark3&quot;</div><div class="line">APP_USER=spark</div><div class="line">APP_GROUP=spark</div><div class="line">INSTALL_DIR=/home/spark/jobserver</div><div class="line">LOG_DIR=/home/spark/jobserver/log</div><div class="line">PIDFILE=spark-jobserver.pid</div><div class="line">SPARK_HOME=/home/spark/spark</div><div class="line">SPARK_CONF_HOME=/home/spark/spark/conf</div></pre></td></tr></table></figure>
+<p>修改project/Dependencies.scala。重新指定spark版本为当前的版本</p>
+<p>lazy val sparkDeps = Seq(<br>    “org.apache.spark” %% “spark-core” % “1.3.1” ……</p>
+<p>运⾏行bin/server_deploy.sh env（或者直接将env.sh的绝对路径写进server_deploy.sh这样就不用再传参数了）<br>打好包后与相关配置⼀一起放到指定服务器的指定目录</p>
+<p>启动：</p>
+<p>需要把config下的local.conf复制到INSTALL_DIR下面，改名为local.conf，并修改其中的master以及两个路径。</p>
+<p>jar-store-rootdir = /var/lib/spark/jars<br>rootdir = /var/lib/spark/filedao</p>
+<p>进⼊入服务器指定指定目录，运⾏行server_start.sh</p>
+<p>如果启动有问题可以试试把cfg.sh 拷贝到 spark-job-server目录下 改名为 settings.sh</p>
+<p>创建JobServer工程：</p>
+<p>在idea中新建SBT工程<br>在.sbt文件中添加以下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">name := &quot;job server demo&quot;</div><div class="line">version := &quot;1.0&quot;</div><div class="line">scalaVersion := &quot;2.10.4&quot;</div><div class="line">resolvers += &quot;Ooyala Bintray&quot; at &quot;http://dl.bintray.com/ooyala/maven&quot;</div><div class="line">libraryDependencies += &quot;ooyala.cnd&quot; % &quot;job-server&quot; % &quot;0.3.1&quot; % &quot;provided&quot;</div><div class="line">libraryDependencies += &quot;org.apache.spark&quot; % &quot;spark-core_2.10&quot; % &quot;1.0.0&quot;</div></pre></td></tr></table></figure>
+<p>继承SparkJob，重写validate与runJob<br>validate就是一个执行一系列验证的方法，执行的时候先看一下validate的验证对不对<br>runJob执行作业的逻辑</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">import com.typesafe.config.&#123;Config, ConfigFactory&#125;</div><div class="line">import org.apache.spark._</div><div class="line">import org.apache.spark.SparkContext._</div><div class="line">import scala.util.Try</div><div class="line">import spark.jobserver.SparkJob</div><div class="line">import spark.jobserver.SparkJobValidation</div><div class="line">import spark.jobserver.SparkJobValid</div><div class="line">import spark.jobserver.SparkJobInvalid</div><div class="line"> </div><div class="line">object WordCount extends SparkJob&#123;</div><div class="line">def main(args: Array[String]) &#123;</div><div class="line">    val sc = new SparkContext(&quot;local[4]&quot;, &quot;WordCountExample&quot;)</div><div class="line">    val config = ConfigFactory.parseString(&quot;&quot;)</div><div class="line">    val results = runJob(sc, config)</div><div class="line">    println(&quot;Result is &quot; + results)</div><div class="line">  &#125;</div><div class="line"> </div><div class="line">  override def validate(sc: SparkContext, config: Config): SparkJobValidation = &#123;</div><div class="line">    Try(config.getString(&quot;input.string&quot;))</div><div class="line">      .map(x =&gt; SparkJobValid)</div><div class="line">      .getOrElse(SparkJobInvalid(&quot;No input.string config param&quot;))</div><div class="line">  &#125;</div><div class="line"> </div><div class="line">  override def runJob(sc: SparkContext, config: Config): Any = &#123;</div><div class="line">    val dd = sc.parallelize(config.getString(&quot;input.string&quot;).split(&quot; &quot;).toSeq)</div><div class="line">    val rsList = dd.map((_,1)).reduceByKey(_+_).map(x =&gt; (x._2,x._1)).sortByKey(false).collect</div><div class="line">    rsList(0)._2</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>生成jar包并提交</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl --data-binary @/root/install-pkg/job-server-demo_2.10-1.0.jar localhost:8090/jars/example</div></pre></td></tr></table></figure>
+<p>测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">curl -i -d &quot;input.string=a a a b b c&quot; &apos;localhost:8090/jobs?appName=example&amp;classPath=com.persia.spark.WordCount&apos;</div><div class="line"> </div><div class="line">HTTP/1.1 202 Accepted</div><div class="line">Server: spray-can/1.2.0</div><div class="line">Date: Sat, 12 Jul 2014 09:22:26 GMT</div><div class="line">Content-Type: application/json; charset=UTF-8</div><div class="line">Content-Length: 150</div><div class="line"> </div><div class="line">&#123;</div><div class="line">  &quot;status&quot;: &quot;STARTED&quot;,</div><div class="line">  &quot;result&quot;: &#123;</div><div class="line">    &quot;jobId&quot;: &quot;b5b2e80f-1992-471f-8a5d-44c08c3a9731&quot;,</div><div class="line">    &quot;context&quot;: &quot;6bd9aa29-com.persia.spark.WordCount&quot;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用命名RDD：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">object MyNamedRDD extends SparkJob with NamedRDDSuport</div><div class="line">//继承SparkJob并混入NamedRDDSuport特质之后写自己的NamedRDD</div><div class="line"></div><div class="line">this.namedRDDs.update(&quot;myrdd&quot;,myrdd)</div><div class="line">//以键值对的形式将自定义的命名RDD缓存起来</div><div class="line"></div><div class="line">val myrdd = this.namedRDDs.get[(String,String)](&quot;myrdd&quot;).get</div><div class="line">//将缓存的RDD拿出来</div><div class="line"></div><div class="line">//命名RDD可以用于有点类似于Session的作用</div></pre></td></tr></table></figure>
+<p><strong>Spark On Tachyon：</strong></p>
+<p>什么是Tachyon？</p>
+<p>来看看传统的Spark不同job之间，不同的框架是如何共享数据的</p>
+<p><img src="http://img.blog.csdn.net/20150529220856526" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20150529221006155" alt="这里写图片描述"></p>
+<p>通过不断的读取HDFS来实现数据的共享，HDFS是什么？是一种分布式的文件系统啊，说到底就是硬盘。那么问题就很明显了，频繁的磁盘IO操作，还有cache丢失，内存使用等问题</p>
+<p>解决方案是什么？</p>
+<p>就是Tachyon，一种分布式的内存⽂文件系统，注意内存两个字，不同任务(框架)享受可靠快速的数据共享</p>
+<p>于是BDAS变成了下面这种构架：</p>
+<p><img src="http://img.blog.csdn.net/20150529221300095" alt="这里写图片描述"></p>
+<p>之前的问题解决方案：</p>
+<p><img src="http://img.blog.csdn.net/20150529221501542" alt="这里写图片描述"></p>
+<p>Tachyon部署：</p>
+<p>在命令行中下载Tachyon</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">wget https://github.com/amplab/tachyon/releases/download/v0.6.4/tachyon-0.6.4-bin.tar.gz</div><div class="line"></div><div class="line">tar xvfz tachyon-0.6.4-bin.tar.gz</div><div class="line"></div><div class="line">cd tachyon-0.6.4</div></pre></td></tr></table></figure>
+<p>国内的网络访问不了的时候可以在这里下载：</p>
+<p><a href="http://download.csdn.net/detail/qq1010885678/8753075" target="_blank" rel="external">Tachyon下载地址</a></p>
+<p>1.Local模式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">cp conf/tachyon-env.sh.template conf/tachyon-env.sh</div><div class="line"></div><div class="line">./bin/tachyon format</div><div class="line"></div><div class="line">./bin/tachyon-start.sh local</div></pre></td></tr></table></figure>
+<p>可以通过 <a href="http://localhost:19999" target="_blank" rel="external">http://localhost:19999</a> WebUI查看</p>
+<p>测试<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">./bin/tachyon runTest Basic CACHE_THROUGH</div><div class="line"></div><div class="line">./bin/tachyon runTests</div><div class="line"></div><div class="line">./bin/tachyon-stop.sh</div></pre></td></tr></table></figure></p>
+<p>2.Cluster模式：</p>
+<p>在配置文件目录下修改slaves<br>加入各个节点的主机名</p>
+<p>tachyon-env.sh修改如下配置：</p>
+<p>export TACHYON_MASTER_ADDRESS=spark1<br>export TACHYON_WORKER_MEMORY_SIZE=4GB<br>export TACHYON_UNDERFS_HDFS_IMPL=org.apache.hadoop.hdfs.DistributedFileSystem<br>export TACHYON_UNDERFS_ADDRESS=hdfs://spark1:9000</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">./bin/tachyon format</div><div class="line"></div><div class="line">./bin/tachyon-start.sh</div></pre></td></tr></table></figure>
+<p>可以通过 <a href="http://tachyon.master.spark1:19999" target="_blank" rel="external">http://tachyon.master.spark1:19999</a> WebUI查看</p>
+<p>测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/tachyon runTests</div></pre></td></tr></table></figure>
+<p>3.基于zookeeper的Master HA</p>
+<p>确保在tachyon-env.sh中设置过<br>export TACHYON_UNDERFS_ADDRESS=hdfs://hostname:port</p>
+<p>在TACHYON_JAVA_OPTS中加⼊<br>-Dtachyon.master.journal.folder=hdfs://hostname:port/<br>tachyon/journal/<br>-Dtachyon.usezookeeper=true<br>-Dtachyon.zookeeper.address=zkserver1:2181,zkserver2:2181,zkserver3:2181</p>
+<p>4.Spark On Tachyon：</p>
+<p>在Spark的conf目录下新建core-site.xml，并加入以下内容(zk模式下，如果不是zk模式，将name替换为fs.tachyon.impl即可)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&lt;configuration&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;fs.tachyon-ft.impl&lt;/name&gt;</div><div class="line">&lt;value&gt;tachyon.hadoop.TFS&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;/configuration&gt;</div></pre></td></tr></table></figure>
+<p>如果运⾏行的是低于Spark1.0.版本，在spark.env.sh中加⼊入：<br>export SPARK_CLASSPATH=/pathToTachyon/client/target/tachyon-client-0.5.0-jar-with-dependencies.jar:$SPARK_CLASSPATH</p>
+<p>在zk模式下，还需要在spark-env.sh中加入<br>以下内容:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">export SPARK_JAVA_OPTS=&quot;</div><div class="line">-Dtachyon.usezookeeper=true</div><div class="line">-Dtachyon.zookeeper.address=zkserver1:2181,zkserver2:2181,zkserver3:2181</div><div class="line">$SPARK_JAVA_OPTS</div><div class="line">&quot;</div></pre></td></tr></table></figure>
+<p>要在spark程序中使用 Tachyon需指定：<br>1、spark.tachyonStore.url<br>2、spark.tachyonStore.baseDir</p>
+<p>如果不想每次手动输入以上配置时，可以在spark的conf目录下编辑spark-defaults.conf文件<br>将上面两个配置加入去即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">spark.master                     spark://spark1:7077</div><div class="line">spark.eventLog.enabled           true</div><div class="line">spark.eventLog.dir               hdfs://ns1/spark_event_log</div><div class="line">spark.tachyonStore.url           tachyon://spark1:19998</div><div class="line">spark.tachyonStore.baseDir       /data/tachyon_tmp</div></pre></td></tr></table></figure>
+<p>spark程序存储数据要指定OffHeap方式，说明数据不让spark自己管理了，而是让Tachyon接手</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/27/spark-recommendsys-baseon-spark/" rel="next" title="基于Spark Mllib，SparkSQL的电影推荐系统">
+                <i class="fa fa-chevron-left"></i> 基于Spark Mllib，SparkSQL的电影推荐系统
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/31/docker-paas-1/" rel="prev" title="Docker解析及轻量级PaaS平台演练（一）--Docker简介与安装">
+                Docker解析及轻量级PaaS平台演练（一）--Docker简介与安装 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/29/spark-others/"
+           data-title="Spark（十二） -- Spark On Yarn & Spark as a Service & Spark On Tachyon" data-url="http://xiaohei.info/2015/05/29/spark-others/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,890 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="概要：
+随着电子商务的高速发展和普及应用，个性化推荐的推荐系统已成为一个重要研究领域。个性化推荐算法是推荐系统中最核心的技术，在很大程度上决定了电子商务推荐系统性能的优劣，决定着是否能够推荐用户真正感兴趣的信息，而面对用户的不断提升的需求，推荐系统不仅需要正确的推荐，还要实时地根据用户的行为进行分析并推荐最新的 结果。实时推荐系统的任务就是为每个用户，不断地、精准地推送个性化的服务，甚至到达让用户">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Spark机器学习和实时流计算的智能推荐系统">
+<meta property="og:url" content="http://xiaohei.info/2015/06/28/spark-recommend-baseon-sparkstreaming/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="概要：
+随着电子商务的高速发展和普及应用，个性化推荐的推荐系统已成为一个重要研究领域。个性化推荐算法是推荐系统中最核心的技术，在很大程度上决定了电子商务推荐系统性能的优劣，决定着是否能够推荐用户真正感兴趣的信息，而面对用户的不断提升的需求，推荐系统不仅需要正确的推荐，还要实时地根据用户的行为进行分析并推荐最新的 结果。实时推荐系统的任务就是为每个用户，不断地、精准地推送个性化的服务，甚至到达让用户">
+<meta property="og:image" content="http://img.blog.csdn.net/20150630212126639">
+<meta property="og:image" content="http://img.blog.csdn.net/20150628184244046">
+<meta property="og:image" content="http://img.blog.csdn.net/20150628184259884">
+<meta property="og:image" content="http://img.blog.csdn.net/20150628184318393">
+<meta property="og:image" content="http://img.blog.csdn.net/20150628184339984">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629230518840">
+<meta property="og:image" content="http://img.blog.csdn.net/20150701150241145">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629231452058">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629231558619">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629231610431">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629231625279">
+<meta property="og:image" content="http://img.blog.csdn.net/20150629231526257">
+<meta property="og:image" content="http://img.blog.csdn.net/20150630212214055">
+<meta property="og:image" content="http://img.blog.csdn.net/20150630212238182">
+<meta property="og:image" content="http://img.blog.csdn.net/20150630212301537">
+<meta property="og:image" content="http://img.blog.csdn.net/20150630212317107">
+<meta property="og:updated_time" content="2016-07-15T02:37:15.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于Spark机器学习和实时流计算的智能推荐系统">
+<meta name="twitter:description" content="概要：
+随着电子商务的高速发展和普及应用，个性化推荐的推荐系统已成为一个重要研究领域。个性化推荐算法是推荐系统中最核心的技术，在很大程度上决定了电子商务推荐系统性能的优劣，决定着是否能够推荐用户真正感兴趣的信息，而面对用户的不断提升的需求，推荐系统不仅需要正确的推荐，还要实时地根据用户的行为进行分析并推荐最新的 结果。实时推荐系统的任务就是为每个用户，不断地、精准地推送个性化的服务，甚至到达让用户">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150630212126639">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/06/28/spark-recommend-baseon-sparkstreaming/"/>
+
+  <title> 基于Spark机器学习和实时流计算的智能推荐系统 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于Spark机器学习和实时流计算的智能推荐系统
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-06-28T10:36:42+08:00" content="2015-06-28">
+              2015-06-28
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/06/28/spark-recommend-baseon-sparkstreaming/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/06/28/spark-recommend-baseon-sparkstreaming/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/06/28/spark-recommend-baseon-sparkstreaming/" class="leancloud_visitors" data-flag-title="基于Spark机器学习和实时流计算的智能推荐系统">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>概要：</strong></p>
+<p>随着电子商务的高速发展和普及应用，个性化推荐的推荐系统已成为一个重要研究领域。<br>个性化推荐算法是推荐系统中最核心的技术，在很大程度上决定了电子商务推荐系统性能的优劣，决定着是否能够推荐用户真正感兴趣的信息，而面对用户的不断提升的需求，推荐系统不仅需要正确的推荐，还要实时地根据用户的行为进行分析并推荐最新的 结果。<br>实时推荐系统的任务就是为每个用户，不断地、精准地推送个性化的服务，甚至到达让用户体会到推荐系统比他们更了解自己的感觉。</p>
+<p>本文主要研究的是基于模型的协同过滤算法—ALS以及实时推荐系统的可行性并详细讲解ALS（交替最小二乘法）的思想<br>然后在Spark Streaming框架上运用ALS算法进行测试，评估实时推荐中算法的可靠性<br>最后，在Spark Mllib和Streaming框架上构建了实时推荐引擎，将推荐数据保存在Hbase中，WebApp通过读取Hbase中的推荐数据来向用户展示推荐结果</p>
+<p>关于其他类别的推荐算法就不细说了，网上有很多的资料查看，推荐几篇文章：<br><a href="http://www.ibm.com/developerworks/cn/views/web/libraryview.jsp?view_by=search&amp;sort_by=Date&amp;sort_order=desc&amp;view_by=Search&amp;search_by=%E6%8E%A2%E7%B4%A2%E6%8E%A8%E8%8D%90%E5%BC%95%E6%93%8E%E5%86%85%E9%83%A8%E7%9A%84%E7%A7%98%E5%AF%86&amp;dwsearch.x=12&amp;dwsearch.y=11&amp;dwsearch=Go" target="_blank" rel="external">IBM-探索推荐引擎内部的秘密系列</a></p>
+<p>以及向亮的《推荐系统实践》<br><a href="http://download.csdn.net/detail/qq1010885678/8847895" target="_blank" rel="external">下载地址</a></p>
+<p>下面进入正文</p>
+<p><strong>基于矩阵分解的协同过滤算法–ALS：</strong></p>
+<p>基于模型的协同过滤推荐就是基于样本的用户喜好信息，训练一个推荐模型，然后根据实时的用户喜好的信息进行预测，计算推荐。</p>
+<p>对于一个users-products-rating的评分数据集,ALS会建立一个user<em>product的m</em>n的矩阵（其中，m为users的数量，n为products的数量），如下图：</p>
+<p><img src="http://img.blog.csdn.net/20150630212126639" alt="这里写图片描述"> </p>
+<p>这个矩阵的每一行代表一个用户 (u1,u2,…,u9)、每一列代表一个产品 (v1,v2,…,v9)。用户隔天产品的打分在 1-9 之间。<br>但是在这个数据集中，并不是每个用户都对每个产品进行过评分，所以这个矩阵往往是稀疏的，用户i对产品j的评分往往是空的<br>ALS所做的事情就是将这个稀疏矩阵通过一定的规律填满，这样就可以从矩阵中得到任意一个user对任意一个product的评分，ALS填充的评分项也称为用户i对产品j的预测得分<br>所以说，ALS算法的核心就是通过什么样子的规律来填满（预测）这个稀疏矩阵<br>它是这么做的：<br>假设m<em>n的评分矩阵R，可以被近似分解成U</em>(V)T<br>U为m<em>d的用户特征向量矩阵<br>V为n</em>d的产品特征向量矩阵（(V)T代表V的转置）<br>d为user/product的特征值的数量</p>
+<p>关于d这个值的理解，大概可以是这样的：<br>对于每个产品，可以从d个角度进行评价，以电影为例，可以从主演，导演，特效，剧情4个角度来评价一部电影，那么d就等于4<br>可以认为，每部电影在这4个角度上都有一个固定的基准评分值<br>例如《末日崩塌》这部电影是一个产品，它的特征向量是由d个特征值组成的<br>d=4，有4个特征值，分别是主演，导演，特效，剧情<br>每个特征值的基准评分值分别为（满分为1.0）：<br>主演：0.9<br>导演：0.7<br>特效：0.8<br>剧情：0.6<br>矩阵V由n个product*d个特征值组成</p>
+<p>对于矩阵U，假设对于任意的用户A，该用户对一部电影的综合评分和电影的特征值存在一定的线性关系，即电影的综合评分=(a1<em>d1+a2</em>d2+a3<em>d3+a4</em>d4)<br>其中a1-4为用户A的特征值，d1-4为之前所说的电影的特征值</p>
+<p>那么对于之前ALS算法的这个假设<br>m<em>n的评分矩阵R，可以被近似分解成U</em>(V)T<br>就是成立的，某个用户对某个产品的评分可以通过矩阵U某行和矩阵V（转置）的某列相乘得到</p>
+<p>那么现在的问题是，如何确定用户和产品的特征值？（之前仅仅是举例子，实际中这两个都是未知的变量）<br>采用的是交替的最小二乘法<br><img src="http://img.blog.csdn.net/20150628184244046" alt="这里写图片描述"></p>
+<p>在上面的公式中，a表示评分数据集中用户i对产品j的真实评分，另外一部分表示用户i的特征向量（转置）*产品j的特征向量（这里可以得到预测的i对j的评分）<br>用真实评分减去预测评分然后求平方，对下一个用户，下一个产品进行相同的计算，将所有结果累加起来（其中，数据集构成的矩阵是存在大量的空打分，并没有实际的评分，解决的方法是就只看对已知打分的项）</p>
+<p>但是这里之前问题还是存在，就是用户和产品的特征向量都是未知的，这个式子存在两个未知变量</p>
+<p>解决的办法是交替的最小二乘法<br>首先对于上面的公式，以下面的形式显示：<br> <img src="http://img.blog.csdn.net/20150628184259884" alt="这里写图片描述"><br>为了防止过度拟合，加上正则化参数<br> <img src="http://img.blog.csdn.net/20150628184318393" alt="这里写图片描述"></p>
+<p> <img src="http://img.blog.csdn.net/20150628184339984" alt="这里写图片描述"></p>
+<p>首先用一个小于1的随机数初始化V<br>根据公式（4）求U<br>此时就可以得到初始的UV矩阵了，计算上面说过的差平方和<br>根据计算得到的U和公式（5），重新计算并覆盖V，计算差平方和<br>反复进行以上两步的计算，直到差平方和小于一个预设的数，或者迭代次数满足要求则停止<br>取得最新的UV矩阵<br>则原本的稀疏矩阵R就可以用R=U(V)T来表示了</p>
+<p>ALS算法的核心就是将稀疏评分矩阵分解为用户特征向量矩阵和产品特征向量矩阵的乘积<br>交替使用最小二乘法逐步计算用户/产品特征向量，使得差平方和最小<br>通过用户/产品特征向量的矩阵来预测某个用户对某个产品的评分</p>
+<p>算法原理讲述完毕，接下来进行算法测试</p>
+<p><strong>算法测试：</strong></p>
+<p>算法测试分为两部分：<br>一、测试最佳的参数，如：隐性因子个数，正则式等<br>二、测试在Streaming框架上算法的可用性</p>
+<p>测试数据集来自MovieLens</p>
+<p>测试一：<br>将整个数据集上传至HDFS中<br>在spark程序中读取ratings.dat文件，并随机划出80%作为训练数据集，20%作为测试数据集</p>
+<p>设置隐性因子、正则式参数列表（由于物理机配置不好，集群能够支持的最大迭代次数只有7次，在多就会内存溢出，所以这里直接将迭代次数设置为7）</p>
+<p>对参数列表的全排列分别进行模型训练，并计算MSE、RMSE</p>
+<p>结果如下图：<br><img src="http://img.blog.csdn.net/20150629230518840" alt="这里写图片描述"></p>
+<p>比较得出最佳的参数组合，以后的模型训练参数都使用这个参数组合</p>
+<p>测试二：</p>
+<p>将原本的数据划分为三部分<br>trainingData-10k<br>testData-10k<br>剩下的为streamData，作为流数据实时发送<br>首先将trainingData、testData上传到HDFS/data目录下<br>在spark程序中读取，并转化为RDD[Rating]类型<br>使用Streaming框架接受流数据，并进行在线模型训练<br>每训练一次就计算一次MSE和RMSE<br>对比模型的精准性有没有提高</p>
+<p>使用Scala读取本地的streamData，通过Socket发送到spark程序中</p>
+<p>结果如下图：</p>
+<p>随着数据的不断增加，模型的精准度在不断的提高，所以实时的更新推荐模型是可行的</p>
+<p><strong>推荐系统整合：</strong></p>
+<p>整体流程图：</p>
+<p><img src="http://img.blog.csdn.net/20150701150241145" alt="这里写图片描述"></p>
+<p>首先用程序生成用户和图书数据，并随机模拟用户行为数据，保存在Hbase中</p>
+<p>在Hbase数据库中包含了用户表（4000个用户），图书表（5060本图书）以及评分表（用户对图书的百万条数据）<br>由于对个人来说无法得到真实的商业性数据，故评分数据都是程序 模拟随机生成的，包括实时发送的流数据，所以这可能会对整个系统的推荐结果带来影响</p>
+<p>另外，除了WebUI部分，其余的程序都是运行在Linux的Spark集群上</p>
+<p>原始数据通过一个程序不断地向Hbase的评分表中写入数据<br>模拟用户在网站上的评分行为<br>运行截图：</p>
+<p><img src="http://img.blog.csdn.net/20150629231452058" alt="这里写图片描述"></p>
+<p>其中，前300个用户的行为偏向于前600本图书（计算机相关）<br>实时流数据将通过另外一个程序发送Socket数据，模拟用户当前在网站上的实时评分行为<br>在最后使用用户进行观察测试时，程序将会只模拟这个用户的评分行为以便观察推荐系统的实时性</p>
+<p>首先推荐引擎会读取Hbase中的评分数据<br>并使用算法测试时得到的最佳参数组合来对其进行训练<br>得到初始的模型<br>使用这个模型对Hbase中所有用户进行图书推荐（取 top10）<br>并将推荐结果保存在Hbase中<br>以上阶段为系统初始化阶段<br>运行截图：</p>
+<p><img src="http://img.blog.csdn.net/20150629231558619" alt="这里写图片描述"><br><img src="http://img.blog.csdn.net/20150629231610431" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20150629231625279" alt="这里写图片描述"></p>
+<p>在系统初始化完成之后，开启实时推荐引擎<br>接收不断生成的用户行为数据，并和Hbase中的原始数据混合，训练出新的模型，产生推荐结果保存<br>不断地进行流数据的读取、训练和保存推荐结果，直至系统关闭或者无流数据产生<br>推荐引擎运行如下图：</p>
+<p><img src="http://img.blog.csdn.net/20150629231526257" alt="这里写图片描述"></p>
+<p>WebUI部分：</p>
+<p>WebUI是由ASP.NET开发的一个简单的B/S应用，通过Thrift和Linux中的Hbase交互<br>选择使用一个用户观察系统的实时推荐性，此时流数据模拟程序只产生这个用户的评分行为<br>不同时刻，在该用户有行为数据产生的情况下，推荐的内容（细节没有仔细处理，比如有的图片找不到路径等。。。）：<br>当前记录</p>
+<p><img src="http://img.blog.csdn.net/20150630212214055" alt="这里写图片描述"><br><img src="http://img.blog.csdn.net/20150630212238182" alt="这里写图片描述"></p>
+<p>新的行为数据产生的记录</p>
+<p><img src="http://img.blog.csdn.net/20150630212301537" alt="这里写图片描述"><br><img src="http://img.blog.csdn.net/20150630212317107" alt="这里写图片描述"></p>
+<p><strong>总结：</strong></p>
+<p>前前后后大概花了两个礼拜多一点的时间（毕竟还要顾着上课，基本也就是晚上才有时间）<br>其中遇到了许多坑，上网找过，请人问过，也上过知乎啥的让大牛指导过</p>
+<p>总之一句话，没有真正动手做过是不会知道其中的艰苦，当然我早就变态的把它当乐趣来看了</p>
+<p>原本的设想是使用联合聚类+ALS矩阵分解来做的，但是试了一下，联合聚类貌似不想k-means啥的那么简单，以自己的水平来说暂时无法实现（还是要怪自己基础不好咯~），遂放弃之~</p>
+<p>之后又有一个美好的想法，通过ItemCF、UserCF、关联规则、ALS等算法组合起来，形成一个混合的模型，毕竟这种模式才是比较接近商业化的构架，但是在Spark上面调用Mahout算法的时候又出现了各种各样的问题，有时候甚至编译都不通过。。。</p>
+<p>在推荐算法性能测试的时候，自己实现了召回率，准确率，覆盖率，多样性，新颖度等指标的计算方式，但是实际测试时总是飙出莫名其妙的数据。。。</p>
+<p>另外，使用ALS进行实时训练模型的时候，每次都要重新训练，感觉这是一个优化点，可否修改成接受到新数据之后不重复训练，只计算新来的数据（水平有限，暂时只是想法）</p>
+<p>期末考又临近了，只好先放下这些不成器的东西以后再研究</p>
+<p>最后的最后，无奈之下只能实现了一个最简单的推荐系统</p>
+<p>最后附上所有源代码和简要记录的开发日志</p>
+<p>源代码已打包上传：<br><a href="http://download.csdn.net/detail/qq1010885678/8858315" target="_blank" rel="external">下载地址</a><br>（代码有些凌乱，没来得及重构，仅仅做了基本的注释，有需要的童鞋不要介意。。。）</p>
+<p>开发日志：</p>
+<p>6-9：准备book数据到hbase中。上传到hdfs中文乱码（docker中），读取hdfs数据到hbase中出异常（原因：数据格式不对，内容太多超出一行，仔细看日志；scala输入hbase异常）</p>
+<p>6-10：完成t_users，t_books，t_ratings的数据导入</p>
+<p>6-12：scala操作scan hbase表<br>坑位：<br>1：resultScaner不能直接for循环<br>2：spark上操作hbase<br>第一次简单测试（按照之前的过程）<br>offset (0) + length (4) exceed the capacity of the array: 2    使用String<br>3：Streaming接收socket数据测试<br>4：Streaming执行内容测试</p>
+<p>6-13：实时推荐测试<br>问题记录：不能同时运行两个sparkcontext<br>解决：使用sparkContext来创建StreamingContext<br>Streaming的处理方式<br>socketTextFile无法接受数据—logger缺少换行符<br>foreachRDD理解<br>完成实时更新模型</p>
+<p>6-14：namenode经常莫名挂掉，重新配置虚拟机<br>ubuntu下hostname默认为ubuntu所以一直无法正确启动–修改/etc/hostname 重启</p>
+<p>6-15：SparkStreaming实时读取更新模型老是抛异常<br>解决：allData.cache（没有缓存的话之前的流数据丢失无法找到）</p>
+<p>Unable to reconnect to ZooKeeper service, session 0x14df6b4bcdb0009 has expired, closing socket connection/<br>Socket connection established to localhost/127.0.0.1:2181, initiating sessio<br>解决：在代码中设置hbase的zk，配置文件中无效</p>
+<p>6-16：解决15鈤的问题<br>allData.repartition(3).cache<br>更新模型时连接到zk异常</p>
+<p>WARN  [sparkDriver-akka.actor.default-dispatcher-46] storage.BlockManagerMasterActor (Logging.scala:logWarning(71)) - Removing BlockManager BlockManagerId(4, cloud1, 56133) with no recent heart beats: 125833ms exceeds 120000ms<br>原因：由于网络差或者数据量太大，worker节点在一定的时间内（默认45s）没有给master信号，master以为它挂了。<br>解决办法：修改运行命令或者sprak-env.sh，添加参数 -Dspark.storage.blockManagerHeartBeatMs=6000000（以ms为单位，即6分钟）。<br>修改：在此配置中无效，要在代码中通过SparkConf设置<br>Spark1.4中直接通过spark.network.timeout一个配置全部</p>
+<p>6-17：完成基础推荐引擎搭建和测试；c#连接hbase环境搭建</p>
+<p>6-18：spark批量写hbase性能优化<br>myTable.setAutoFlush(false, false)//关键点1<br>myTable.setWriteBufferSize(3<em>1024</em>1024)//关键点2<br>myTable.flushCommits()//关键点3<br>关键点1_:将自动提交关闭，如果不关闭，每写一条数据都会进行提交，是导入数据较慢的做主要因素。<br>关键点2:设置缓存大小，当缓存大于设置值时，hbase会自动提交。此处可自己尝试大小，一般对大数据量，设置为5M即可，本文设置为3M。<br>关键点3:每一个分片结束后都进行flushCommits()，如果不执行，当hbase最后缓存小于上面设定值时，不会进行提交，导致数据丢失。</p>
+<p>注：此外如果想提高Spark写数据如Hbase速度，可以增加Spark可用核数量。</p>
+<p>修改：实际测试中，以上优化并没有起作用，反而会使一下数据丢失，没有继续深入测试</p>
+<p>完成webapp的基本搭建</p>
+<p>6-23：完成算法测试部分，评测指标RMSE,MSE,==》（平均值，取不同的n推荐列表画曲线）召回率，准确率，覆盖率，多样性，新颖度<br>使用spark1.4 的新api来推荐物品提升效率<br>在spark-env和default里面的配置无效，在代码中配置<br>    System.setProperty(“spark.akka.frameSize”, “2000”)</p>
+<p>6-24：系统原型完成</p>
+<p>6-25：完善系统原型</p>
+<p>6-26：论文初稿</p>
+<p>参考资料：<br><a href="http://wuchong.me/blog/2015/04/06/spark-on-hbase-new-api/" target="_blank" rel="external">Spark 下操作 HBase（1.0.0 新 API）</a><br><a href="http://blog.csdn.net/sunthx/article/details/8818838" target="_blank" rel="external">【C#】通过Thrift操作HBase系列（1）</a><br><a href="http://www.dataguru.cn/article-7049-1.html" target="_blank" rel="external">ALS 在 Spark MLlib 中的实现</a><br><a href="http://www.docin.com/p-714582034.html" target="_blank" rel="external">基于矩阵分解的协同过滤算法</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/06/03/docker-spark-install/" rel="next" title="在Docker中从头部署自己的Spark集群">
+                <i class="fa fa-chevron-left"></i> 在Docker中从头部署自己的Spark集群
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/03/scala-note/" rel="prev" title="Scala笔记">
+                Scala笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/06/28/spark-recommend-baseon-sparkstreaming/"
+           data-title="基于Spark机器学习和实时流计算的智能推荐系统" data-url="http://xiaohei.info/2015/06/28/spark-recommend-baseon-sparkstreaming/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

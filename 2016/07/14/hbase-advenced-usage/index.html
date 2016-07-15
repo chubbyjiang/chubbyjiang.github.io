@@ -1,0 +1,905 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="行健设计在HBase中有两类基本的键结构：行健和列键这两者都存储着有意义的信息，不仅仅是该键对应的值：   
+
+
+键本身存储的内容   
+键的排列顺序
+
+
+在HBase中，键的排序顺序是十分重要的
+概念如之前所说，HBase的键分为两种：   
+
+
+列键：包括了列族名和限定符，定位到列的索引   
+行健：相当于关系型数据库中的主键，通过行健得到逻辑布局中一行的所有列
+
+
+
+如上图所示，逻辑上用户设">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase高级用法">
+<meta property="og:url" content="http://xiaohei.info/2016/07/14/hbase-advenced-usage/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="行健设计在HBase中有两类基本的键结构：行健和列键这两者都存储着有意义的信息，不仅仅是该键对应的值：   
+
+
+键本身存储的内容   
+键的排列顺序
+
+
+在HBase中，键的排序顺序是十分重要的
+概念如之前所说，HBase的键分为两种：   
+
+
+列键：包括了列族名和限定符，定位到列的索引   
+行健：相当于关系型数据库中的主键，通过行健得到逻辑布局中一行的所有列
+
+
+
+如上图所示，逻辑上用户设">
+<meta property="og:image" content="http://xiaohei.info/images/hbase-data-store.png">
+<meta property="og:image" content="http://xiaohei.info/images/hbase-query2data.png">
+<meta property="og:updated_time" content="2016-07-14T12:29:04.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase高级用法">
+<meta name="twitter:description" content="行健设计在HBase中有两类基本的键结构：行健和列键这两者都存储着有意义的信息，不仅仅是该键对应的值：   
+
+
+键本身存储的内容   
+键的排列顺序
+
+
+在HBase中，键的排序顺序是十分重要的
+概念如之前所说，HBase的键分为两种：   
+
+
+列键：包括了列族名和限定符，定位到列的索引   
+行健：相当于关系型数据库中的主键，通过行健得到逻辑布局中一行的所有列
+
+
+
+如上图所示，逻辑上用户设">
+<meta name="twitter:image" content="http://xiaohei.info/images/hbase-data-store.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/07/14/hbase-advenced-usage/"/>
+
+  <title> HBase高级用法 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase高级用法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-14T18:57:22+08:00" content="2016-07-14">
+              2016-07-14
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/07/14/hbase-advenced-usage/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/07/14/hbase-advenced-usage/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/07/14/hbase-advenced-usage/" class="leancloud_visitors" data-flag-title="HBase高级用法">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="行健设计"><a href="#行健设计" class="headerlink" title="行健设计"></a>行健设计</h2><p>在HBase中有两类基本的键结构：<strong>行健和列键</strong><br>这两者都存储着有意义的信息，不仅仅是该键对应的值：   </p>
+<blockquote>
+<ul>
+<li>键本身存储的内容   </li>
+<li><strong>键的排列顺序</strong></li>
+</ul>
+</blockquote>
+<p>在HBase中，键的排序顺序是十分重要的</p>
+<h3 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h3><p>如之前所说，HBase的键分为两种：   </p>
+<blockquote>
+<ul>
+<li>列键：包括了列族名和限定符，定位到列的索引   </li>
+<li>行健：相当于关系型数据库中的主键，通过行健得到逻辑布局中一行的所有列</li>
+</ul>
+</blockquote>
+<p><img src="/images/hbase-data-store.png" alt="HBase实际存储示例"></p>
+<p>如上图所示，逻辑上用户设置的每一行都没放在一起，但是实际存储的时候每个列族的以单独的文件存储的，不同列族的单元格绝对不会出现在同一个StoreFile中<br>同时，HBase也不会存储值为空的单元格，所以磁盘上的文件也只有这些有值的单元格</p>
+<p><strong>每个单元格在实际存储的时候也保存了行健和列键，所以每个单元格都单独存储了它在表中所处位置的关键信息</strong></p>
+<p><strong>同一个单元格的不同版本被单独存储为连续的单元格</strong>，单元格按照时间戳降序排列，所以默认读取的是最新的单元格数据</p>
+<p>同一列族的单元格在存储的时候<strong>先按行健排序，当一行中有多个单元格的时候再按列键排序，同一单元格有多个版本的时候按时间戳排序</strong></p>
+<p>根据以上的存储特性，建议在查询的时候<strong>指定列族信息可以有效减少查询的存储文件，提高效率</strong></p>
+<p>下图表示了查询数据的时候指定各种不同的筛选条件时会读取到存储文件的范围信息：</p>
+<p><img src="/images/hbase-query2data.png" alt="数据查询筛选"></p>
+<p>值得注意的一点是：在图1中左下角的位置，展示的是“数据位移”，对于一个KeyValue来说，筛选的效率从左至右明显下降<br>所以在设计的时候用户可以考虑将一些重要的筛选信息左移到合适的位置，从而在<strong>不改变数据量的情况下改变数据的排序病提供查询性能</strong></p>
+<h3 id="高表与宽表"><a href="#高表与宽表" class="headerlink" title="高表与宽表"></a>高表与宽表</h3><p>HBase中的表可以设计为两类：<strong>高表和宽表</strong></p>
+<p>顾名思义，高表就是列少行多，宽表则反之   </p>
+<p>通过之前我们所描述的信息来看，除了行健和列键之外，指定其余的筛选粒度信息效率都不是很高，由于列键是由列族名和限定符组成的，属于定位具体StoreFile的，所以我们<strong>应该将需要查询的维度或者信息存储在行健中，因为用它来筛选数据效率最高！</strong></p>
+<p>那么，在设计表结构的时候，我们如何知道设计成高表还是宽表呢？   </p>
+<p>举一个简单的例子来说明：<br>在一个电子邮箱系统中，将行健设置为用户的唯一ID，其余属性作为列族或者列族中的列<br>如此一来，同一个用户的所有邮件信息都会被存储在同一行中（因为他们的行健相同），这在大部分情况下是通用的，但是有些用户的邮件数量非常非常大，大到一行数据就超出了HFile的最大限度<br>这个时候你可能就会疑问，HFile和Region达到一定大小的时候不是会自动切分的吗？<br>别忘了，<strong>HBase只能按行切分</strong>，当行数量达到阈值的时候会根据行健进行切分</p>
+<p>这样一来，上面的那种宽表设计方式就出现了致命的缺陷：<strong>表数据无法拆分，更无法进行HBase的负载均衡等特性</strong></p>
+<p>解决这个问题更好的办法是代替宽表，设计一个高表：<br>我们可以将行健设置为用户Id+单独邮件Id，这样一来，每封邮件都是单独的一行，将宽表中的行数据释放出来了</p>
+<p>这样做的好处是：   </p>
+<blockquote>
+<p>1.行数量可以更容易的被拆分<br>2.行健中包含关键的筛选信息（<strong>邮件Id被移到了左边</strong>），用户可以直接根据行健定位到唯一的一封邮件</p>
+</blockquote>
+<p>综上所述，HBase中高表的性能要优于宽表<br>但是要使用高表还是宽表还要根据具体的业务场景来确定，因为在以上高表的设计中，同一用户的数据<strong>分布在多行中</strong>，用户不可能在一个简单的操作中修改一个收件箱的全局属性，因为这涉及到了<strong>原子性的操作</strong>，如果用户没有一次修改整个收件箱的需求时，这种设计是非常合适的<br>但是如果用户真的有这种需求，而且需求很大，那么宽表反而更加合适，因为<strong>HBase能够保证行级别的原子性</strong></p>
+<h3 id="部分键扫描"><a href="#部分键扫描" class="headerlink" title="部分键扫描"></a>部分键扫描</h3><p>在之前的例子中，我们通过用户Id+邮件Id的形式形成了组合键，使得一个用户的所有数据分布到不同的行中，这同时也决定了我们无法通过操作宽表一样来直接获得一个用户整个收件箱的数据   </p>
+<p>在高表的设计中，<strong>如果没有提供足够的维度信息的行健的话，用户是无法精确定位到一个值的</strong><br>为了解决这个问题，用户可以使用包含部分键的扫描：<strong>将扫描操作中键的开始和结束设置为一个用户的Id（终止键应该为该用户Id+1）</strong></p>
+<p>扫描的范围包括起始键，但不包含结束键，设置用户Id之后，HBase会按字典顺序找到第一个行健的位置（例如：<userid>-<lowest-messageid>），读取所有数据直至行健不等于提供的用户Id</lowest-messageid></userid></p>
+<p>如此一来，通过部分键扫描，就可以得到一个用户的所有邮件信息了</p>
+<p>用户<strong>通过部分键扫描可以设计出非常有效的左对齐索引，根据行健的维度，从左至右依次提供长度相同的索引维度</strong><br>需要注意的是，要保证行健中每个字段的值都被补齐到这个字段所设置的长度，这样字典序才会按预期排列（按二进制内容比较并升序排列）<br>也就是说用户需要<strong>为每个字段设定一个固定长度来保证每个字段比较时只会与同字段内容从左向右比较</strong></p>
+<p>根据邮件系统这个例子，下表给出了可能的起始键及其意义：</p>
+<table>
+<thead>
+<tr>
+<th>起始键</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><userid></userid></td>
+<td>给定用户Id下的所有信息</td>
+</tr>
+<tr>
+<td><userid>-<data></data></userid></td>
+<td>给定用户Id下的特定日期的所有信息</td>
+</tr>
+<tr>
+<td><userid>-<data>-<messageid></messageid></data></userid></td>
+<td>给定用户Id下的特定日期下的指定信息</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这种组合键提供的其实和关系型数据库中的where条件功能类似</strong>，用户可以控制每个字段的内容以达到控制段内排序的目的<br>例如，用户也可以将时间转化为Unix格式之后添加入组合键中，使得数据按照日期进行排序</p>
+<h3 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h3><p>HBase中分页的效果可以由两种方式来实现：</p>
+<blockquote>
+<p>1.利用行健<br>2.使用分页过滤器</p>
+</blockquote>
+<p>如果只是简单的分页，推荐使用分页过滤器，因为其可以避免传输多余的数据</p>
+<p>使用行健进行分页操作的步骤如下：   </p>
+<blockquote>
+<p>1.设置起始键（例如某个用户Id）<br>2.客户端设置offset的行数<br>3.客户端设置limit数目的行<br>4.返回数据并关闭扫描器</p>
+</blockquote>
+<p>例如某个用户的邮件很多的时候，需要分页浏览，limit设置为50，初始的时候offset设置为0<br>通过用户Id扫描得到该用户下的所有邮件的前50封，当用户点击next的时候offset设置为50，代表跳过前50行返回第51-100行</p>
+<h3 id="时间排序"><a href="#时间排序" class="headerlink" title="时间排序"></a>时间排序</h3><h3 id="时间顺序关系"><a href="#时间顺序关系" class="headerlink" title="时间顺序关系"></a>时间顺序关系</h3><h2 id="高级模式"><a href="#高级模式" class="headerlink" title="高级模式"></a>高级模式</h2><h2 id="辅助索引"><a href="#辅助索引" class="headerlink" title="辅助索引"></a>辅助索引</h2><h2 id="搜索集成"><a href="#搜索集成" class="headerlink" title="搜索集成"></a>搜索集成</h2><h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h2 id="布隆过滤器"><a href="#布隆过滤器" class="headerlink" title="布隆过滤器"></a>布隆过滤器</h2><h2 id="版本管理"><a href="#版本管理" class="headerlink" title="版本管理"></a>版本管理</h2><h3 id="隐式版本控制"><a href="#隐式版本控制" class="headerlink" title="隐式版本控制"></a>隐式版本控制</h3><h3 id="自定义版本控制"><a href="#自定义版本控制" class="headerlink" title="自定义版本控制"></a>自定义版本控制</h3><p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/07/13/hadoop-administering/" rel="next" title="Hadoop集群管理">
+                <i class="fa fa-chevron-left"></i> Hadoop集群管理
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/07/14/hbase-advenced-usage/"
+           data-title="HBase高级用法" data-url="http://xiaohei.info/2016/07/14/hbase-advenced-usage/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#行健设计"><span class="nav-number">1.</span> <span class="nav-text">行健设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高表与宽表"><span class="nav-number">1.2.</span> <span class="nav-text">高表与宽表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部分键扫描"><span class="nav-number">1.3.</span> <span class="nav-text">部分键扫描</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分页"><span class="nav-number">1.4.</span> <span class="nav-text">分页</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间排序"><span class="nav-number">1.5.</span> <span class="nav-text">时间排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间顺序关系"><span class="nav-number">1.6.</span> <span class="nav-text">时间顺序关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高级模式"><span class="nav-number">2.</span> <span class="nav-text">高级模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#辅助索引"><span class="nav-number">3.</span> <span class="nav-text">辅助索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#搜索集成"><span class="nav-number">4.</span> <span class="nav-text">搜索集成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">5.</span> <span class="nav-text">事务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#布隆过滤器"><span class="nav-number">6.</span> <span class="nav-text">布隆过滤器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本管理"><span class="nav-number">7.</span> <span class="nav-text">版本管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#隐式版本控制"><span class="nav-number">7.1.</span> <span class="nav-text">隐式版本控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义版本控制"><span class="nav-number">7.2.</span> <span class="nav-text">自定义版本控制</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

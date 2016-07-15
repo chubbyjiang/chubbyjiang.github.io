@@ -1,0 +1,876 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="数据挖掘,Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="算法介绍回归和分类回归算法和分类算法通常会被联系在一起，因为两者都可以通过一个或者多个值来预测一个或者多个值   he为了能够做出预测，两者需要从一组输入和输出中学习预测规则，在学习过程中需要告诉它们问题以及问题的答案因此，回归和分类都属于监督学习类的算法
+回归是预测一个数值型的结果，例如温度，成绩等分类是预测一个标号或者类别，例如邮件是否为辣鸡邮件，一个人是属于哪个人种
+这里将使用决策树和随机森">
+<meta property="og:type" content="article">
+<meta property="og:title" content="决策树算法预测森林植被">
+<meta property="og:url" content="http://xiaohei.info/2016/05/06/spark-decisiontree-predict/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="算法介绍回归和分类回归算法和分类算法通常会被联系在一起，因为两者都可以通过一个或者多个值来预测一个或者多个值   he为了能够做出预测，两者需要从一组输入和输出中学习预测规则，在学习过程中需要告诉它们问题以及问题的答案因此，回归和分类都属于监督学习类的算法
+回归是预测一个数值型的结果，例如温度，成绩等分类是预测一个标号或者类别，例如邮件是否为辣鸡邮件，一个人是属于哪个人种
+这里将使用决策树和随机森">
+<meta property="og:updated_time" content="2016-07-14T01:51:23.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="决策树算法预测森林植被">
+<meta name="twitter:description" content="算法介绍回归和分类回归算法和分类算法通常会被联系在一起，因为两者都可以通过一个或者多个值来预测一个或者多个值   he为了能够做出预测，两者需要从一组输入和输出中学习预测规则，在学习过程中需要告诉它们问题以及问题的答案因此，回归和分类都属于监督学习类的算法
+回归是预测一个数值型的结果，例如温度，成绩等分类是预测一个标号或者类别，例如邮件是否为辣鸡邮件，一个人是属于哪个人种
+这里将使用决策树和随机森">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/05/06/spark-decisiontree-predict/"/>
+
+  <title> 决策树算法预测森林植被 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                决策树算法预测森林植被
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-06T09:53:49+08:00" content="2016-05-06">
+              2016-05-06
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/05/06/spark-decisiontree-predict/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/06/spark-decisiontree-predict/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/05/06/spark-decisiontree-predict/" class="leancloud_visitors" data-flag-title="决策树算法预测森林植被">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h2><h3 id="回归和分类"><a href="#回归和分类" class="headerlink" title="回归和分类"></a>回归和分类</h3><p>回归算法和分类算法通常会被联系在一起，因为两者都可以通过一个或者多个值来预测一个或者多个值   he<br>为了能够做出预测，两者需要从一组输入和输出中学习预测规则，在学习过程中需要告诉它们问题以及问题的答案<br>因此，回归和分类都属于<strong>监督学习</strong>类的算法</p>
+<p>回归是预测一个数值型的结果，例如温度，成绩等<br>分类是预测一个标号或者类别，例如邮件是否为辣鸡邮件，一个人是属于哪个人种</p>
+<p>这里将使用<strong>决策树</strong>和<strong>随机森林算法</strong>来完成工作，这两种算法灵活且被广泛应用<br>既可以用于分类问题也可以用于回归问题</p>
+<h3 id="特征识别"><a href="#特征识别" class="headerlink" title="特征识别"></a>特征识别</h3><p>假设我们要通过某饭店商家<strong>今天的销售额</strong>来预测<strong>明天的销售额</strong>，使用机器学习算法完全没有问题<br>但是在这之前我们要做一些操作，今天的销售额是一个非常广泛的概念，无法直接应用到算法中<br>那么我们就需要对<strong>今天的销售额进行特征提取和识别</strong>，这些特征有助于我们预测明天的销售额<br>例如：</p>
+<blockquote>
+<ul>
+<li>今天的最低人流量：20   </li>
+<li>今天的最高人流量：200   </li>
+<li>今天平均上菜速度：3   </li>
+<li>忙时是早上、中午还是晚上：中午   </li>
+<li>隔壁饭店的平均人流量：60</li>
+</ul>
+</blockquote>
+<p>等等，特征有时候也被称为<strong>维度</strong>或者<strong>预测指标</strong>，以上的每个特征都能够被量化，例如<br>今天的最低人流量为20，单位人<br>今天平均上菜速度为3，单位分钟</p>
+<p>因此，今天的销售额就可以简化为一个值列表：<br>20,200,3,中午,60</p>
+<p>这几个特征顺序排列就组成了特征向量，<strong>一个特征向量可以用来描述该商家每天的销售额</strong>   </p>
+<p>关于如何提取特征，要根据实际的业务场景来操作，提取出的特征能够贴切的描述具体的业务场景，这个过程甚至需要业务专家的参与   </p>
+<p>相信你已经注意到了，示例中的特征向量中并不是每个值都是数值型，例如<strong>中午</strong><br>在实际应用中，这种情况很常见，通常把特征分为两种：</p>
+<blockquote>
+<ul>
+<li>数值型特征：可以直接使用数字表示，数字的小大是有意义的   </li>
+<li>类别型特征：在几个离散值中选取一个，离散值之间的大小是没有意义的</li>
+</ul>
+</blockquote>
+<h3 id="训练样本"><a href="#训练样本" class="headerlink" title="训练样本"></a>训练样本</h3><p>为了进行预测，监督学习算法需要在大量的数据集上进行训练，这些数据集不仅要包含数据特征输入，还要包含正确的输入<br>如上例中的特征向量是不能够被作为训练样本的，因为其没有<strong>正确的输出–今天的销售额</strong><br>如果将今天的销售额2000也作为一个特征加入该数据中，该数据就能够作为一个训练样本，为机器学习算法提供了一个结构化的输入：<br>20,200,3,中午,60,2000</p>
+<p>注意，这里的输出是一个数值型<br>回归和分类的区别在于：<strong>回归的目标为数值型特征，分类的目标为类别型特征</strong><br>并不是所有的回归、分类算法都能够处理类别型特征或者类别型目标，有些算法只能处理数值型   </p>
+<p>我们可以通过适当的转换规则将类别型特征转换为数值型特征，例如：</p>
+<blockquote>
+<ul>
+<li>早上：1   </li>
+<li>中午：2   </li>
+<li>晚上：3</li>
+</ul>
+</blockquote>
+<p>用数字123分别代表早上、中午和晚上，那么该训练样本就可以表示为：<br>20,200,3,2,60,2000</p>
+<p><strong>注意：</strong>有些算法对对数值型特征的大小进行猜测，一旦将类别型特征转换为数值型特征可能会造成一些影响，因为类别型特征本身的大小是没有意义的</p>
+<h3 id="决策树"><a href="#决策树" class="headerlink" title="决策树"></a>决策树</h3><p>决策树算法家族能够自然的处理署执行和类别型特征<br>什么是决策树呢？<br>事实上，我们在生活中无意中就会用到决策树所体现的推理方法，例如：<br>看到一部满意的新手机，但是旧手机还能用，买还是不买呢？<br>于是我会经历一下的过程：</p>
+<blockquote>
+<p>1.旧手机是否已经无法忍受？是，就买<br>2.上一步为否，那么新手机是否能够达到非买不可的地步？是，就买<br>3.上一步为否，新手机的价格是否达到可以随意购买的地步？是，就买<br>4.上一步为否，新手机的综合性价比能否和旧手机甩开一个距离？是，就买<br>5.上一步为否，那么就不买</p>
+</blockquote>
+<p>可以看到，决策树推理的过程就是一系列的是/否，在程序中表达就是一堆if/else<br>但是决策树有个很严重的缺点<strong>过度拟合</strong>，如何理解？<br>即，用训练数据训练出来的模型在训练数据中表现优异，但是对新的数据无法做出合理的预测<br><strong>决策树训练出来的模型可能会对训练数据有过度拟合的问题</strong></p>
+<h3 id="随机森林"><a href="#随机森林" class="headerlink" title="随机森林"></a>随机森林</h3><p>随机森林是由多个<strong>随机的</strong>决策树组成的，何为随机的决策树？<br>随机森林中的每颗决策树中，使用的训练数据是总训练数据中随机的一部分，每层使用的决策规则都是随机选定的<br>随机森林的做法是属于<strong>集体智慧</strong>的，<strong>集体的平均预测应该比任何一个个体的预测要准确</strong><br><strong>正是因为随机森林构建过程中的随机性，才有了这种独立性，这是随机森林的关键</strong></p>
+<p>因为每颗决策树所使用的决策都是随机的一部分，所以随机森林得以有足够的时间来构建多颗决策树<br>也正是因为如此，森林中的每棵树更不会产生过度拟合的问题，因为使用的决策是随机的一部分</p>
+<p>随机森林的预测是所有决策树的加权平均</p>
+<h2 id="程序开发"><a href="#程序开发" class="headerlink" title="程序开发"></a>程序开发</h2><h3 id="数据集"><a href="#数据集" class="headerlink" title="数据集"></a>数据集</h3><p>示例中将使用Covtype的森林植被数据集，该数据集是公开的，可以<a href="https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/" target="_blank" rel="external">在线下载</a><br>该数据集的每个样本描述每块土地的若干特征，包括海拔、坡度、到水源的距离、遮阳情况和土壤类型等54个特征，并给出了目标特征–每块土地的森林植被类型</p>
+<h3 id="Spark-Mllib的决策树"><a href="#Spark-Mllib的决策树" class="headerlink" title="Spark Mllib的决策树"></a>Spark Mllib的决策树</h3><p>这里将使用Spark中的Mllib机器学习库，Mllib将特征向量抽象为LabeledPoint，关于LabeledPoint的具体介绍请看：<br><a href="http://www.xiaohei.info/2015/05/27/spark-11-mllib/" target="_blank" rel="external">Spark（十一） – Mllib API编程 线性回归、KMeans、协同过滤演示</a></p>
+<p>LabeledPoint中的Vector本质上是对多个Double类型的抽象，所以LabeledPoint只能处理数值型特征，样本数据集中已经将类别型的特征转换为数值型特征了<br>Mllib中的DecisionTree的输入为LabeledPoint类型，所以读取数据之后，我们需要将数据转换为LabeledPoint</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> conf = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">"DecisionTree"</span>)</div><div class="line"><span class="keyword">val</span> sc = <span class="keyword">new</span> <span class="type">SparkContext</span>(conf)</div><div class="line"><span class="comment">//读取数据</span></div><div class="line"><span class="keyword">val</span> rawData = sc.textFile(<span class="string">"/spark_data/covtype.data"</span>)</div><div class="line"><span class="comment">//转换为为LabeledPoint</span></div><div class="line"><span class="keyword">val</span> data = rawData.map &#123; line =&gt;</div><div class="line">  <span class="keyword">val</span> values = line.split(<span class="string">","</span>).map(_.toDouble)</div><div class="line">  <span class="comment">//init返回除了最后一个元素的所有元素,作为特征向量</span></div><div class="line">  <span class="keyword">val</span> feature = <span class="type">Vectors</span>.dense(values.init)</div><div class="line">  <span class="comment">//返回最后一个目标特征,由于决策树的目标特征规定从0开始,而数据是从1开始的,所以要-1</span></div><div class="line">  <span class="keyword">val</span> label = values.last - <span class="number">1</span></div><div class="line">  <span class="type">LabeledPoint</span>(label, feature)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>为了能够评估训练出来的模型的准确度，我们可以将数据集划分为三部分：训练集、交叉验证集和测试集，各占80%，10%和10%</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> <span class="type">Array</span>(trainData, cvData, testData) = data.randomSplit(<span class="type">Array</span>(<span class="number">0.8</span>, <span class="number">0.1</span>, <span class="number">0.1</span>))</div><div class="line">trainData.cache()</div><div class="line">cvData.cache()</div><div class="line">testData.cache()</div></pre></td></tr></table></figure>
+<p>接下来我们先训练出一个决策树模型来看看猪长什么样</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">  * 获得评估指标</div><div class="line">  *</div><div class="line">  * @param model 决策树模型</div><div class="line">  * @param data  用于交叉验证的数据集</div><div class="line">  **/</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">getMetrics</span></span>(model: <span class="type">DecisionTreeModel</span>, data: <span class="type">RDD</span>[<span class="type">LabeledPoint</span>]): <span class="type">MulticlassMetrics</span> = &#123;</div><div class="line">  <span class="comment">//将交叉验证数据集的每个样本的特征向量交给模型预测,并和原本正确的目标特征组成一个tuple</span></div><div class="line">  <span class="keyword">val</span> predictionsAndLables = data.map &#123; d =&gt;</div><div class="line">    (model.predict(d.features), d.label)</div><div class="line">  &#125;</div><div class="line">  <span class="comment">//将结果交给MulticlassMetrics,其可以以不同的方式计算分配器预测的质量</span></div><div class="line">  <span class="keyword">new</span> <span class="type">MulticlassMetrics</span>(predictionsAndLables)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">val</span> model = <span class="type">DecisionTree</span>.trainClassifier(trainData, <span class="number">7</span>, <span class="type">Map</span>[<span class="type">Int</span>, <span class="type">Int</span>](), <span class="string">"gini"</span>, <span class="number">4</span>, <span class="number">100</span>)</div><div class="line"><span class="keyword">val</span> metrics = getMetrics(model, cvData)</div></pre></td></tr></table></figure>
+<p>DecisionTree有两种训练模型的方法：trainClassifier和trainRegressor分别对应分类和回归问题<br>trainClassifier的参数：</p>
+<blockquote>
+<p>1.训练数据集<br>2.目标类别个数，即结果有几种选择<br>3.Map中的键值分别对应Vector下标和该下标对应<strong>类别特征</strong>的取值情况，空表示所有特征都是数值型（为了方便，示例中直接取空，实际当中并不能这么使用）<br>4.不纯性(impurity)度量：gini或者entropy，不纯度用来衡量一个规则的好坏，好的规则可以将数据划分为等值的两部分，坏规则则相反<br>5.决策树的最大深度，越深的决策树越有可能产生过度拟合的问题<br>6.决策树的最大桶数，每层使用的决策规则的个数，越多就可能精确，花费的时候也就越多,最小的桶数应该不小于类别特征中最大的选择个数</p>
+</blockquote>
+<p>现在来看看metrics指标中的混淆矩阵：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="type">System</span>.out.println(metrics.confusionMatrix.toString())</div></pre></td></tr></table></figure>
+<p>结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">14411.0  6564.0   17.0    1.0    0.0   0.0  317.0</div><div class="line">5444.0   22158.0  449.0   22.0   4.0   0.0  43.0</div><div class="line">0.0      415.0    3022.0  95.0   0.0   0.0  0.0</div><div class="line">0.0      0.0      159.0   112.0  0.0   0.0  0.0</div><div class="line">0.0      895.0    34.0    0.0    14.0  0.0  0.0</div><div class="line">0.0      422.0    1228.0  108.0  0.0   0.0  0.0</div><div class="line">1112.0   28.0     0.0     0.0    0.0   0.0  903.0</div></pre></td></tr></table></figure>
+<p>因为目标类别有7个，所以混淆矩阵是一个7<em>7的矩阵，每一行对应一个<strong>正确的目标特征</strong>值，每一列对应一个<strong>预测的目标特征</strong>值<br>第i行第j列表示一个正确类别为i的样本被预测为j的次数，所以<em>*对角线上的元素代表预测正确的次数，其他表示预测错误的次数</em></em><br>另外，模型的精准度也可以用一个数字来表示：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="type">System</span>.out.println(metrics.precision)</div></pre></td></tr></table></figure>
+<p>结果为0.6996041965535718，准确率大概在69%左右   </p>
+<p>除了准确度，还有召回率等概念，还可以为每个目标特征单独查看其准确度等信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(0 until 7).map(target =&gt; (metrics.precision(target), metrics.recall(target))).foreach(println)</div></pre></td></tr></table></figure>
+<p>下面为输出结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">(0.6845289541918755,0.6708390193402664)</div><div class="line">(0.7237410535817912,0.7904577464788732)</div><div class="line">(0.6385618166526493,0.8483240223463687)</div><div class="line">(0.5800865800865801,0.44966442953020136)</div><div class="line">(0.0,0.0)</div><div class="line">(0.7283950617283951,0.03460410557184751)</div><div class="line">(0.6814580031695721,0.4405737704918033)</div></pre></td></tr></table></figure>
+<p>可以看到，每个类别的准确度都不同，而且很诡异的是第5个类别的准确度为0，所以这个模型并不是我们想要的<br>我们想要的是一个符合实际的，准确度尽可能高的模型，那么该如何确定模型训练的参数呢？<br>可以在训练模型的时候选择不同的组合，并反馈出每个组合训练处的模型准确度结果，那么我们就可以从中选出最好的那个模型来使用：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">  * 在训练数据集上得到最好的参数组合</div><div class="line">  * @param trainData 训练数据集</div><div class="line">  * @param cvData 交叉验证数据集</div><div class="line">  * */</div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">getBestParam</span></span>(trainData: <span class="type">RDD</span>[<span class="type">LabeledPoint</span>], cvData: <span class="type">RDD</span>[<span class="type">LabeledPoint</span>]): <span class="type">Unit</span> = &#123;</div><div class="line">  <span class="keyword">val</span> evaluations = <span class="keyword">for</span> (impurity &lt;- <span class="type">Array</span>(<span class="string">"gini"</span>, <span class="string">"entropy"</span>);</div><div class="line">                         depth &lt;- <span class="type">Array</span>(<span class="number">1</span>, <span class="number">20</span>);</div><div class="line">                         bins &lt;- <span class="type">Array</span>(<span class="number">10</span>, <span class="number">300</span>)) <span class="keyword">yield</span> &#123;</div><div class="line">    <span class="keyword">val</span> model = <span class="type">DecisionTree</span>.trainClassifier(trainData, <span class="number">7</span>, <span class="type">Map</span>[<span class="type">Int</span>, <span class="type">Int</span>](), impurity, depth, bins)</div><div class="line">    <span class="keyword">val</span> metrics = getMetrics(model, cvData)</div><div class="line">    ((impurity, depth, bins), metrics.precision)</div><div class="line">  &#125;</div><div class="line">  evaluations.sortBy(_._2).reverse.foreach(println)</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>执行的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">((entropy,20,300),0.9123611325743918)</div><div class="line">((gini,20,300),0.9062140490049623)</div><div class="line">((entropy,20,10),0.8948814368378578)</div><div class="line">((gini,20,10),0.8902625388485379)</div><div class="line">((gini,1,300),0.6352272532151995)</div><div class="line">((gini,1,10),0.6349525232232697)</div><div class="line">((entropy,1,300),0.4855337488624461)</div><div class="line">((entropy,1,10),0.4855337488624461)</div></pre></td></tr></table></figure>
+<p>可以看到最好的组合为第一个，准确度在91%左右，我们可以再查看一下使用最好参数训练出来的模型，各个类别的准确度为多少：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">(0.899412455934195,0.9029350698376746)</div><div class="line">(0.9193229901269393,0.9203289914928166)</div><div class="line">(0.9222857142857143,0.9238694905552376)</div><div class="line">(0.8263888888888888,0.8623188405797102)</div><div class="line">(0.8294663573085846,0.7663451232583065)</div><div class="line">(0.8596802841918295,0.8491228070175438)</div><div class="line">(0.9454369869628199,0.9275225011842728)</div></pre></td></tr></table></figure>
+<p>现在看来比之前的要好上很多了吧</p>
+<p>直到这里，我们一直没有使用到10%的测试数据集，如果说10%的交叉验证数据集的作用是确定在训练数据集上训练出来的模型的<strong>最好参数</strong><br>那么测试数据集的作用就是评估CV数据集的最好参数，可以将训练集和CV集结合起来，然后对测试集进行以上的步骤验证来得到一个合适的参数组合</p>
+<h3 id="随机森林-1"><a href="#随机森林-1" class="headerlink" title="随机森林"></a>随机森林</h3><p>在Spark Mllib中使用随机森林的方式和决策树差不多：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">val</span> forest = <span class="type">RandomForest</span>.trainClassifier(trainData, <span class="number">7</span>, <span class="type">Map</span>(<span class="number">10</span> -&gt; <span class="number">4</span>, <span class="number">11</span> -&gt; <span class="number">40</span>), <span class="number">20</span>, <span class="string">"auto"</span>, <span class="string">"entropy"</span>, <span class="number">30</span>, <span class="number">300</span>)</div></pre></td></tr></table></figure>
+<p>和构架决策树的时候不同，这里不再使用空的Map<br>Map(10 -&gt; 4, 11 -&gt; 40)表示特征向量中下标为10的是类别型特征，类别取值有4个；下标为11的类别特征向量取值有40个<br>此时，随机森林不会再对10和11这两个特征向量做出“大小推测”等数值型特征才会有的操作<br>这样明显更加贴近实际，所得到的模型质量也会更好</p>
+<p>此外随机森林还多了两个参数：</p>
+<blockquote>
+<p>1.森林中有多少颗决策树，示例中取值为20<br>2.每层决策规则的选择方法，示例中为”auto”</p>
+</blockquote>
+<p>按照决策树的评估流程对随机森林模型进行测试，可以得到关于准确度的一些指标进而衡量模型质量</p>
+<p>至此，关于决策树和随机森林算法的模型已经构建完毕，可以使用这个模型对数据进行预测</p>
+<p><a href="https://github.com/chubbyjiang/spark-demo/tree/master/src/main/scala/info/xiaohei/www/spark/examples/decisiontree" target="_blank" rel="external">Github源码地址</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据挖掘/" rel="tag">#数据挖掘</a>
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/04/hadoop-io-summary/" rel="next" title="Hadoop I/O">
+                <i class="fa fa-chevron-left"></i> Hadoop I/O
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/07/mapreduce-works/" rel="prev" title="MapReduce工作机制">
+                MapReduce工作机制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/05/06/spark-decisiontree-predict/"
+           data-title="决策树算法预测森林植被" data-url="http://xiaohei.info/2016/05/06/spark-decisiontree-predict/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#算法介绍"><span class="nav-number">1.</span> <span class="nav-text">算法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#回归和分类"><span class="nav-number">1.1.</span> <span class="nav-text">回归和分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#特征识别"><span class="nav-number">1.2.</span> <span class="nav-text">特征识别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#训练样本"><span class="nav-number">1.3.</span> <span class="nav-text">训练样本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#决策树"><span class="nav-number">1.4.</span> <span class="nav-text">决策树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#随机森林"><span class="nav-number">1.5.</span> <span class="nav-text">随机森林</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#程序开发"><span class="nav-number">2.</span> <span class="nav-text">程序开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#数据集"><span class="nav-number">2.1.</span> <span class="nav-text">数据集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spark-Mllib的决策树"><span class="nav-number">2.2.</span> <span class="nav-text">Spark Mllib的决策树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#随机森林-1"><span class="nav-number">2.3.</span> <span class="nav-text">随机森林</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,830 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Spark," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Spark Streaming作为Spark上的四大子框架之一，肩负着实时流计算的重大责任而相对于另外一个当下十分流行的实时流计算处理框架Storm，Spark Streaming有何优点？又有何不足呢？首先，对于Storm实时流处理惊人的低延迟性，Spark Streaming的不足很明显Storm官方说的最低延迟可以使多少毫秒级别的而Spark Streaming只能做到压秒，也就是零点几秒相">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（五） -- Spark Streaming介绍与基本执行过程">
+<meta property="og:url" content="http://xiaohei.info/2015/05/16/spark-5-sparkstreaming-introduction/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="Spark Streaming作为Spark上的四大子框架之一，肩负着实时流计算的重大责任而相对于另外一个当下十分流行的实时流计算处理框架Storm，Spark Streaming有何优点？又有何不足呢？首先，对于Storm实时流处理惊人的低延迟性，Spark Streaming的不足很明显Storm官方说的最低延迟可以使多少毫秒级别的而Spark Streaming只能做到压秒，也就是零点几秒相">
+<meta property="og:image" content="http://img.blog.csdn.net/20150516200005295">
+<meta property="og:updated_time" content="2016-07-15T02:49:18.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark（五） -- Spark Streaming介绍与基本执行过程">
+<meta name="twitter:description" content="Spark Streaming作为Spark上的四大子框架之一，肩负着实时流计算的重大责任而相对于另外一个当下十分流行的实时流计算处理框架Storm，Spark Streaming有何优点？又有何不足呢？首先，对于Storm实时流处理惊人的低延迟性，Spark Streaming的不足很明显Storm官方说的最低延迟可以使多少毫秒级别的而Spark Streaming只能做到压秒，也就是零点几秒相">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20150516200005295">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2015/05/16/spark-5-sparkstreaming-introduction/"/>
+
+  <title> Spark（五） -- Spark Streaming介绍与基本执行过程 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spark（五） -- Spark Streaming介绍与基本执行过程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2015-05-16T10:48:54+08:00" content="2015-05-16">
+              2015-05-16
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/05/16/spark-5-sparkstreaming-introduction/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/16/spark-5-sparkstreaming-introduction/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2015/05/16/spark-5-sparkstreaming-introduction/" class="leancloud_visitors" data-flag-title="Spark（五） -- Spark Streaming介绍与基本执行过程">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>Spark Streaming作为Spark上的四大子框架之一，肩负着实时流计算的重大责任<br>而相对于另外一个当下十分流行的实时流计算处理框架Storm，Spark Streaming有何优点？又有何不足呢？<br>首先，对于Storm实时流处理惊人的低延迟性，Spark Streaming的不足很明显<br>Storm官方说的最低延迟可以使多少毫秒级别的<br>而Spark Streaming只能做到压秒，也就是零点几秒<br>相对于Storm的实时性来说，Spark Streaming甚至只能说是准实时的</p>
+<p>But，Spark Streaming虽然在延迟性方面比不过Storm，但是Spark Streaming有太多太多的优点，以至于能够让人的注意力从Storm转移到Spark Streaming身上</p>
+<p>第一，Spark Streaming是Spark的核心子框架之一。<br>说到Spark核心，那就不得不说RDD了。<br>Spark Streaming作为核心的子框架，对RDD的操作支持肯定是杠杠的，这又说明了什么？<br>Spark Streaming可以通过RDD和Spark上的任何框架进行数据共享和交流，这就是Spark的野心，一个堆栈搞定所有场景</p>
+<p>第二，虽然Spark Streaming的延迟性比不过Storm，但是Spark Streaming也有自己的优势，那就是巨大的吞吐量，这点是Storm所比不上的</p>
+<p>第三，由于Spark上子框架的编程模型基本都是一个套路，所以Spark Streaming的API也是十分易于掌握的</p>
+<p>第四，Spark Streaming支持多语言编程，并且各个语言之间的编程模型也是类似的</p>
+<p>第五，Spark Streaming的容错机制。Spark Streaming在读取流数据进入内存的时候会保存两个副本，计算只用一个，当出现问题的时候可以快速的切换到另外一个副本；在规定的时间内进行数据的固化；由于支持RDD操作，所以RDD本身的容错处理机制也被继承</p>
+<p><strong>Spark Streaming的处理过程：</strong></p>
+<ol>
+<li>以时间片为单位划分形成数据流形成RDD（DStream）</li>
+<li>对每个划分数来的RDD以批处理的方式处理数据</li>
+<li>每个划分出来的RDD地处理都会提交成Job</li>
+</ol>
+<p><strong>比较适用的场景：</strong></p>
+<ul>
+<li>历史数据和实时数据结合进行分析</li>
+<li>对实时性要求不是很苛刻的场景</li>
+</ul>
+<p><strong>重要的组件：</strong></p>
+<ol>
+<li>Job Scheduler：周期性查询DStream生成的DAG图，将其转换为Job提交到Job Manager</li>
+<li>Job Manager：维护Job队列，将Job提交到Spark运行</li>
+</ol>
+<p><strong>一些调优方式：</strong></p>
+<p> 1、运行时间调优</p>
+<ul>
+<li>并行度优化，确保任务使用集群所有资源，防止数据倾斜</li>
+<li>减少数据序列化、反序列化的次数</li>
+<li>合理调整批处理窗口</li>
+</ul>
+<p>2、空间占用调优</p>
+<ul>
+<li>定时清理不用的数据</li>
+<li>控制批处理量，确保当前节点Spark的可用内存能够容纳这个batch窗口的所有数据</li>
+</ul>
+<p>下面给出一个Spark Streaming的简单实例代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">//根据sparkConf（spark配置信息）和Seconds（多少秒处理一次流数据）创建一个StreamingContext对象</div><div class="line">val ssc = StreamingContext(sparkConf,Seconds(1))</div><div class="line">//调用ssc的socketTextStream根据参数接收指定地址的数据，根据ssc的Seconds参数配置决定多长时间处理一次。这里的socketTextStream是专门处理socket数据的方法，对于其他数据来源，例如Flume，Kafka，Twitter等都有专门的方法来处理</div><div class="line">val lines = ssc.socketTextStream(servIp,servPort)</div><div class="line">//对每一行数据进行分割</div><div class="line">val words = lines.flatMap(_.Split(&quot; &quot;))</div><div class="line">//统计word的数量</div><div class="line">val pairs = words.map(word =&gt; (word,1))</div><div class="line">val wordCounts = pairs.reduceByKey(_ + _)</div><div class="line">//输出结果</div><div class="line">wordCounts.print()</div><div class="line">//开始</div><div class="line">ssc.start()</div><div class="line">//计算完毕退出</div><div class="line">ssc.waitTermination()</div></pre></td></tr></table></figure>
+<p>从以上代码中就很明显的可以看出Spark Streaming的编程模型和Spark上的其他子框架是差不多的，只不过针对实时流处理多了一些自身的操作而已</p>
+<p>在执行这行代码的时候<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">val lines = ssc.socketTextStream(servIp,servPort)</div></pre></td></tr></table></figure></p>
+<p>lines其实是一个DStream的RDD对象</p>
+<p>每一秒流进来的数据都会被处理成DStream对象，也就是一个个lines<br>在处理流进来的数据时，Spark Streaming是串行处理的，也就是说，当前面这个DStream在一秒之内还没有被处理完毕时，新的数据来了，那么此时的新数据会被阻塞住，直至当前的DStream处理完毕之后才处理下一个数据</p>
+<p><img src="http://img.blog.csdn.net/20150516200005295" alt="这里写图片描述"></p>
+<p>如同上图所示，interval[0,1)和interval[1,2)是串行执行的，当interval1执行完毕（经过reduce操作到达第三个阶段时），才会处理interval2</p>
+<p>但是我们可以看到每一行的产生的结果，也就是第三个阶段之间也会进行一些操作运算，这时是交给Spark内核引擎来并行处理的</p>
+<p>对于串行引起的阻塞问题就涉及到Spark Streaming的一些优化了，如，Batch Size，每个数据分块的大小应该分为多少才会在规定的时间内处理完毕而不会引起阻塞？<br>答案是没有最好的Size，只有最合适的Size。<br>一切都是根据当前系统的状况来进行决定的，以系统反馈的数据说话</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Spark/" rel="tag">#Spark</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/05/14/spark-3-shark-sparksql/" rel="next" title="Spark（三） -- Shark与SparkSQL">
+                <i class="fa fa-chevron-left"></i> Spark（三） -- Shark与SparkSQL
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/17/spark-6-calculation-model/" rel="prev" title="Spark（六） -- Spark计算模型">
+                Spark（六） -- Spark计算模型 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2015/05/16/spark-5-sparkstreaming-introduction/"
+           data-title="Spark（五） -- Spark Streaming介绍与基本执行过程" data-url="http://xiaohei.info/2015/05/16/spark-5-sparkstreaming-introduction/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

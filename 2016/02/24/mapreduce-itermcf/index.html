@@ -1,0 +1,830 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,MapReduce," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="##ItermCF的基本思想
+基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+
+1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
+
+通俗的来讲就是：
+对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
+##ItermCF">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ItermCF的MR并行实现">
+<meta property="og:url" content="http://xiaohei.info/2016/02/24/mapreduce-itermcf/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="##ItermCF的基本思想
+基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+
+1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
+
+通俗的来讲就是：
+对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
+##ItermCF">
+<meta property="og:updated_time" content="2016-07-14T03:27:01.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ItermCF的MR并行实现">
+<meta name="twitter:description" content="##ItermCF的基本思想
+基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+
+1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
+
+通俗的来讲就是：
+对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
+##ItermCF">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/02/24/mapreduce-itermcf/"/>
+
+  <title> ItermCF的MR并行实现 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                ItermCF的MR并行实现
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-02-24T11:26:19+08:00" content="2016-02-24">
+              2016-02-24
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/02/24/mapreduce-itermcf/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/24/mapreduce-itermcf/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/02/24/mapreduce-itermcf/" class="leancloud_visitors" data-flag-title="ItermCF的MR并行实现">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##<strong>ItermCF的基本思想</strong></p>
+<p>基于物品相似度的协同过滤推荐的思想大致可分为两部分：</p>
+<blockquote>
+<p>1.计算物与物之前的相似度<br>2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐</p>
+</blockquote>
+<p><strong>通俗的来讲就是：</strong></p>
+<p>对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。</p>
+<p>##<strong>ItermCF的算法实现思路</strong></p>
+<p>对于以下的数据集：<br>|UserId|ItermId|Preference|<br>|—|—|—|<br>|1|    101|    5|<br>|1|    102|    3|<br>|1|    103|    2.5<br>|2|    101|    2|<br>|2|    102|    2.5|<br>|2|    103|    5|<br>|2|    104|    2|<br>|3|    101|    2|<br>|3|    104|    4|<br>|3|    105|    4.5|<br>|3|    107|    5|<br>|4|    101|    5|<br>|4|    103|    3|<br>|4|    104|    4.5|<br>|4|    106|    4|<br>|5|    101|    4|<br>|5|    102|    3|<br>|5|    103|    2|<br>|5|    104|    4|<br>|5|    105|    3.5|<br>|5|    106|    4|<br>|6|    102|    4|<br>|6|    103|    2|<br>|6|    105|    3.5|<br>|6|    107|    4|</p>
+<p>###<strong>用户评分矩阵</strong></p>
+<p>首先可以建立用户对物品的评分矩阵，大概长这个样子：</p>
+<p>$$<br>  \begin{matrix}<br>   &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5\<br>   101 &amp; 5 &amp; 2 &amp; 2 &amp; 5 &amp; 4\<br>   102 &amp; 3 &amp; 2.5 &amp; 0 &amp; 0 &amp; 3 \<br>   103 &amp; 2.5 &amp; 5 &amp; 0 &amp; 3 &amp; 2\<br>   104 &amp; 0 &amp; 2 &amp; 4 &amp; 4.5 &amp; 4\<br>   105 &amp; 0 &amp; 0 &amp; 4.5 &amp; 0 &amp; 3\<br>   106 &amp; 0 &amp; 0 &amp; 0 &amp; 4 &amp; 4\<br>   107 &amp; 0 &amp; 0 &amp; 5 &amp; 4 &amp; 0\<br>  \end{matrix}<br>$$</p>
+<p>列为UserId，行为ItermId，矩阵中的值代表该用户对该物品的评分。   </p>
+<p>从列的方向看，该矩阵的每一个列在mr程序中可以用一行简单的字符串来表示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">1	101:5,102:3,103:2.5 ...   </div><div class="line">```   </div><div class="line">这样一来，上面的矩阵5个列就可以由5行类似的字符串来构成。   </div><div class="line">那么第一个mr任务的功能就是一个简单的数据转换过程：</div><div class="line"></div><div class="line">&gt; 1.输入的key为行偏移量，value为每行内容，形如：1,101,5.0</div><div class="line">&gt; 2.在map阶段，分割每行内容，输出的key为1，value为101:5.0</div><div class="line">&gt; 3.在reduce阶段，将UserId相同的所有评分记录进行汇总拼接，输出的key仍然为1，value形如：101:5,102:3,103:2.5 ...</div><div class="line"></div><div class="line">如此一来通过第一个mr任务得到了用户的评分矩阵。</div><div class="line"></div><div class="line">###**物品同现矩阵**</div><div class="line"></div><div class="line">该矩阵大概长这个样子：</div><div class="line"></div><div class="line">矩阵的值表示，两个物品同时被用户喜欢（评过分）的次数，例如：101和102这个组合被1，2，5三个用户喜欢过，那么在矩阵中101和102对应的值就是3。   </div><div class="line"></div><div class="line">这个矩阵的意义就是**各个物品之间的相似度**，为什么可以这么说？   </div><div class="line">如果两个物品经常同时被很多用户喜欢，那么可以说这两个物品是相似的，**同时被越多的用户喜欢（即为通同现度，上面矩阵中的值），这两个物品的相似度就越高**。   </div><div class="line">其实观察可以发现，行和列上相同的（比如101和101）相比其他值（比如101和102，101和103）都是最大的，**因为101和101就是同一个物品，相似度肯定是最大的**。   </div><div class="line"></div><div class="line">从列的方向上看，这个同现矩阵的每一列在mr程序中可以通过下面简单的字符串来表示：</div></pre></td></tr></table></figure></p>
+<p>101:101    5<br>101:102    3<br>101:103    4<br>…<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">m*n的同现矩阵就由m个以上的字符串（n行）组成。   </div><div class="line"></div><div class="line">那么第二个mr任务的功能就是在第一个mr任务的输出结果上得到物品同现矩阵：</div><div class="line"></div><div class="line">&gt; 1.输入的key为偏移量，输入的value为UserId+制表符+ItermId1:Perference1,ItermId2:Perference2...</div><div class="line">&gt; 2.输入的value中，UserId和Perference是不需要关心的，观察物品的同现矩阵，map阶段的工作就是将每行包含的ItermId都解析出来，**全排列组合作为key输出**，每个key的value记为1。</div><div class="line">&gt; 3.在reduce阶段所做的就是根据key对value进行累加输出。</div><div class="line"></div><div class="line">如此一来便能够得到物品的同现矩阵。   </div><div class="line"></div><div class="line">###**物品同现矩阵和用户评分矩阵的相乘**</div><div class="line"></div><div class="line">物品同现矩阵*用户评分矩阵=推荐结果：</div><div class="line"></div><div class="line">为什么两个矩阵相乘可以得到推荐结果？   </div><div class="line">**物品1和各个物品的同现度*用户对各个物品的喜好度，反应出用户对物品1的喜好度。**   </div><div class="line"></div><div class="line">例如，要预测用户3对103物品的喜好度，我们需要找到和103相似的物品，比如101物品，和103的同现度为4，**是很类似的物品，用户3对101的评分为2，那么一定程度上可以反映出用户对103的喜好度**，101和103的相似度（即同现度）*用户3对101的评分可以得到**用户3对103的喜好度权重**，将用户3对各个物品的权重相加，可以**反映出用户3对103的喜好度**。   </div><div class="line"></div><div class="line">了解矩阵相乘的意义之后，第三个mr任务的功能就是实现两个矩阵的相乘，并将结果输出。</div><div class="line"></div><div class="line">在这个mr任务中，这两个矩阵的相乘可以这样来计算：</div><div class="line"></div><div class="line">将同现矩阵存入一个Map中，形如：</div></pre></td></tr></table></figure></p>
+<p>Map<string, map<string,="" double="">&gt; colItermOccurrenceMap = new HashMap<string, map<string,="" double="">&gt;();<br>```</string,></string,></p>
+<p>同现矩阵中的每一行就是大Map中的一条记录，每行对应的每列都在该记录的小Map中。</p>
+<p>在map阶段的开始的时候初始化这个Map，输入的value形如101:101 5,101:102 3，将101作为大Map的key，value为小Map，小Map的key为101/102，value为5/3。</p>
+<p>由于map函数读取文件是并发读取的，不能保证两个输入文件的读取顺序（<strong>在同一个文件中也不能保证</strong>），所以这里使用Hadoop提供的<strong>分布式缓存机制</strong>来对同现矩阵进行共享。</p>
+<p>关于Hadoop的分布式缓存机制请看：<br><a href="http://blog.csdn.net/qq1010885678/article/details/50751007" target="_blank" rel="external">Hadoop的DistributedCache机制</a></p>
+<p>初始化同现矩阵之后，读取评分矩阵的每一行，输入的value为1    101:5,102:3,103:2.5 …<br>将每行的itermIds和对应的评分数提取出来，遍历itermId，根据itermId到itermOccurrenceMap中找到对应的List集合，找到每个itermId在该集合中对应的itermId2记录，将评分数*同现度，之后进行累加，以UserId:ItermID作为key，累加值作为value输出。</p>
+<p>reduce的工作就很简单了，根据key对value进行累加输出即可。</p>
+<p>###<strong>项目代码</strong></p>
+<p><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">源码Github地址</a></p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/02/22/mapreduce-multi-input-mapper-reducer/" rel="next" title="多个Mapper和Reducer处理多个输入">
+                <i class="fa fa-chevron-left"></i> 多个Mapper和Reducer处理多个输入
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/02/26/mapreduce-distributed-cache/" rel="prev" title="MapReduce中的DistributedCache">
+                MapReduce中的DistributedCache <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/02/24/mapreduce-itermcf/"
+           data-title="ItermCF的MR并行实现" data-url="http://xiaohei.info/2016/02/24/mapreduce-itermcf/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

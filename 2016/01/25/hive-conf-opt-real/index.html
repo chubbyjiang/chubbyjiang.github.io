@@ -1,0 +1,875 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hadoop,Hive," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="##安装hive
+hive的安装十分简单，只需要在一台服务器上部署即可。
+上传hive安装包，解压缩，将其配入环境变量。
+###mysql的设置
+在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hive配置与操作实践">
+<meta property="og:url" content="http://xiaohei.info/2016/01/25/hive-conf-opt-real/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="##安装hive
+hive的安装十分简单，只需要在一台服务器上部署即可。
+上传hive安装包，解压缩，将其配入环境变量。
+###mysql的设置
+在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
+<meta property="og:updated_time" content="2016-07-14T03:29:07.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hive配置与操作实践">
+<meta name="twitter:description" content="##安装hive
+hive的安装十分简单，只需要在一台服务器上部署即可。
+上传hive安装包，解压缩，将其配入环境变量。
+###mysql的设置
+在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/01/25/hive-conf-opt-real/"/>
+
+  <title> Hive配置与操作实践 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hive配置与操作实践
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-01-25T11:28:18+08:00" content="2016-01-25">
+              2016-01-25
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/01/25/hive-conf-opt-real/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/01/25/hive-conf-opt-real/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/01/25/hive-conf-opt-real/" class="leancloud_visitors" data-flag-title="Hive配置与操作实践">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##<strong>安装hive</strong></p>
+<p>hive的安装十分简单，只需要在一台服务器上部署即可。</p>
+<p>上传hive安装包，解压缩，将其配入环境变量。</p>
+<p>###<strong>mysql的设置</strong></p>
+<p>在要作为元数据库的mysql服务器上建立hive数据库：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#建立数据库</div><div class="line">create database if not exists hive;</div><div class="line"></div><div class="line">#设置远程登录的权限</div><div class="line">GRANT ALL PRIVILEGES ON *.* TO &apos;root&apos;@&apos;%&apos; IDENTIFIED BY &apos;root&apos; WITH GRANT OPTION;</div><div class="line"></div><div class="line">#刷新配置</div><div class="line">FLUSH PRIVILEGES;</div></pre></td></tr></table></figure>
+<p>或者创建专门访问hive的用户：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">CREATE USER &apos;hive&apos;@&apos;localhost&apos; IDENTIFIED BY &apos;hive&apos;;</div><div class="line">create database hive;</div><div class="line">grant all on hive.* to hive@&apos;%&apos;  identified by &apos;hive&apos;;</div><div class="line">grant all on hive.* to hive@&apos;localhost&apos;  identified by &apos;hive&apos;;</div><div class="line">flush privileges;</div></pre></td></tr></table></figure>
+<p>并将mysql jdbc驱动放入hive/lib目录下。</p>
+<p>###<strong>配置文件修改</strong></p>
+<p>进入conf目录，修改配置文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cp hive-env.sh.template hive-env.sh</div><div class="line">cp hive-default.xml.template hive-default.xml</div><div class="line">cp hive-log4j.properties.template hive-log4j.properties</div><div class="line">cp hive-exec-log4j.properties.template hive-exec-log4j.properties</div></pre></td></tr></table></figure>
+<p>在hive-env.sh文件中配置hadoop的home目录。</p>
+<p>新建hive-site.xml文件</p>
+<p><strong>hive-site.xml：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">&lt;configuration&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.exec.local.scratchdir&lt;/name&gt;</div><div class="line">&lt;value&gt;/usr/local/hive/iotmp&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.exec.scratchdir&lt;/name&gt;</div><div class="line">&lt;value&gt;/tmp/hive&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.server2.logging.operation.log.location&lt;/name&gt;</div><div class="line">&lt;value&gt;/usr/local/hive/iotmp&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.downloaded.resources.dir&lt;/name&gt;</div><div class="line">&lt;value&gt;/usr/local/hive/iotmp&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.querylog.location&lt;/name&gt;</div><div class="line">&lt;value&gt;/usr/local/hive/iotmp&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.metastore.warehouse.dir&lt;/name&gt;</div><div class="line">&lt;value&gt;/user/hive/warehouse&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;!--mysql元数据库配置--&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;javax.jdo.option.ConnectionDriverName&lt;/name&gt;</div><div class="line">&lt;value&gt;com.mysql.jdbc.Driver&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;javax.jdo.option.ConnectionURL&lt;/name&gt;</div><div class="line">&lt;value&gt;jdbc:mysql://localhost:3306/hive?characterEncoding=UTF-8&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;javax.jdo.option.ConnectionUserName&lt;/name&gt;</div><div class="line">&lt;value&gt;hive&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;javax.jdo.option.ConnectionPassword&lt;/name&gt;</div><div class="line">&lt;value&gt;hive&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;!--远程mysql元数据库--&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.metastore.local&lt;/name&gt;</div><div class="line">&lt;value&gt;false&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;property&gt;</div><div class="line">&lt;name&gt;hive.metastore.uris&lt;/name&gt;</div><div class="line">&lt;value&gt;thrift://localhost:9083&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line">&lt;/configuration&gt;</div></pre></td></tr></table></figure>
+<p>根据续期就进行修改。<br>注意：低版本的hive<strong>文件BUG：搜索<value>auth，改为<value>auth</value></value></strong></p>
+<p> 之后需要创建/usr/local/hive/iotmp文件夹</p>
+<p> <strong>hive-log4j.properties：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#修改默认的日志存在路径</div><div class="line">hive.log.dir=</div></pre></td></tr></table></figure>
+<p><strong>hive-exec-log4j.properties：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#修改默认的日志存在路径</div><div class="line">hive.log.dir=</div></pre></td></tr></table></figure>
+<p>###<strong>错误与异常记录</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask. java.lang.RuntimeException: Unable to instantiate org.apache.hadoop.hive.metastore.HiveMetaStoreClient</div></pre></td></tr></table></figure>
+<p>一般是没执行hive –service metastore，重新执行即可。</p>
+<p>##<strong>常用命令</strong></p>
+<p><strong>建表(默认是内部表)</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">create table trade_detail(id bigint, account string, income double, expenses double, </div><div class="line">time string) row format delimited fields terminated by &apos;\t&apos;;</div></pre></td></tr></table></figure>
+<p>建表时要指定字段之间的分隔符。</p>
+<p><strong>建分区表</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">create table td_part(id bigint, account string, income double, expenses double, time </div><div class="line">string) partitioned by (logdate string) row format delimited fields terminated by &apos;\t&apos;;</div></pre></td></tr></table></figure>
+<p>除了执行字段分隔符 之外还要指定分区字段。</p>
+<p><strong>建外部表</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">create external table td_ext(id bigint, account string, income double, expenses </div><div class="line">double, time string) row format delimited fields terminated by &apos;\t&apos; location &apos;/td_ext&apos;;</div></pre></td></tr></table></figure>
+<p>通过external关键字来建立外部表，location来指定要关联的hdfs文件系统的位置。</p>
+<p><strong>分区表加载数据</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">load data local inpath &apos;./book.txt&apos; overwrite into table book partition </div><div class="line">(pubdate=&apos;2010-08-22&apos;);</div></pre></td></tr></table></figure>
+<p><strong>使用sqoop将mysql的数据导入到hive表中</strong><br>sqoop先将数据导入到hdfs中，在调用hive的命令load到hive表中，所以要配置hive的环境变量。</p>
+<p>在hive当中创建两张表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">create table trade_detail (id bigint, account string, income double, </div><div class="line">expenses double, time string) row format delimited fields terminated by &apos;\t&apos;;</div><div class="line"></div><div class="line">create table user_info (id bigint, account string, name  string, age int) row format delimited fields terminated by &apos;\t&apos;;</div></pre></td></tr></table></figure>
+<p>将mysq当中的数据直接导入到hive当中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">sqoop import --connect jdbc:mysql://192.168.61.130:3306/cloud --username </div><div class="line">root --password JChubby123 --table trade_detail --hive-import --hive-overwrite --hive-table trade_detail --fields-terminated-by &apos;\t&apos;</div><div class="line"></div><div class="line">sqoop import --connect jdbc:mysql://192.168.61.130:3306/cloud --username </div><div class="line">root --password JChubby123 --table user_info --hive-import --hive-overwrite --hive-table user_info -- fields-terminated-by &apos;\t&apos;</div></pre></td></tr></table></figure>
+<p>创建一个result表保存前一个sql执行的结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">create table result row format delimited fields terminated by &apos;\t&apos; as select t2.account, t2.name, t1.income, t1.expenses, t1.surplus from user_info t2 join (select account, sum(income) as income, sum(expenses) as expenses, sum(income-expenses) as surplus from trade_detail group by account) t1 on (t1.account = t2.account);</div></pre></td></tr></table></figure>
+<p><strong>使用自定义的UDF函数</strong></p>
+<p>像传统数据库中的存储过程一样，自定义的UDF函数有输入和输出。当hive的函数不能满足业务需求的时候就需要自定义UDF函数来进行任务执行。</p>
+<ol>
+<li>引入hive和hadoop common的jar包</li>
+<li>自定义类，并继承自UDF类</li>
+<li>定义UDF函数，统一命名为evaluate，如：public Text evaluate(Text in)输入和输出要使用hadoop io的基本类型，因为其也要走mr任务和网络传输</li>
+<li>将其打包成jar并上传到装有hive的机器中</li>
+<li>在hive shell中执行命令将jar包中的函数添加进去</li>
+</ol>
+<p><strong>自定义函数调用过程：</strong></p>
+<ol>
+<li>添加jar包（在hive命令行里面执行）<br>hive&gt; add jar /root/NUDF.jar;</li>
+<li>创建临时函数<br>hive&gt; create temporary function getNation as ‘NationUDF’;<br>函数要写成包括包名的全名称</li>
+<li>调用<br>hive&gt; select id, name, getNation(nation) from beauty;</li>
+<li>将查询结果保存到HDFS中<br>create table result row format delimited fields terminated by ‘\t’ as select id, getNation<br>(nation) from beauties;</li>
+</ol>
+<p>##<strong>基本数据类型</strong></p>
+<p>基本的数据类型参考：<br><a href="http://blog.csdn.net/chenxingzhen001/article/details/20901045" target="_blank" rel="external">http://blog.csdn.net/chenxingzhen001/article/details/20901045</a></p>
+<p>##<strong>1.27更新</strong></p>
+<p>配置hive1.2.1版本的时候出现一个问题，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">Exception in thread &quot;main&quot;java.lang.RuntimeException: java.lang.IllegalArgumentException:java.net.URISyntaxException: Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.start(SessionState.java:444)</div><div class="line">        atorg.apache.hadoop.hive.cli.CliDriver.run(CliDriver.java:672)</div><div class="line">        atorg.apache.hadoop.hive.cli.CliDriver.main(CliDriver.java:616)</div><div class="line">        atsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</div><div class="line">        atsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)</div><div class="line">        atsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</div><div class="line">        atjava.lang.reflect.Method.invoke(Method.java:606)</div><div class="line">        atorg.apache.hadoop.util.RunJar.main(RunJar.java:160)</div><div class="line">Caused by: java.lang.IllegalArgumentException:java.net.URISyntaxException: Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atorg.apache.hadoop.fs.Path.initialize(Path.java:148)</div><div class="line">        atorg.apache.hadoop.fs.Path.&lt;init&gt;(Path.java:126)</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.createSessionDirs(SessionState.java:487)</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.start(SessionState.java:430)</div><div class="line">        ... 7more</div><div class="line">Caused by: java.net.URISyntaxException:Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atjava.net.URI.checkPath(URI.java:1804)</div><div class="line">        atjava.net.URI.&lt;init&gt;(URI.java:752)</div><div class="line">        atorg.apache.hadoop.fs.Path.initialize(Path.java:145)</div><div class="line">        ... 10more</div></pre></td></tr></table></figure>
+<p><strong>解决方式：</strong></p>
+<p>在HIVE_HOME目录下新建一个iotmp文件夹，<br>在hive-site.xml文件中，搜索所有包含system:java.io.tmpdir的配置项，将其value属性改为iotmp的路径保存即可。</p>
+<p>###<strong>hive无法读取配置文件的问题</strong></p>
+<p>hive部署之后，hive-site.xml中配置的是连接到远程的mysql数据库。</p>
+<p>HIVE_HOME已配置到.bash_profile文件中，但是直接执行hive命令的时候发现，同一个人在不同路径下执行竟然看到的表数据是不一样的！</p>
+<p>于是开始排查异常，切换各个不同的目录执行hive命令，但是看到的数据都不一样，而且发现<strong>每个目录下都会生成derby元数据库的文件信息</strong>，于是猜想hive连接的是本地的derby数据库，但是配置文件里面明明设置的是连接远程mysql数据库。</p>
+<p>进入conf目录再次执行hive命令，一切正常，将hive-site.xml文件复制到任意目录，再次执行hive，一切正常。</p>
+<p>说明当不在conf目录下执行hive命令的时候，hive脚本找不到hive-site.xml文件。</p>
+<p>再次仔细检查各种环境变量，一切正常，HADOOP_HOME、HIVE_HOME、HIVE_CONF_DIR等已经都在hive-env.sh中配置好了。</p>
+<p>查看hive脚本的代码，发现里面会先跑一个hive-config.sh，于是又打开该文件查看，没发现什么异常，直接export HIVE_CONF_DIR写死在里面，保存退出，执行hive，仍然不行。</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>小手一抖公众号就上来了</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>弄来试试？</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Hive/" rel="tag">#Hive</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/01/20/tools-rsync-multi-server/" rel="next" title="使用rsync进行多服务器同步">
+                <i class="fa fa-chevron-left"></i> 使用rsync进行多服务器同步
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/02/22/mapreduce-multi-input-mapper-reducer/" rel="prev" title="多个Mapper和Reducer处理多个输入">
+                多个Mapper和Reducer处理多个输入 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/01/25/hive-conf-opt-real/"
+           data-title="Hive配置与操作实践" data-url="http://xiaohei.info/2016/01/25/hive-conf-opt-real/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
