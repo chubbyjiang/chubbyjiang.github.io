@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="小黑的博客">
 <meta property="og:description" content="近期准备系统的学习一下HBase的知识，包括构架和原理等方面，以便为后续的开发工作做准备，做到知其然而之所以然的状态，而不再是瞎子摸象般的搞开发本篇作为开篇，只是对HBase做一个大体的介绍，各个小节没有很大的关联性，很多只是将系统中一些繁杂又有用的东西记录下来，以备日后查阅
 学习路线整理了一下手头上HBase的相关资料，发现特别零散，没有一个系统性的指导，所以特别想入一本《HBase权威指南》但">
-<meta property="og:updated_time" content="2016-07-13T11:26:45.000Z">
+<meta property="og:updated_time" content="2016-07-17T02:39:33.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase概览">
 <meta name="twitter:description" content="近期准备系统的学习一下HBase的知识，包括构架和原理等方面，以便为后续的开发工作做准备，做到知其然而之所以然的状态，而不再是瞎子摸象般的搞开发本篇作为开篇，只是对HBase做一个大体的介绍，各个小节没有很大的关联性，很多只是将系统中一些繁杂又有用的东西记录下来，以备日后查阅
@@ -328,9 +328,8 @@
         <p>近期准备系统的学习一下HBase的知识，包括构架和原理等方面，以便为后续的开发工作做准备，做到<strong>知其然而之所以然</strong>的状态，而不再是<strong>瞎子摸象</strong>般的搞开发<br>本篇作为开篇，只是对HBase做一个大体的介绍，各个小节没有很大的关联性，很多只是将系统中一些繁杂又有用的东西记录下来，以备日后查阅</p>
 <h2 id="学习路线"><a href="#学习路线" class="headerlink" title="学习路线"></a>学习路线</h2><p>整理了一下手头上HBase的相关资料，发现特别零散，没有一个系统性的指导，所以特别想入一本<strong>《HBase权威指南》</strong><br>但是手头上的书还没消化完毕，买回来也没时间看，只好自己先整理出一个简要的学习路线来走</p>
 <blockquote>
-<p>1.Java API使用<br>2.HBase构架中各个组件的原理和运维只是<br>3.相应框架的工具类，如MapReduce和Spark等<br>4.进入源码分析原理</p>
+<p>1.HBase构架和设计，各个组件的原理和运维知识<br>2.API的使用<br>3.相应框架的工具类，如MapReduce和Spark等<br>4.进入源码分析原理</p>
 </blockquote>
-<p>首先从Java API入手，先用起来再说，在使用过程中探究深层次的东西，最后尽量深入到源码解析其原理实现</p>
 <h2 id="HBase简介"><a href="#HBase简介" class="headerlink" title="HBase简介"></a>HBase简介</h2><h3 id="什么是HBase？"><a href="#什么是HBase？" class="headerlink" title="什么是HBase？"></a>什么是HBase？</h3><p>谈到HBase，必有五点：</p>
 <blockquote>
 <p>1.基于Google的BigTable论文实现<br>2.分布式数据库<br>3.列式存储<br>4.nosql型<br>5.基于HDFS和Zookeeper</p>

@@ -101,7 +101,7 @@ HBase集群上的各个节点，一个数据量很大的表可能被保存在不
 HLog
 HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中">
 <meta property="og:image" content="http://xiaohei.info/images/hbase-framework.png">
-<meta property="og:updated_time" content="2016-07-17T02:25:24.000Z">
+<meta property="og:updated_time" content="2016-07-17T03:41:20.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase构架">
 <meta name="twitter:description" content="存储结构HBase构架
@@ -358,7 +358,7 @@ HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个H
 <h2 id="HBase在HDFS上的目录结构"><a href="#HBase在HDFS上的目录结构" class="headerlink" title="HBase在HDFS上的目录结构"></a>HBase在HDFS上的目录结构</h2><h3 id="根级文件"><a href="#根级文件" class="headerlink" title="根级文件"></a>根级文件</h3><p><strong>.logs目录</strong></p>
 <p>HDFS上的HBase目录默认为/hbase，进入/hbase目录之后可以看到/hbase/.logs文件夹<br>这是被HLog管理的WAL文件，对于每个RegionServer，该目录中都会包含有一个对应的子目录<br>因为日志滚动的原因每个子目录中有多个HLog文件<br>日志滚动将在后面详细说明</p>
 <p><strong>hbase.id和hbase.version</strong></p>
-<p>顾名思义，分别包含集群的卫衣ID和文件格式的版本信息，它们在内部使用，且携带的信息不多</p>
+<p>顾名思义，分别包含集群的唯一ID和文件格式的版本信息，它们在内部使用，且携带的信息不多</p>
 <p><strong>.splitlog和.corrupt</strong></p>
 <p>日志拆分过程中产生的文件夹，详情见数据恢复小节</p>
 <h3 id="表级文件"><a href="#表级文件" class="headerlink" title="表级文件"></a>表级文件</h3><p>每个表在HBase中都会以一个单独的目录存储，每个表目录包含一个名为table.info的顶层文件<br>该文件存储表对应的序列化之后的HTableDescriptor，其中包含表和列族的定义<br>.tmp目录中包含一些临时数据，例如当更新.tableinfo文件时生成的临时数据就会被存放到该目录中</p>
