@@ -87,8 +87,7 @@
 <meta name="description" content="随着数据的不断导入和增大，原本集群部署的目录磁盘空间不足了，所以要把hadoop存储数据的位置迁移到另外一个巨大的磁盘上，另外的一个用意是将数据和程序分离开，以免互相影响。
 以下是迁移过程和需要注意的一些地方：
 动手之前先把集群停止，如果有hbase也一起停了，因为hbase的存储是依赖于hdfs的，如果没有停止就进行目录迁移hbase会出现错误。
-###修改配置文件
-hadoop最重要的存储数据">
+修改配置文件hadoop最重要的存储数据的配置在">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Hadoop数据目录迁移">
 <meta property="og:url" content="http://xiaohei.info/2016/01/13/hadoop-datadir-migration/index.html">
@@ -96,16 +95,14 @@ hadoop最重要的存储数据">
 <meta property="og:description" content="随着数据的不断导入和增大，原本集群部署的目录磁盘空间不足了，所以要把hadoop存储数据的位置迁移到另外一个巨大的磁盘上，另外的一个用意是将数据和程序分离开，以免互相影响。
 以下是迁移过程和需要注意的一些地方：
 动手之前先把集群停止，如果有hbase也一起停了，因为hbase的存储是依赖于hdfs的，如果没有停止就进行目录迁移hbase会出现错误。
-###修改配置文件
-hadoop最重要的存储数据">
-<meta property="og:updated_time" content="2016-07-14T03:32:49.000Z">
+修改配置文件hadoop最重要的存储数据的配置在">
+<meta property="og:updated_time" content="2016-07-17T02:23:29.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hadoop数据目录迁移">
 <meta name="twitter:description" content="随着数据的不断导入和增大，原本集群部署的目录磁盘空间不足了，所以要把hadoop存储数据的位置迁移到另外一个巨大的磁盘上，另外的一个用意是将数据和程序分离开，以免互相影响。
 以下是迁移过程和需要注意的一些地方：
 动手之前先把集群停止，如果有hbase也一起停了，因为hbase的存储是依赖于hdfs的，如果没有停止就进行目录迁移hbase会出现错误。
-###修改配置文件
-hadoop最重要的存储数据">
+修改配置文件hadoop最重要的存储数据的配置在">
 
 
 
@@ -337,8 +334,7 @@ hadoop最重要的存储数据">
         <p>随着数据的不断导入和增大，原本集群部署的目录磁盘空间不足了，所以要把hadoop存储数据的位置迁移到另外一个巨大的磁盘上，另外的一个用意是将数据和程序分离开，以免互相影响。</p>
 <p>以下是迁移过程和需要注意的一些地方：</p>
 <p><strong>动手之前先把集群停止，如果有hbase也一起停了，因为hbase的存储是依赖于hdfs的，如果没有停止就进行目录迁移hbase会出现错误。</strong></p>
-<p>###<strong>修改配置文件</strong></p>
-<p>hadoop最重要的存储数据的配置在core-site.xml文件中设置，修改core-site.xml的hadoop.tmp.dir值为新磁盘的路径即可。</p>
+<h3 id="修改配置文件"><a href="#修改配置文件" class="headerlink" title="修改配置文件"></a><strong>修改配置文件</strong></h3><p>hadoop最重要的存储数据的配置在core-site.xml文件中设置，修改core-site.xml的hadoop.tmp.dir值为新磁盘的路径即可。</p>
 <p>考虑到数据和程序的分离，决定将那些会不断增长的文件都迁移出去，包括：日志文件，pid目录，journal目录。</p>
 <p>日志文件和pid目录在hadoop-env.sh中配置，export HADOOP_PID_DIR，HADOOP_LOG_DIR为对应磁盘路径即可。</p>
 <p>journal目录在hdfs-site.xml中配置dfs.journalnode.edits.dir</p>
@@ -562,7 +558,7 @@ hadoop最重要的存储数据">
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#修改配置文件"><span class="nav-number">1.</span> <span class="nav-text">修改配置文件</span></a></li></ol></div>
             
           </div>
         </section>

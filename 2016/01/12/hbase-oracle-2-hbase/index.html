@@ -85,8 +85,7 @@
 
 
 <meta name="description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
-##HBase表设计
-首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+HBase表设计首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
 
 
 交易信息
@@ -95,14 +94,13 @@
 
 刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
 
-1、由于各个表">
+1、由于各个表之间的">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Oracle数据迁移至HBase操作记录">
 <meta property="og:url" content="http://xiaohei.info/2016/01/12/hbase-oracle-2-hbase/index.html">
 <meta property="og:site_name" content="小黑的博客">
 <meta property="og:description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
-##HBase表设计
-首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+HBase表设计首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
 
 
 交易信息
@@ -111,13 +109,12 @@
 
 刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
 
-1、由于各个表">
-<meta property="og:updated_time" content="2016-07-14T03:33:43.000Z">
+1、由于各个表之间的">
+<meta property="og:updated_time" content="2016-07-17T02:25:47.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Oracle数据迁移至HBase操作记录">
 <meta name="twitter:description" content="近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
-##HBase表设计
-首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+HBase表设计首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
 
 
 交易信息
@@ -126,7 +123,7 @@
 
 刚开始的计划是将所有表都导入HBase中的一张大表，但是思索讨论之后发现是行不通的：
 
-1、由于各个表">
+1、由于各个表之间的">
 
 
 
@@ -356,8 +353,7 @@
 
       
         <p>近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。</p>
-<p>##<strong>HBase表设计</strong></p>
-<p>首先，是根据Oracle的数据规划HBase的表和表结构。<br>从业务上看，十几张表大概可以分为两大部分：</p>
+<h2 id="HBase表设计"><a href="#HBase表设计" class="headerlink" title="HBase表设计"></a><strong>HBase表设计</strong></h2><p>首先，是根据Oracle的数据规划HBase的表和表结构。<br>从业务上看，十几张表大概可以分为两大部分：</p>
 <blockquote>
 <ul>
 <li>交易信息</li>
@@ -377,8 +373,7 @@
 <p>例如：交易这一大部分的6个表中，有4个是经常一起做连接查询的，而另外2个表则是另一组业务逻辑经常使用的 ，那么就HBase中的交易表就可以分为两个列簇:交易业务，个人操作，分别存储着原本Oracle中4个表和2个表的数据。</p>
 <p>客户信息表中列簇的设计同理，根据表之间的关联程度划分出三个列簇，大致可以称为：基本属性，行为属性，签署协议。</p>
 <p>敲定了HBase的表结构之后，建表就是分分钟的事情了。</p>
-<p>##<strong>数据迁移部分</strong></p>
-<p>现在我们在HBase中有两张表，结构如下。</p>
+<h2 id="数据迁移部分"><a href="#数据迁移部分" class="headerlink" title="数据迁移部分"></a><strong>数据迁移部分</strong></h2><p>现在我们在HBase中有两张表，结构如下。</p>
 <p>交易表：</p>
 <table>
 <thead>
@@ -427,7 +422,7 @@
 <p>对于第二个问题，采取的方案是：先将这四张表分别导入为四张HBase临时表，之后使用mr程序修改时间戳统一导入最终的交易表。<br><strong>理由：</strong>使用临时表第一是为了避免数据损坏，第二是方便mr程序修改时间戳属性。</p>
 <p>而对于客户表，业务逻辑比较简单，可以直接使用Sqoop进行导入。</p>
 <p><strong>建立HBase始终是要在业务逻辑之上的</strong>，没有分析业务根本没办法知道HBase该分为几个表，每个表有几个列簇，每个列簇分别存储哪些数据，以及Rowkey的定义。</p>
-<p>##<strong>1.13更新</strong><br>关于交易表的的数据版本问题，因为业务是根据手机号码和某个月份来查询的，平均每个月每个用户会查5次，那么之前的rowkey设计就是不合理的：</p>
+<h2 id="1-13更新"><a href="#1-13更新" class="headerlink" title="1.13更新"></a><strong>1.13更新</strong></h2><p>关于交易表的的数据版本问题，因为业务是根据手机号码和某个月份来查询的，平均每个月每个用户会查5次，那么之前的rowkey设计就是不合理的：</p>
 <p><strong>之前的rowkey是手机号码反转，其中一列为时间戳字段，那么每次有新的交易数据进来就会发生覆盖</strong>，之前我们一直在想设定值的版本为多少个比较好，12*5=60，也就是说每个列的值要设置为60个版本，这是极其不合理的。</p>
 <p>现在，解决的思路是，<strong>既然是根据时间戳和手机号码来取数据的，因为每次数据入库的时候相同用户的交易数据会被新数据覆盖，那么把时间戳和手机号的组合设置为rowkey就完全可以解决这个问题。</strong></p>
 <p>那么这个rowkey的格式就是手机号码反转+时间戳，理由如下：</p>
@@ -439,8 +434,7 @@
 </ul>
 </blockquote>
 <p><strong>另注：hbase统计数据量大的表可以使用其自带的一个mr程序：</strong>$HBASE_HOME/bin/hbase org.apache.hadoop.hbase.mapreduce.RowCounter tableName</p>
-<p>##<strong>1.21更新</strong></p>
-<p>从传统数据库到HBase，表设计的思路与步骤大概如下：</p>
+<h2 id="1-21更新"><a href="#1-21更新" class="headerlink" title="1.21更新"></a><strong>1.21更新</strong></h2><p>从传统数据库到HBase，表设计的思路与步骤大概如下：</p>
 <blockquote>
 <ul>
 <li>根据业务划分hbase表</li>
@@ -451,8 +445,7 @@
 <li>如果有关联关系，导入数据时需要注意对应问题</li>
 </ul>
 </blockquote>
-<p>##<strong>1.25更新</strong></p>
-<p>oracle表中如果没有合适的字段来给–split-by参数的话，可以用<strong>rownum</strong>这个默认的字段。</p>
+<h2 id="1-25更新"><a href="#1-25更新" class="headerlink" title="1.25更新"></a><strong>1.25更新</strong></h2><p>oracle表中如果没有合适的字段来给–split-by参数的话，可以用<strong>rownum</strong>这个默认的字段。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">--split-by rownum</div></pre></td></tr></table></figure>
 <p>其余遇到的困惑会再进行后续更新。</p>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
@@ -654,7 +647,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HBase表设计"><span class="nav-number">1.</span> <span class="nav-text">HBase表设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据迁移部分"><span class="nav-number">2.</span> <span class="nav-text">数据迁移部分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-13更新"><span class="nav-number">3.</span> <span class="nav-text">1.13更新</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-21更新"><span class="nav-number">4.</span> <span class="nav-text">1.21更新</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-25更新"><span class="nav-number">5.</span> <span class="nav-text">1.25更新</span></a></li></ol></div>
             
           </div>
         </section>

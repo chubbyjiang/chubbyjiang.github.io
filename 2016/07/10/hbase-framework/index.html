@@ -84,35 +84,32 @@
 
 
 
-<meta name="description" content="存储结构###HBase构架
-
+<meta name="description" content="存储结构HBase构架
 如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的
 HRegionServer
 HBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
 HLog
-HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作">
+HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中">
 <meta property="og:type" content="article">
 <meta property="og:title" content="HBase构架">
 <meta property="og:url" content="http://xiaohei.info/2016/07/10/hbase-framework/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="存储结构###HBase构架
-
+<meta property="og:description" content="存储结构HBase构架
 如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的
 HRegionServer
 HBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
 HLog
-HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作">
+HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中">
 <meta property="og:image" content="http://xiaohei.info/images/hbase-framework.png">
-<meta property="og:updated_time" content="2016-07-14T11:20:01.000Z">
+<meta property="og:updated_time" content="2016-07-17T02:25:24.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase构架">
-<meta name="twitter:description" content="存储结构###HBase构架
-
+<meta name="twitter:description" content="存储结构HBase构架
 如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的
 HRegionServer
 HBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上
 HLog
-HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作">
+HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个HLog文件记录该节点上数据的CRUD操作记录图中">
 <meta name="twitter:image" content="http://xiaohei.info/images/hbase-framework.png">
 
 
@@ -342,8 +339,7 @@ HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个H
       
 
       
-        <h2 id="存储结构"><a href="#存储结构" class="headerlink" title="存储结构"></a>存储结构</h2><p>###HBase构架</p>
-<p><img src="/images/hbase-framework.png" alt="HBase存储结构"></p>
+        <h2 id="存储结构"><a href="#存储结构" class="headerlink" title="存储结构"></a>存储结构</h2><h3 id="HBase构架"><a href="#HBase构架" class="headerlink" title="HBase构架"></a>HBase构架</h3><p><img src="/images/hbase-framework.png" alt="HBase存储结构"></p>
 <p>如上图所示，一个HBase集群是由Zookeeper、HMaster和HRegionServer构成的</p>
 <p><strong>HRegionServer</strong></p>
 <p>HBase集群上的各个节点，一个数据量很大的表可能被保存在不同RegionServer上</p>
@@ -508,16 +504,16 @@ HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个H
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/11/hadoop-settingup-cluster/" rel="next" title="构建Hadoop集群">
-                <i class="fa fa-chevron-left"></i> 构建Hadoop集群
+              <a href="/2016/07/10/hbase-principle-tuning/" rel="next" title="HBase进阶学习（四）--调优方式">
+                <i class="fa fa-chevron-left"></i> HBase进阶学习（四）--调优方式
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/07/10/hbase-principle-tuning/" rel="prev" title="HBase进阶学习（四）--调优方式">
-                HBase进阶学习（四）--调优方式 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/07/13/hbase-introduction/" rel="prev" title="HBase概览">
+                HBase概览 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -649,7 +645,7 @@ HBase将数据存储在各个HRegionServer上，每个HRegionServer都有一个H
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#存储结构"><span class="nav-number">1.</span> <span class="nav-text">存储结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HBase在HDFS上的目录结构"><span class="nav-number">2.</span> <span class="nav-text">HBase在HDFS上的目录结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#根级文件"><span class="nav-number">2.1.</span> <span class="nav-text">根级文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表级文件"><span class="nav-number">2.2.</span> <span class="nav-text">表级文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#region级文件"><span class="nav-number">2.3.</span> <span class="nav-text">region级文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#合并"><span class="nav-number">3.</span> <span class="nav-text">合并</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志滚动"><span class="nav-number">4.</span> <span class="nav-text">日志滚动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据恢复"><span class="nav-number">5.</span> <span class="nav-text">数据恢复</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#读路径"><span class="nav-number">6.</span> <span class="nav-text">读路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Region的生命周期"><span class="nav-number">7.</span> <span class="nav-text">Region的生命周期</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#存储结构"><span class="nav-number">1.</span> <span class="nav-text">存储结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HBase构架"><span class="nav-number">1.1.</span> <span class="nav-text">HBase构架</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HBase在HDFS上的目录结构"><span class="nav-number">2.</span> <span class="nav-text">HBase在HDFS上的目录结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#根级文件"><span class="nav-number">2.1.</span> <span class="nav-text">根级文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表级文件"><span class="nav-number">2.2.</span> <span class="nav-text">表级文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#region级文件"><span class="nav-number">2.3.</span> <span class="nav-text">region级文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#合并"><span class="nav-number">3.</span> <span class="nav-text">合并</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志滚动"><span class="nav-number">4.</span> <span class="nav-text">日志滚动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据恢复"><span class="nav-number">5.</span> <span class="nav-text">数据恢复</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#读路径"><span class="nav-number">6.</span> <span class="nav-text">读路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Region的生命周期"><span class="nav-number">7.</span> <span class="nav-text">Region的生命周期</span></a></li></ol></div>
             
           </div>
         </section>

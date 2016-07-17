@@ -86,23 +86,20 @@
 
 <meta name="description" content="对于复杂的mr任务来说，只有一个map和reduce往往是不能够满足任务需求的，有可能是需要n个map之后进行reduce，reduce之后又要进行m个map。
 在hadoop的mr编程中可以使用ChainMapper和ChainReducer来实现链式的Map-Reduce任务。
-###ChainMapper
-以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Ma">
+ChainMapper以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Mapper">
 <meta property="og:type" content="article">
 <meta property="og:title" content="多个Mapper和Reducer处理多个输入">
 <meta property="og:url" content="http://xiaohei.info/2016/02/22/mapreduce-multi-input-mapper-reducer/index.html">
 <meta property="og:site_name" content="小黑的博客">
 <meta property="og:description" content="对于复杂的mr任务来说，只有一个map和reduce往往是不能够满足任务需求的，有可能是需要n个map之后进行reduce，reduce之后又要进行m个map。
 在hadoop的mr编程中可以使用ChainMapper和ChainReducer来实现链式的Map-Reduce任务。
-###ChainMapper
-以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Ma">
-<meta property="og:updated_time" content="2016-07-14T03:27:53.000Z">
+ChainMapper以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Mapper">
+<meta property="og:updated_time" content="2016-07-17T02:28:44.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="多个Mapper和Reducer处理多个输入">
 <meta name="twitter:description" content="对于复杂的mr任务来说，只有一个map和reduce往往是不能够满足任务需求的，有可能是需要n个map之后进行reduce，reduce之后又要进行m个map。
 在hadoop的mr编程中可以使用ChainMapper和ChainReducer来实现链式的Map-Reduce任务。
-###ChainMapper
-以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Ma">
+ChainMapper以下为官方API文档翻译：ChainMapper类允许在单一的Map任务中使用多个Mapper">
 
 
 
@@ -333,20 +330,17 @@
       
         <p>对于复杂的mr任务来说，只有一个map和reduce往往是不能够满足任务需求的，有可能是需要n个map之后进行reduce，reduce之后又要进行m个map。</p>
 <p>在hadoop的mr编程中可以使用ChainMapper和ChainReducer来实现链式的Map-Reduce任务。</p>
-<p>###ChainMapper</p>
-<p>以下为官方API文档翻译：<br>ChainMapper类允许在单一的Map任务中使用多个Mapper来执行任务，这些Mapper将会以链式或者管道的形式来调用。<br>第一个Mapper的输出即为第二个Mapper的输入，以此类推，直到最后一个Mapper则为任务的输出。<br>这个特性的关键功能在于，在链中的Mappers不必知道他们是否已经被执行，这可以在一个单一的任务中让一些Mapper进行重用，组合在一起完成复杂的操作。<br>使用的时候需要注意，每个Mapper的输出都会在下一个Mapper的输入中进行验证，这里假设所有的Mapper和Reduce都使用相匹配的key和value作为输入和输出，因为在链式执行的代码中并没有对其进行转换。<br>使用ChainMapper和ChainReducer可以将Map-Reduce任务组合成[MAP+ / REDUCE MAP<em>]的形式，这个模式最直接的好处就是可以大大减少磁盘的IO开销。<br><em>*注意：</em></em>没有必要为ChainMapper指定输出的key和value的类型，使用addMapper方法添加最后一个Mapper的时候回自动完成。   </p>
+<h3 id="ChainMapper"><a href="#ChainMapper" class="headerlink" title="ChainMapper"></a>ChainMapper</h3><p>以下为官方API文档翻译：<br>ChainMapper类允许在单一的Map任务中使用多个Mapper来执行任务，这些Mapper将会以链式或者管道的形式来调用。<br>第一个Mapper的输出即为第二个Mapper的输入，以此类推，直到最后一个Mapper则为任务的输出。<br>这个特性的关键功能在于，在链中的Mappers不必知道他们是否已经被执行，这可以在一个单一的任务中让一些Mapper进行重用，组合在一起完成复杂的操作。<br>使用的时候需要注意，每个Mapper的输出都会在下一个Mapper的输入中进行验证，这里假设所有的Mapper和Reduce都使用相匹配的key和value作为输入和输出，因为在链式执行的代码中并没有对其进行转换。<br>使用ChainMapper和ChainReducer可以将Map-Reduce任务组合成[MAP+ / REDUCE MAP<em>]的形式，这个模式最直接的好处就是可以大大减少磁盘的IO开销。<br><em>*注意：</em></em>没有必要为ChainMapper指定输出的key和value的类型，使用addMapper方法添加最后一个Mapper的时候回自动完成。   </p>
 <p><strong>使用的格式：</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">Job = new Job(conf);</div><div class="line">//mapA的配置，如果不是特殊配置可传入null或者共用一个conf</div><div class="line">Configuration mapAConf = new Configuration(false);</div><div class="line">//将Mapper加入执行链中</div><div class="line">ChainMapper.addMapper(job, AMap.class, LongWritable.class, Text.class,</div><div class="line">   Text.class, Text.class, true, mapAConf);</div><div class="line">Configuration mapBConf = new Configuration(false);</div><div class="line">ChainMapper.addMapper(job, BMap.class, Text.class, Text.class,</div><div class="line">   LongWritable.class, Text.class, false, mapBConf);</div><div class="line"></div><div class="line"> job.waitForComplettion(true);</div></pre></td></tr></table></figure>
 <p>addMapper函数的定义如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">public static void addMapper(Job job,</div><div class="line">             Class&lt;? extends Mapper&gt; klass,</div><div class="line">             Class&lt;?&gt; inputKeyClass,</div><div class="line">             Class&lt;?&gt; inputValueClass,</div><div class="line">             Class&lt;?&gt; outputKeyClass,</div><div class="line">             Class&lt;?&gt; outputValueClass,</div><div class="line">             Configuration mapperConf)</div><div class="line">                      throws IOException</div></pre></td></tr></table></figure>
-<p>###ChainReducer</p>
-<p>基本描述同ChainMapper。<br>对于每条reduce输出的数据，Mappers将会以链或者管道的形式调用。    ？<br>ChainReducer有两个基本函数可以调用，使用格式：</p>
+<h3 id="ChainReducer"><a href="#ChainReducer" class="headerlink" title="ChainReducer"></a>ChainReducer</h3><p>基本描述同ChainMapper。<br>对于每条reduce输出的数据，Mappers将会以链或者管道的形式调用。    ？<br>ChainReducer有两个基本函数可以调用，使用格式：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">Job = new Job(conf);</div><div class="line">Configuration reduceConf = new Configuration(false);</div><div class="line">//这里是在setReducer之后才调用addMapper</div><div class="line">ChainReducer.setReducer(job, XReduce.class, LongWritable.class, Text.class,</div><div class="line">   Text.class, Text.class, true, reduceConf);</div><div class="line">ChainReducer.addMapper(job, CMap.class, Text.class, Text.class,</div><div class="line">   LongWritable.class, Text.class, false, null);</div><div class="line">ChainReducer.addMapper(job, DMap.class, LongWritable.class, Text.class,</div><div class="line">   LongWritable.class, LongWritable.class, true, null);</div><div class="line">job.waitForCompletion(true);</div></pre></td></tr></table></figure>
 <p>setReducer定义：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">public static void setReducer(Job job,</div><div class="line">              Class&lt;? extends Reducer&gt; klass,</div><div class="line">              Class&lt;?&gt; inputKeyClass,</div><div class="line">              Class&lt;?&gt; inputValueClass,</div><div class="line">              Class&lt;?&gt; outputKeyClass,</div><div class="line">              Class&lt;?&gt; outputValueClass,</div><div class="line">              Configuration reducerConf)</div></pre></td></tr></table></figure>
 <p>addMapper定义同ChainMapper。   </p>
-<p>##实际的测试过程</p>
-<p>在demo程序测试中观察结果得到两条比较有用的结论：</p>
+<h2 id="实际的测试过程"><a href="#实际的测试过程" class="headerlink" title="实际的测试过程"></a>实际的测试过程</h2><p>在demo程序测试中观察结果得到两条比较有用的结论：</p>
 <blockquote>
 <ol>
 <li>对于reduce之后添加的Mapper，每条reduce的输出都会马上调用一次该map函数，而不是等待reduce全部完成之后再调用map，如果是有多个map，应该是一样的道理。   </li>
@@ -354,8 +348,7 @@
 </ol>
 </blockquote>
 <p><strong>另注：</strong>reduce之前设置多个Mapper使用ChainMapper的addMapper，reduce之后设置多个Mapper使用ChainReducer的addMapper。   </p>
-<p>##多个job连续运行</p>
-<p>有时候链式的设置多个Mapper仍然无法满足需求，例如，有时候我们需要多个reduce过程，或者map之后的分组排序等，这就需要多个job协同进行工作。<br>使用的方法很简单，直接在第一个job.waitForCompletion之后再次实例化一个Job对象，按照八股文的格式进行设置即可，注意输入和输出的路径信息。</p>
+<h2 id="多个job连续运行"><a href="#多个job连续运行" class="headerlink" title="多个job连续运行"></a>多个job连续运行</h2><p>有时候链式的设置多个Mapper仍然无法满足需求，例如，有时候我们需要多个reduce过程，或者map之后的分组排序等，这就需要多个job协同进行工作。<br>使用的方法很简单，直接在第一个job.waitForCompletion之后再次实例化一个Job对象，按照八股文的格式进行设置即可，注意输入和输出的路径信息。</p>
 <p>example：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Job newJob = Job.getInstance(conf, jobName + &quot;-sort&quot;);</div><div class="line">        newJob.setJarByClass(jarClass);</div><div class="line"></div><div class="line">        FileInputFormat.setInputPaths(newJob, new Path(outPath + &quot;/part-*&quot;));</div><div class="line">        newJob.setInputFormatClass(TextInputFormat.class);</div><div class="line"></div><div class="line">        newJob.setMapperClass(SortMapper.class);</div><div class="line">        newJob.setMapOutputKeyClass(SortKey.class);</div><div class="line">        newJob.setMapOutputValueClass(NullWritable.class);</div><div class="line"></div><div class="line">        FileOutputFormat.setOutputPath(newJob, new Path(outPath + &quot;/sort&quot;));</div><div class="line">        newJob.setOutputFormatClass(TextOutputFormat.class);</div><div class="line"></div><div class="line">        newJob.waitForCompletion(true);</div></pre></td></tr></table></figure>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
@@ -559,7 +552,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#ChainMapper"><span class="nav-number">1.</span> <span class="nav-text">ChainMapper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ChainReducer"><span class="nav-number">2.</span> <span class="nav-text">ChainReducer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实际的测试过程"><span class="nav-number"></span> <span class="nav-text">实际的测试过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多个job连续运行"><span class="nav-number"></span> <span class="nav-text">多个job连续运行</span></a></div>
             
           </div>
         </section>

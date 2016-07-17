@@ -84,28 +84,25 @@
 
 
 
-<meta name="description" content="##默认的TextInputFormat
-应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
+<meta name="description" content="默认的TextInputFormat应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
 实验过程
 分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总量大概有8k+个文件，使用CLI命令上传到HDFS就花费了一个多小时。
-环境为本地电脑安装的伪分布式">
+环境为本地电脑安装的伪分布式Had">
 <meta property="og:type" content="article">
 <meta property="og:title" content="自定义分片策略解决大量小文件问题">
 <meta property="og:url" content="http://xiaohei.info/2016/03/01/mapreduce-custom-split/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="##默认的TextInputFormat
-应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
+<meta property="og:description" content="默认的TextInputFormat应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
 实验过程
 分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总量大概有8k+个文件，使用CLI命令上传到HDFS就花费了一个多小时。
-环境为本地电脑安装的伪分布式">
-<meta property="og:updated_time" content="2016-07-14T03:24:57.000Z">
+环境为本地电脑安装的伪分布式Had">
+<meta property="og:updated_time" content="2016-07-17T02:27:33.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="自定义分片策略解决大量小文件问题">
-<meta name="twitter:description" content="##默认的TextInputFormat
-应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
+<meta name="twitter:description" content="默认的TextInputFormat应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
 实验过程
 分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总量大概有8k+个文件，使用CLI命令上传到HDFS就花费了一个多小时。
-环境为本地电脑安装的伪分布式">
+环境为本地电脑安装的伪分布式Had">
 
 
 
@@ -334,8 +331,7 @@
       
 
       
-        <p>##<strong>默认的TextInputFormat</strong></p>
-<p>应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。</p>
+        <h2 id="默认的TextInputFormat"><a href="#默认的TextInputFormat" class="headerlink" title="默认的TextInputFormat"></a><strong>默认的TextInputFormat</strong></h2><p>应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。</p>
 <p><strong>实验过程</strong></p>
 <p>分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总量大概有8k+个文件，使用CLI命令上传到HDFS就花费了<strong>一个多小时</strong>。</p>
 <p>环境为本地电脑安装的伪分布式Hadoop集群，机器配置为四核I7的CPU，16G的RAM。</p>
@@ -353,8 +349,7 @@
 <blockquote>
 <p>1.默认每个小文件对应一个block，那么可以采取压缩等手段将多个小文件进行合并存储，以达到每个block存储的内容都是足够大的。<br>2.修改mapreduce默认的分片策略，使得读取文件进行分片的时候让每个block可以对应多个小文件，而不再是仅仅一个小文件。</p>
 </blockquote>
-<p>##<strong>自定义的分片策略</strong></p>
-<p>关于Hadoop的InputFormat类，网上有很多详细介绍的文章，默认的分片策略使用的就是其TextInputFormat子类，这里将介绍另外一个子类：<strong>CombineFileInputFormat</strong>。</p>
+<h2 id="自定义的分片策略"><a href="#自定义的分片策略" class="headerlink" title="自定义的分片策略"></a><strong>自定义的分片策略</strong></h2><p>关于Hadoop的InputFormat类，网上有很多详细介绍的文章，默认的分片策略使用的就是其TextInputFormat子类，这里将介绍另外一个子类：<strong>CombineFileInputFormat</strong>。</p>
 <p>顾名思义，CombineFileInputFormat是用来将输入的小文件进行合并，然后输入到一个mapper中的策略。<br>这是一个抽象类，只实现了InputFomat接口的getSplit方法。（<strong>P.S.所有的分片策略都要继承InputFormat，并实现getSplit和createRecordReader两个方法</strong>）<br>既然我们需要用到CombineFileInputFormat，但他留了一个接口方法让我们实现，那么就可以自定义一个MyInputFormat类继承自CombineFileInputFormat，重写createRecordReader。</p>
 <p>关于InputFormat接口的两个方法：</p>
 <blockquote>
@@ -365,12 +360,10 @@
 <blockquote>
 <p>1.MyInputFormat类自定义分片策略<br>2.MyRecordReader类自定义读取分片内的数据</p>
 </blockquote>
-<p>###<strong>MyInputFormat</strong></p>
-<p>新建MyInputFormat类继承CombineFileInputFormat：</p>
+<h3 id="MyInputFormat"><a href="#MyInputFormat" class="headerlink" title="MyInputFormat"></a><strong>MyInputFormat</strong></h3><p>新建MyInputFormat类继承CombineFileInputFormat：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 自定义的分片类,继承CombineFileInputFormat可以将多个小文件进行合并,泛型参数为输入map函数中的key,value类型</div><div class="line"> */</div><div class="line">public class MyInputFormat extends CombineFileInputFormat&lt;Text, Text&gt; &#123;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 重写次方法,直接放回false,对所有文件都不进行切割,保持完整</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    protected boolean isSplitable(JobContext context, Path file) &#123;</div><div class="line">        return false;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 重写此方法,返回的CombineFileRecordReader为处理每个分片的recordReader,在构造函数中设置自定义的RecordReader对象</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    public RecordReader&lt;Text, Text&gt; createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException &#123;</div><div class="line">        return new CombineFileRecordReader&lt;Text, Text&gt;((CombineFileSplit) inputSplit, taskAttemptContext, PaodingRecordReader.class);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>关于createRecordReader的细节将在MyRecordReader中详细讨论。</p>
-<p>###<strong>MyRecordReader</strong></p>
-<p>新建MyRecordReader类继承RecordReader：</p>
+<h3 id="MyRecordReader"><a href="#MyRecordReader" class="headerlink" title="MyRecordReader"></a><strong>MyRecordReader</strong></h3><p>新建MyRecordReader类继承RecordReader：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * 自定义的RecordReader类,用来处理CombineFileInputSplit返回的每个分片</div><div class="line"> * 泛型的参数为输入mapper时候的键值对</div><div class="line"> */</div><div class="line">public class MyRecordReader extends RecordReader&lt;Text, Text&gt; &#123;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>继承RecordReader需要实现RecordReader的6个抽象方法。   </p>
 <p><strong>1.initialize</strong></p>
@@ -411,11 +404,9 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">@Override</div><div class="line">public void close() throws IOException &#123;</div><div class="line">    if (this.inputStream != null) &#123;</div><div class="line">        this.inputStream.close();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p><strong>完整的MyRecordReader类代码：</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * Created by xiaohei on 16/2/29.</div><div class="line"> * 自定义的RecordReader类,用来处理CombineFileInputSplit返回的每个分片</div><div class="line"> */</div><div class="line">public class PaodingRecordReader extends RecordReader&lt;Text, Text&gt; &#123;</div><div class="line"></div><div class="line">    private CombineFileSplit combineFileSplit;//当前处理的分片</div><div class="line">    private Configuration conf;//系统信息</div><div class="line">    private int currentIndex;//当前处理到第几个分片</div><div class="line"></div><div class="line">    private Text currentKey = new Text();//当前key</div><div class="line">    private Text currentValue = new Text();//当前value</div><div class="line">    private boolean isReaded = false;//是否已经读取过了该分片</div><div class="line">    private float currentProgress = 0;//当前读取进度</div><div class="line"></div><div class="line">    private FSDataInputStream inputStream;//HDFS文件流读取</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 构造函数必须的三个参数,自定义的InputFormat类每次读取新的分片时,都会实例化自定义的RecordReader类对象来对其进行读取</div><div class="line">     *</div><div class="line">     * @param combineFileSplit   当前读取的分片</div><div class="line">     * @param taskAttemptContext 系统上下文环境</div><div class="line">     * @param index              当前分片中处理的文件索引</div><div class="line">     */</div><div class="line">    public PaodingRecordReader(CombineFileSplit combineFileSplit, TaskAttemptContext taskAttemptContext, Integer index) &#123;</div><div class="line">        this.combineFileSplit = combineFileSplit;</div><div class="line">        this.conf = taskAttemptContext.getConfiguration();</div><div class="line">        this.currentIndex = index;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 初始化RecordReader的一些设置</div><div class="line">     * */</div><div class="line">    @Override</div><div class="line">    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException &#123;</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    /**</div><div class="line">     * 返回true就取出key和value,之后index前移,返回false就结束循环表示没有文件内容可读取了</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    public boolean nextKeyValue() throws IOException, InterruptedException &#123;</div><div class="line">        //没被读取过的文件才进行读取</div><div class="line">        if (!this.isReaded) &#123;</div><div class="line">            //根据当前的文件索引从当前分片中找到对应的文件路径</div><div class="line">            Path path = this.combineFileSplit.getPath(this.currentIndex);</div><div class="line">            //获取父目录名即为类别名</div><div class="line">            this.currentKey.set(path.getParent().getName());</div><div class="line">            //从当前分片中获得当前文件的长度</div><div class="line">            byte[] content = new byte[(int) this.combineFileSplit.getLength(this.currentIndex)];</div><div class="line">            try &#123;</div><div class="line">                //读取该文件内容</div><div class="line">                FileSystem fs = path.getFileSystem(this.conf);</div><div class="line">                this.inputStream = fs.open(path);</div><div class="line">                this.inputStream.readFully(content);</div><div class="line">            &#125; catch (Exception ignored) &#123;</div><div class="line">            &#125; finally &#123;</div><div class="line">                assert inputStream != null;</div><div class="line">                inputStream.close();</div><div class="line">            &#125;</div><div class="line">            this.currentValue.set(content);</div><div class="line">            this.isReaded = true;</div><div class="line">            return true;</div><div class="line">        &#125;</div><div class="line">        return false;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 返回当前key的方法</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    public Text getCurrentKey() throws IOException, InterruptedException &#123;</div><div class="line">        return this.currentKey;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 返回当前value的方法</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    public Text getCurrentValue() throws IOException, InterruptedException &#123;</div><div class="line">        return this.currentValue;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    /**</div><div class="line">     * 返回当前的处理进度</div><div class="line">     */</div><div class="line">    @Override</div><div class="line">    public float getProgress() throws IOException, InterruptedException &#123;</div><div class="line">        //获得当前分片中的总文件数</div><div class="line">        int splitFileNum = this.combineFileSplit.getPaths().length;</div><div class="line">        if (this.currentIndex &gt;= 0 &amp;&amp; this.currentIndex &lt; splitFileNum) &#123;</div><div class="line">            //当前处理的文件索引除以文件总数得到处理的进度</div><div class="line">            this.currentProgress = (float) this.currentIndex / splitFileNum;</div><div class="line">            return this.currentProgress;</div><div class="line">        &#125;</div><div class="line">        return this.currentProgress;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    @Override</div><div class="line">    public void close() throws IOException &#123;</div><div class="line">        if (this.inputStream != null) &#123;</div><div class="line">            this.inputStream.close();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>##<strong>在Job中设置自定义的分片策略</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">job.setsetInputFormatClass(MyInputFormat.class);</div></pre></td></tr></table></figure>
+<h2 id="在Job中设置自定义的分片策略"><a href="#在Job中设置自定义的分片策略" class="headerlink" title="在Job中设置自定义的分片策略"></a><strong>在Job中设置自定义的分片策略</strong></h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">job.setsetInputFormatClass(MyInputFormat.class);</div></pre></td></tr></table></figure>
 <p>job会根据MyInputFormat的getSplit方法对数据进行分片，根据createRecordReader创建对分片的处理类。</p>
-<p>##<strong>自定义分片的实际场景使用Demo</strong></p>
-<p><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">Github源码地址</a></p>
+<h2 id="自定义分片的实际场景使用Demo"><a href="#自定义分片的实际场景使用Demo" class="headerlink" title="自定义分片的实际场景使用Demo"></a><strong>自定义分片的实际场景使用Demo</strong></h2><p><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">Github源码地址</a></p>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
       
@@ -617,7 +608,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#默认的TextInputFormat"><span class="nav-number">1.</span> <span class="nav-text">默认的TextInputFormat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自定义的分片策略"><span class="nav-number">2.</span> <span class="nav-text">自定义的分片策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MyInputFormat"><span class="nav-number">2.1.</span> <span class="nav-text">MyInputFormat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MyRecordReader"><span class="nav-number">2.2.</span> <span class="nav-text">MyRecordReader</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在Job中设置自定义的分片策略"><span class="nav-number">3.</span> <span class="nav-text">在Job中设置自定义的分片策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自定义分片的实际场景使用Demo"><span class="nav-number">4.</span> <span class="nav-text">自定义分片的实际场景使用Demo</span></a></li></ol></div>
             
           </div>
         </section>

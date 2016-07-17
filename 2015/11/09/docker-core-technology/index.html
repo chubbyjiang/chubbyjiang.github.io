@@ -84,25 +84,19 @@
 
 
 
-<meta name="description" content="##1、cgroup
-即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
-##2、lxc
-即linux containers，是一种基于容器的操作系">
+<meta name="description" content="1、cgroup即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
+2、lxc即linux containers，是一种基于容器的操作系统级别的虚拟">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker核心技术">
 <meta property="og:url" content="http://xiaohei.info/2015/11/09/docker-core-technology/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="##1、cgroup
-即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
-##2、lxc
-即linux containers，是一种基于容器的操作系">
-<meta property="og:updated_time" content="2016-07-14T04:41:58.000Z">
+<meta property="og:description" content="1、cgroup即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
+2、lxc即linux containers，是一种基于容器的操作系统级别的虚拟">
+<meta property="og:updated_time" content="2016-07-17T02:22:13.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker核心技术">
-<meta name="twitter:description" content="##1、cgroup
-即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
-##2、lxc
-即linux containers，是一种基于容器的操作系">
+<meta name="twitter:description" content="1、cgroup即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。
+2、lxc即linux containers，是一种基于容器的操作系统级别的虚拟">
 
 
 
@@ -331,23 +325,17 @@
       
 
       
-        <p>##<strong>1、cgroup</strong></p>
-<p>即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。</p>
-<p>##<strong>2、lxc</strong></p>
-<p>即linux containers，是一种基于容器的操作系统级别的虚拟化技术。借助namespace的隔离机制和cgroup的资源控制来控制和创建容器。<br>namespace命名空间类似各大语言中的概念，每个namespace中创建的资源都是独立的，互相看不到的。<br>且是基于一个共享kernel的虚拟化技术，创建容器的时候共享host主机的kernel内核，这样可以提高性能和速度。<br>但是因为共享内核，所有容器的内核版本都是一样的，没有kvm虚拟技术那么强大，因为kvm技术是会创建独立kernel的，可以在独立的内核上进行很多独立操作。</p>
-<p>##<strong>3、aufs</strong></p>
-<p>一种层状的文件系统，在修改文件的时候，aufs会先创建一个副本，在副本上进行修改保存之后，这个副本成为源文件的一个上层文件目录，与docker中镜像与容器的概念一致。<br>image是不可修改的（原文件），要对其进行更新，只能根据这个image启动一个container（副本），在container中进行操作之后保存成为一个新的image（上层文件）。<br>然后而并不是每次形成一个新的image都是完全的复制原image一份，宗旨是：相同的公用，不相同的才独立保存。<br>也就是说，一个新的image中（例如apache服务器），其依赖的各种library都是一个debain image提供的，只有apache服务器的安装部分是其独有的。</p>
-<p>##<strong>使用建议</strong></p>
-<pre><code>* 一个container中运行尽量少的app（例如1个）；
+        <h2 id="1、cgroup"><a href="#1、cgroup" class="headerlink" title="1、cgroup"></a><strong>1、cgroup</strong></h2><p>即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术进行资源隔离限制。</p>
+<h2 id="2、lxc"><a href="#2、lxc" class="headerlink" title="2、lxc"></a><strong>2、lxc</strong></h2><p>即linux containers，是一种基于容器的操作系统级别的虚拟化技术。借助namespace的隔离机制和cgroup的资源控制来控制和创建容器。<br>namespace命名空间类似各大语言中的概念，每个namespace中创建的资源都是独立的，互相看不到的。<br>且是基于一个共享kernel的虚拟化技术，创建容器的时候共享host主机的kernel内核，这样可以提高性能和速度。<br>但是因为共享内核，所有容器的内核版本都是一样的，没有kvm虚拟技术那么强大，因为kvm技术是会创建独立kernel的，可以在独立的内核上进行很多独立操作。</p>
+<h2 id="3、aufs"><a href="#3、aufs" class="headerlink" title="3、aufs"></a><strong>3、aufs</strong></h2><p>一种层状的文件系统，在修改文件的时候，aufs会先创建一个副本，在副本上进行修改保存之后，这个副本成为源文件的一个上层文件目录，与docker中镜像与容器的概念一致。<br>image是不可修改的（原文件），要对其进行更新，只能根据这个image启动一个container（副本），在container中进行操作之后保存成为一个新的image（上层文件）。<br>然后而并不是每次形成一个新的image都是完全的复制原image一份，宗旨是：相同的公用，不相同的才独立保存。<br>也就是说，一个新的image中（例如apache服务器），其依赖的各种library都是一个debain image提供的，只有apache服务器的安装部分是其独有的。</p>
+<h2 id="使用建议"><a href="#使用建议" class="headerlink" title="使用建议"></a><strong>使用建议</strong></h2><pre><code>* 一个container中运行尽量少的app（例如1个）；
 * 不要什么都往container中装，只装必要的；
 * container内不建议有运行期需要修改的配置文件；
 * 尽量重用公开的基础镜像；
 </code></pre><p>使用docker命令其实就是和docker daemon打交道，可以将其理解为一个大container，其中运行着各种各样用户启动的container。</p>
 <p>/var/lib/docker/graph 中存储着image的分层信息<br>/var/lib/dokcer/devicemapper/devicemapper/data 存储了image和container的二进制数据文件<br>/var/lib/docker/devicemapper/devicemapper/matadata 存储了相关元数据</p>
-<p>##<strong>Volume</strong></p>
-<p>aufs系统每次修改文件都先复制副本，然后在副本上操作，这样一来对于频繁的写操作会消耗大量资源，这时候应该使用Volume。<br>直接和本地文件系统关联，和本地写文件没有差别。<br>高频写文件例子：日志，数据库等。<br>可将多个容器的Volume挂在到宿主机的同一目录实现文件共享。<br>–volume-from 容器名，直接挂载到该容器挂载的目录，存在的意义：使用-v是写死的路径，不适合移植，而且在Dockerfile中是不允许这么做的，另外别的容器可能是不知道这个挂载路径的。</p>
-<p>##<strong>Link</strong></p>
-<p>–link 容器名：别名<br>会在容器/etc/hosts中生成一条ip映射记录，并且在防火墙中会生成相应的规则</p>
+<h2 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a><strong>Volume</strong></h2><p>aufs系统每次修改文件都先复制副本，然后在副本上操作，这样一来对于频繁的写操作会消耗大量资源，这时候应该使用Volume。<br>直接和本地文件系统关联，和本地写文件没有差别。<br>高频写文件例子：日志，数据库等。<br>可将多个容器的Volume挂在到宿主机的同一目录实现文件共享。<br>–volume-from 容器名，直接挂载到该容器挂载的目录，存在的意义：使用-v是写死的路径，不适合移植，而且在Dockerfile中是不允许这么做的，另外别的容器可能是不知道这个挂载路径的。</p>
+<h2 id="Link"><a href="#Link" class="headerlink" title="Link"></a><strong>Link</strong></h2><p>–link 容器名：别名<br>会在容器/etc/hosts中生成一条ip映射记录，并且在防火墙中会生成相应的规则</p>
 <p>shipyard<br>cadvisor</p>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
@@ -548,7 +536,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、cgroup"><span class="nav-number">1.</span> <span class="nav-text">1、cgroup</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、lxc"><span class="nav-number">2.</span> <span class="nav-text">2、lxc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、aufs"><span class="nav-number">3.</span> <span class="nav-text">3、aufs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用建议"><span class="nav-number">4.</span> <span class="nav-text">使用建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Volume"><span class="nav-number">5.</span> <span class="nav-text">Volume</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Link"><span class="nav-number">6.</span> <span class="nav-text">Link</span></a></li></ol></div>
             
           </div>
         </section>

@@ -88,10 +88,8 @@
 rsync是linux上实现不同机器之间文件同步、备份的工具，centos系统中默认已经安装，使用
 1rsync -h
 检查是否已经安装rsync。
-###使用前提
-确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
-##使用过程
-在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsyn">
+使用前提确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
+使用过程在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsync的人来说，各">
 <meta property="og:type" content="article">
 <meta property="og:title" content="使用rsync进行多服务器同步">
 <meta property="og:url" content="http://xiaohei.info/2016/01/20/tools-rsync-multi-server/index.html">
@@ -100,21 +98,17 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
 rsync是linux上实现不同机器之间文件同步、备份的工具，centos系统中默认已经安装，使用
 1rsync -h
 检查是否已经安装rsync。
-###使用前提
-确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
-##使用过程
-在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsyn">
-<meta property="og:updated_time" content="2016-07-14T03:30:55.000Z">
+使用前提确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
+使用过程在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsync的人来说，各">
+<meta property="og:updated_time" content="2016-07-17T02:30:42.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用rsync进行多服务器同步">
 <meta name="twitter:description" content="当集群数量很大时，修改配置文件和节点之间的文件同步是一件很麻烦且浪费时间的事情。
 rsync是linux上实现不同机器之间文件同步、备份的工具，centos系统中默认已经安装，使用
 1rsync -h
 检查是否已经安装rsync。
-###使用前提
-确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
-##使用过程
-在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsyn">
+使用前提确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
+使用过程在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsync的人来说，各">
 
 
 
@@ -347,10 +341,8 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
 <p>rsync是linux上实现不同机器之间文件同步、备份的工具，centos系统中默认已经安装，使用</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">rsync -h</div></pre></td></tr></table></figure>
 <p>检查是否已经安装rsync。</p>
-<p>###<strong>使用前提</strong></p>
-<p>确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。</p>
-<p>##<strong>使用过程</strong></p>
-<p>在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsync的人来说，各种配置显然太过复杂，需要一步步来熟悉。</p>
+<h3 id="使用前提"><a href="#使用前提" class="headerlink" title="使用前提"></a><strong>使用前提</strong></h3><p>确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。</p>
+<h2 id="使用过程"><a href="#使用过程" class="headerlink" title="使用过程"></a><strong>使用过程</strong></h2><p>在网上找到一大堆rsync的配置资料，然而使用起来不尽人意，对于初次使用rsync的人来说，各种配置显然太过复杂，需要一步步来熟悉。</p>
 <p>所以这里不会对rsync的配置文件进行任何修改，仅仅使用rsync的命令进行同步操作。</p>
 <p><strong>需求</strong></p>
 <p>需要同步各个节点上的hadoop、hbase和spark的配置文件，其余目录/文件不需要同步。</p>
@@ -361,8 +353,7 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo rsync -avz --exclude-from rsync-exclude.list $&#123;需要同步的目录&#125; $&#123;目标节点ip/host&#125;:$&#123;目标节点的目录&#125;</div></pre></td></tr></table></figure>
 <p>-avz 表示传输过程中递归同步、显示详情并使用压缩。<br>–exclude-from 的参数为exclude文件目录。</p>
 <p><strong>注意，exclude文件中要使用相对路径，测试时使用绝对路径失败。</strong></p>
-<p>##<strong>脚本实现多服务器同步</strong></p>
-<p>只需要一个简单的for循环即可实现：</p>
+<h2 id="脚本实现多服务器同步"><a href="#脚本实现多服务器同步" class="headerlink" title="脚本实现多服务器同步"></a><strong>脚本实现多服务器同步</strong></h2><p>只需要一个简单的for循环即可实现：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">#!/bin/bash</div><div class="line">hosts=(host1 host2 host3 ...)</div><div class="line">for host in $&#123;hosts[@]&#125;</div><div class="line">do</div><div class="line">sudo rsync -avz --exclude-from rsync-exclude.list $&#123;需要同步的目录&#125; $host:$&#123;目标节点的目录&#125;</div><div class="line">done</div></pre></td></tr></table></figure>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
@@ -563,7 +554,7 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用前提"><span class="nav-number">1.</span> <span class="nav-text">使用前提</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用过程"><span class="nav-number"></span> <span class="nav-text">使用过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#脚本实现多服务器同步"><span class="nav-number"></span> <span class="nav-text">脚本实现多服务器同步</span></a></div>
             
           </div>
         </section>

@@ -124,7 +124,8 @@
 如上图所示，逻辑上用户设">
 <meta property="og:image" content="http://xiaohei.info/images/hbase-data-store.png">
 <meta property="og:image" content="http://xiaohei.info/images/hbase-query2data.png">
-<meta property="og:updated_time" content="2016-07-14T12:29:04.000Z">
+<meta property="og:image" content="http://xiaohei.info/images/hbase-rowkey-timestamp.png">
+<meta property="og:updated_time" content="2016-07-17T02:33:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase高级用法">
 <meta name="twitter:description" content="行健设计在HBase中有两类基本的键结构：行健和列键这两者都存储着有意义的信息，不仅仅是该键对应的值：   
@@ -424,15 +425,15 @@
 </thead>
 <tbody>
 <tr>
-<td><userid></userid></td>
+<td>userId</td>
 <td>给定用户Id下的所有信息</td>
 </tr>
 <tr>
-<td><userid>-<data></data></userid></td>
+<td>userId-data</td>
 <td>给定用户Id下的特定日期的所有信息</td>
 </tr>
 <tr>
-<td><userid>-<data>-<messageid></messageid></data></userid></td>
+<td>userId-data-messageId</td>
 <td>给定用户Id下的特定日期下的指定信息</td>
 </tr>
 </tbody>
@@ -448,7 +449,76 @@
 <p>1.设置起始键（例如某个用户Id）<br>2.客户端设置offset的行数<br>3.客户端设置limit数目的行<br>4.返回数据并关闭扫描器</p>
 </blockquote>
 <p>例如某个用户的邮件很多的时候，需要分页浏览，limit设置为50，初始的时候offset设置为0<br>通过用户Id扫描得到该用户下的所有邮件的前50封，当用户点击next的时候offset设置为50，代表跳过前50行返回第51-100行</p>
-<h3 id="时间排序"><a href="#时间排序" class="headerlink" title="时间排序"></a>时间排序</h3><h3 id="时间顺序关系"><a href="#时间顺序关系" class="headerlink" title="时间顺序关系"></a>时间顺序关系</h3><h2 id="高级模式"><a href="#高级模式" class="headerlink" title="高级模式"></a>高级模式</h2><h2 id="辅助索引"><a href="#辅助索引" class="headerlink" title="辅助索引"></a>辅助索引</h2><h2 id="搜索集成"><a href="#搜索集成" class="headerlink" title="搜索集成"></a>搜索集成</h2><h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h2 id="布隆过滤器"><a href="#布隆过滤器" class="headerlink" title="布隆过滤器"></a>布隆过滤器</h2><h2 id="版本管理"><a href="#版本管理" class="headerlink" title="版本管理"></a>版本管理</h2><h3 id="隐式版本控制"><a href="#隐式版本控制" class="headerlink" title="隐式版本控制"></a>隐式版本控制</h3><h3 id="自定义版本控制"><a href="#自定义版本控制" class="headerlink" title="自定义版本控制"></a>自定义版本控制</h3><p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+<h3 id="时间序列"><a href="#时间序列" class="headerlink" title="时间序列"></a>时间序列</h3><p>当时间序列被当做行健使用时，在存储的时候出现一个问题：<br><strong>由于时间序列的连续性，这些数据都会被集中存储在一台或者几台服务器上，势必会造成读写热点的问题</strong></p>
+<p>下面提供几种解决时间序列特性的数据产生数据热点的解决思路：</p>
+<h4 id="行健添加前缀"><a href="#行健添加前缀" class="headerlink" title="行健添加前缀"></a>行健添加前缀</h4><p>例如下面的公式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">byte</span> prefix = (<span class="keyword">byte</span>)(Long.hashCode(timestamp) % &lt;region服务器数量&gt;)</div><div class="line"><span class="keyword">byte</span>[] rowKey = Bytes.add(Bytes.toBytes(prefix),Bytes.toBytes(timestamp))</div></pre></td></tr></table></figure>
+<p>使用hash函数产生的前缀添加到行健中，将使得整个数据被分散到不同的服务器上<br>但是这么做也有一个缺点：<strong>当用户要扫描一定范围内的数据时可能需要对很对region服务器发起请求</strong><br>但从另外一个角度来看，用户也可以多线程的并行读取数据</p>
+<h4 id="权重字段变换"><a href="#权重字段变换" class="headerlink" title="权重字段变换"></a>权重字段变换</h4><p>其实刚刚所讨论的行健添加前缀的方式也属于字段变换的一种：将连续增长的时间戳在行健中的位置从第一位变成第二位</p>
+<blockquote>
+<ul>
+<li>如果行健中已经包含很多字段了则可以尝试调整他们的位置   </li>
+<li>如果行健中只有时间戳，那么可以尝试提取其他的字段到行健中并调整一个合适的顺序</li>
+</ul>
+</blockquote>
+<h4 id="随机化"><a href="#随机化" class="headerlink" title="随机化"></a>随机化</h4><p>另外一种比较极端的方式是将整个行健随机化<br>比如使用一个MD5值作为整个行健的组成</p>
+<p>这么做的好处很明显：<strong>所有的数据都会被随机的、均匀的分散到各个服务器中</strong><br>缺陷也很明显：<strong>对于顺序读将造成很大的麻烦</strong></p>
+<p>如果用户的数据不需要连续扫描而只需要随机读取，用户就可以使用这种策略</p>
+<h4 id="时间序列解决方案总结"><a href="#时间序列解决方案总结" class="headerlink" title="时间序列解决方案总结"></a>时间序列解决方案总结</h4><p>下图总结了各个方案的性能对比：</p>
+<p><img src="/images/hbase-rowkey-timestamp.png" alt="图片"></p>
+<p>以上只针对顺序读的情况，用户需要根据自己的业务需求来调整行健的设计</p>
+<h3 id="时间顺序关系"><a href="#时间顺序关系" class="headerlink" title="时间顺序关系"></a>时间顺序关系</h3><p>以上的数据默认情况下都会以产生的时间顺序以独立行插入HBase中<br>但是用户也可以在插入的时候使用时间戳作为列插入到HBase中，进而可以根据该时间列族对数据单独进行排序   </p>
+<p>这么做有什么用呢？<br>其实上面的话要表达的意思是：<strong>我们可以使用列族来建立辅助索引来对数据进行另类的排序</strong></p>
+<p>继续之前邮件系统的例子，如果使用的是<strong>将用户的所有邮件存储在一行中</strong>，行健是用户Id<br>那么在默认情况下，一个用户所看到的邮件列表视图是<strong>根据数据产生的时间前后来排序的</strong></p>
+<p>如果用户需要按照邮件地址或者邮件题目排序查看，我们可以这么做：<br><strong>单独设置一个列族，里面包含两列，名列为不同的前缀（区分开不同的排序）+邮件地址/邮件题目</strong>    </p>
+<p>当用户需要以邮件地址来排序显示的时候，我们可以查询这个列族中的邮件地址列<br>因为该用户的所有数据都被存放在同一行中，所以在这行的辅助索引列族的邮件地址列中，<strong>数据是按照邮件地址这个列名的字典顺序来排序的</strong><br>所以最终用户得到的结果就是根据邮件地址来排序的数据<br>同理，对于邮件题目的排序也是一样</p>
+<p>需要注意的一点是，辅助索引列族中存放的数据主体是什么可以有两种解决方式：   </p>
+<blockquote>
+<p>1.存放的并不是真实的数据，而是<strong>该数据的行健</strong><br>2.直接存放真实数据</p>
+</blockquote>
+<p>第一种方式类似关系型数据库中的外键形式<br>第二种则是反范式化得设计了，虽然会存在数据冗余，但是响应速度快</p>
+<h3 id="行健设计总结"><a href="#行健设计总结" class="headerlink" title="行健设计总结"></a>行健设计总结</h3><p>首先确定业务需求比较符合高表还是宽表的设计</p>
+<blockquote>
+<p>1.尽量提取<strong>最有查询价值的字段</strong>到行健中组成多个维度（注意：行健也不宜太长，最大长度64kb，最好16字节以内）<br>2.权重越高的字段在行健中应该排在越前面<br>3.每个字段都保持相同的长度以支持左对齐的部分键扫描</p>
+</blockquote>
+<p>如果因为时间戳作为行健导致部分数据热点的问题可以尝试：   </p>
+<blockquote>
+<p>1.时间戳行健添加随机前缀<br>2.提取其他字段到行健中并调整字段的顺序，使时间戳的影响降低</p>
+</blockquote>
+<p>经常和不经常使用的两类数据放入不同列族中，列族名字尽可能短，注意列族的数量级，避免数据倾斜<br>另外别忘了查询的时候指定列族信息可以有效减少查询的存储文件<br>同时宽表中也可以使用列族来完成辅助索引的工作（高表参考下一节的辅助索引中的客户端管理索引）</p>
+<p>更加具体的行健设计可以参考：<br><a href="http://blog.chedushi.com/archives/9720" target="_blank" rel="external">大数据性能调优之HBase的RowKey设计</a></p>
+<h2 id="高级模式"><a href="#高级模式" class="headerlink" title="高级模式"></a>高级模式</h2><h2 id="辅助索引"><a href="#辅助索引" class="headerlink" title="辅助索引"></a>辅助索引</h2><p>HBase并没有直接提供可以使用的索引方案，但是在某些应用场景中又确实需要辅助索引的支持<br><strong>辅助索引可以提供除了主坐标（行健、列族和限定符等）之外的查询方式</strong></p>
+<p>和关系型数据库中的辅助索引意义类似，<strong>辅助索引存储了一个新坐标到现有坐标的映射关系</strong></p>
+<p>下面列出了一些可行的解决方案</p>
+<h3 id="客户端管理索引"><a href="#客户端管理索引" class="headerlink" title="客户端管理索引"></a>客户端管理索引</h3><p>典型的做法就是把一个数据表和一个多个索引表关联起来<br>当程序写数据表的时候，同时更新索引表<br>读数据的时候可以直接从数据表读，也可以先从辅助索引表中查找原表的行健，再在原表中读取实际的数据</p>
+<p>这种做法和上一节时间顺序关系中讨论的辅助索引列族类似<br>不一样的是，上一节中我们假设了一个用户的所有数据都被存放在一行中，所以我们可以直接建立辅助索引列族<br>对应到不同的情况，我们也可以通过辅助索引表来完成同样的效果</p>
+<p>这种情况的优点是整个逻辑都是由客户端代码处理的，用户可以根据需求来设计映射关系<br>但是缺点很明显：<strong>用户不能保证主表和依赖表的一致性，因为HBase只能保证行之间的原子性操作</strong></p>
+<p>解决这个问题的方案也有很多，例如通过定期的修复程序来删除过时的条目或者增加缺失的条目<br>但是不管怎么说，都不能保证实时同步的状态</p>
+<h3 id="带索引的事务型HBase"><a href="#带索引的事务型HBase" class="headerlink" title="带索引的事务型HBase"></a>带索引的事务型HBase</h3><p>开源的带索引的事务型HBase提供了一个不同的解决方案，它扩展了Hbase并增加了特殊的客户端和服务端类的实现</p>
+<p>最核心的扩展是增加了用来保证所有辅助索引更新操作一致性的事务功能<br>并提供了一个查询辅助索引的客户端类</p>
+<p>这种方案会自动化管理主键和辅助键之间的映射关系，但是可能不支持最新可用的HBase，同事也增加了同步的开销，将导致性能一定量的下降</p>
+<p>有兴趣的朋友可以了解ITHBase这个项目</p>
+<h3 id="带索引的HBase"><a href="#带索引的HBase" class="headerlink" title="带索引的HBase"></a>带索引的HBase</h3><p>和ITHBase一样，IHBase也提供了自动化管理主键和辅助键映射关系，而且是完全在内存中维护索引</p>
+<p>当一个region第一次打开，或者一个memstore被刷写到磁盘时<br>用户可以通过扫描整个region来建立索引</p>
+<p>基于这样的特性，IHBase的速度很快，但是同时也需要大量额外的内存来维护索引</p>
+<h3 id="协处理器"><a href="#协处理器" class="headerlink" title="协处理器"></a>协处理器</h3><p>类似关系型数据库中的触发器，可以使用其将维每个region载入索引层并维护索引<br>代码可以利用其透明的便利一个正常的数据表，也可以遍历这张表上的索引视图，并由一个协处理器基类读取</p>
+<p>关于协处理器的详细介绍请关注后续文章~</p>
+<h2 id="搜索集成"><a href="#搜索集成" class="headerlink" title="搜索集成"></a>搜索集成</h2><p>使用之前介绍的索引机制用户可以按照行健以外的顺序来遍历数据表<br>但用户仍然受限于使用键或者过滤器来筛选数据，或者直接遍历数据来查找所需要的内容<br>一个非常普遍的需求是使用任意关键字来搜索数据</p>
+<p>如何完成这类需求呢？<br>这时候我们可能需要集成一个完整的搜索引擎</p>
+<p>常见的选择是Lucene或者Solr的解决方案<br>下面列出几个可行的方法</p>
+<h3 id="客户端管理"><a href="#客户端管理" class="headerlink" title="客户端管理"></a>客户端管理</h3><p>需要使用HBase存储数据，同时使用MapReduce任务来建立索引<br>类似Facebook的一个搜索表的解决方案如下：</p>
+<blockquote>
+<ul>
+<li>每个用户在搜索表中都有单独的一行   </li>
+<li>列是可能会被索引的关键字   </li>
+<li>版本是消息ID   </li>
+<li>值包括附加消息，例如词组的位置</li>
+</ul>
+</blockquote>
+<p>这个模式使得用户很容易在收件箱中搜索包含特写关键词的消息</p>
+<h3 id="Lucene"><a href="#Lucene" class="headerlink" title="Lucene"></a>Lucene</h3><p>独立于HBase使用Lucene提供了建立索引的类<br>该类会扫描整个表并建立Lucene索引，最终以HDFS上的目录形式存储<br>一般情况下，这种方式只是用HBase来存储数据<br>如果通过Lucene执行一个搜索，<strong>通常只返回匹配的行健</strong>   </p>
+<h3 id="HBasene"><a href="#HBasene" class="headerlink" title="HBasene"></a>HBasene</h3><p>该方式直接在HBase内部建立搜索索引，同时为用户提供Lucene的API   </p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
       
     </div>
@@ -643,7 +713,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#行健设计"><span class="nav-number">1.</span> <span class="nav-text">行健设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高表与宽表"><span class="nav-number">1.2.</span> <span class="nav-text">高表与宽表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部分键扫描"><span class="nav-number">1.3.</span> <span class="nav-text">部分键扫描</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分页"><span class="nav-number">1.4.</span> <span class="nav-text">分页</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间排序"><span class="nav-number">1.5.</span> <span class="nav-text">时间排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间顺序关系"><span class="nav-number">1.6.</span> <span class="nav-text">时间顺序关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高级模式"><span class="nav-number">2.</span> <span class="nav-text">高级模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#辅助索引"><span class="nav-number">3.</span> <span class="nav-text">辅助索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#搜索集成"><span class="nav-number">4.</span> <span class="nav-text">搜索集成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">5.</span> <span class="nav-text">事务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#布隆过滤器"><span class="nav-number">6.</span> <span class="nav-text">布隆过滤器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本管理"><span class="nav-number">7.</span> <span class="nav-text">版本管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#隐式版本控制"><span class="nav-number">7.1.</span> <span class="nav-text">隐式版本控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义版本控制"><span class="nav-number">7.2.</span> <span class="nav-text">自定义版本控制</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#行健设计"><span class="nav-number">1.</span> <span class="nav-text">行健设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#概念"><span class="nav-number">1.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#高表与宽表"><span class="nav-number">1.2.</span> <span class="nav-text">高表与宽表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部分键扫描"><span class="nav-number">1.3.</span> <span class="nav-text">部分键扫描</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分页"><span class="nav-number">1.4.</span> <span class="nav-text">分页</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间序列"><span class="nav-number">1.5.</span> <span class="nav-text">时间序列</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#行健添加前缀"><span class="nav-number">1.5.1.</span> <span class="nav-text">行健添加前缀</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#权重字段变换"><span class="nav-number">1.5.2.</span> <span class="nav-text">权重字段变换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#随机化"><span class="nav-number">1.5.3.</span> <span class="nav-text">随机化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#时间序列解决方案总结"><span class="nav-number">1.5.4.</span> <span class="nav-text">时间序列解决方案总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间顺序关系"><span class="nav-number">1.6.</span> <span class="nav-text">时间顺序关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行健设计总结"><span class="nav-number">1.7.</span> <span class="nav-text">行健设计总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高级模式"><span class="nav-number">2.</span> <span class="nav-text">高级模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#辅助索引"><span class="nav-number">3.</span> <span class="nav-text">辅助索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端管理索引"><span class="nav-number">3.1.</span> <span class="nav-text">客户端管理索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#带索引的事务型HBase"><span class="nav-number">3.2.</span> <span class="nav-text">带索引的事务型HBase</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#带索引的HBase"><span class="nav-number">3.3.</span> <span class="nav-text">带索引的HBase</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协处理器"><span class="nav-number">3.4.</span> <span class="nav-text">协处理器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#搜索集成"><span class="nav-number">4.</span> <span class="nav-text">搜索集成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端管理"><span class="nav-number">4.1.</span> <span class="nav-text">客户端管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lucene"><span class="nav-number">4.2.</span> <span class="nav-text">Lucene</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HBasene"><span class="nav-number">4.3.</span> <span class="nav-text">HBasene</span></a></li></ol></li></ol></div>
             
           </div>
         </section>

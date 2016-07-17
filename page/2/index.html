@@ -574,10 +574,9 @@ Slave节点数：4
       
         
           
-          ##默认的TextInputFormat
-应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
+          默认的TextInputFormat应该都知道默认的TextInputFormat是一行行的读取文件内容，这对于一个或几个超大型的文件来说并没有什么问题，但是在实验读取大量小文件的时候，性能及其低下。
 实验过程
-分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总
+分别有5个文件夹，每个文件夹下有不同数量（1-2千个）的小文件（10+k大小），总量大概
           ...
 
           <div class="post-more-link text-center">
@@ -692,10 +691,8 @@ Slave节点数：4
       
         
           
-          ##简介
-DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
-##符号链接
-可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相
+          简介DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
+符号链接可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷
           ...
 
           <div class="post-more-link text-center">
@@ -810,13 +807,12 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
       
         
           
-          ##ItermCF的基本思想
-基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+          ItermCF的基本思想基于物品相似度的协同过滤推荐的思想大致可分为两部分：
 
 1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
 
 通俗的来讲就是：
-对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比
+对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似
           ...
 
           <div class="post-more-link text-center">
@@ -933,7 +929,7 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
           
           对于复杂的mr任务来说，只有一个map和reduce往往是不能够满足任务需求的，有可能是需要n个map之后进行reduce，reduce之后又要进行m个map。
 在hadoop的mr编程中可以使用ChainMapper和ChainReducer来实现链式的Map-Reduce任务。
-###Chain
+ChainMap
           ...
 
           <div class="post-more-link text-center">
@@ -1048,12 +1044,10 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
       
         
           
-          ##安装hive
-hive的安装十分简单，只需要在一台服务器上部署即可。
+          安装hivehive的安装十分简单，只需要在一台服务器上部署即可。
 上传hive安装包，解压缩，将其配入环境变量。
-###mysql的设置
-在要作为元数据库的mysql服务器上建立hive数据库：
-12345678#建立数据库create database if not exists hive
+mysql的设置在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登
           ...
 
           <div class="post-more-link text-center">
@@ -1172,8 +1166,8 @@ hive的安装十分简单，只需要在一台服务器上部署即可。
 rsync是linux上实现不同机器之间文件同步、备份的工具，centos系统中默认已经安装，使用
 1rsync -h
 检查是否已经安装rsync。
-###使用前提
-确保各个节点部署的目录结构是一致的，不然同步起来很麻
+使用前提确保各个节点部署的目录结构是一致的，不然同步起来很麻烦。
+使
           ...
 
           <div class="post-more-link text-center">
@@ -1405,9 +1399,8 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
       
         
           
-          ##yarn开启日志输出设置
-在yarn-site.xml文件中添加如下配置：
-12345678910111213141516&lt;property&gt;&lt;name&gt;yarn.log-aggregation-enable&lt;/name&gt;&lt;value&gt;true&l
+          yarn开启日志输出设置在yarn-site.xml文件中添加如下配置：
+12345678910111213141516&lt;property&gt;&lt;name&gt;yarn.log-aggregation-enable&lt;/name&gt;&lt;value&gt;true&lt;/
           ...
 
           <div class="post-more-link text-center">
@@ -1640,15 +1633,14 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
         
           
           近期需要把Oracle数据库中的十几张表T级别的数据迁移至HBase中，过程中遇到了许多苦难和疑惑，在此记录一下希望能帮到一些有同样需求的兄弟。
-##HBase表设计
-首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
+HBase表设计首先，是根据Oracle的数据规划HBase的表和表结构。从业务上看，十几张表大概可以分为两大部分：
 
 
 交易信息
 客户操作
 
 
-刚
+刚开始的
           ...
 
           <div class="post-more-link text-center">
@@ -1878,16 +1870,14 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
       
         
           
-          ###适合HBase应用的场景
-
+          适合HBase应用的场景
 
 成熟的数据分析主题，查询模式已经确定且不会轻易改变。
 传统数据库无法承受负载。
 简单的查询模式。
 
 
-###基本概念
-行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的
+基本概念行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，
           ...
 
           <div class="post-more-link text-center">
@@ -2004,9 +1994,8 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
           
           仍然是来的有点迟的年度总结。。。
 废话不多说，上15年的收获、目标和完成度以及16年的计划以及预期到达的程度。
-###15年的收获
-经历了人生中的第一份coding工作，也经历了人生中的第一次跳槽，迎来第二份coding。。。
-在第一家公司干了半年的活，大部分的时间都是在开发和维护数据库中间件，个人
+15年的收获经历了人生中的第一份coding工作，也经历了人生中的第一次跳槽，迎来第二份coding。。。
+在第一家公司干了半年的活，大部分的时间都是在开发和维护数据库中间件，个人对其很不
           ...
 
           <div class="post-more-link text-center">
@@ -2121,8 +2110,7 @@ rsync是linux上实现不同机器之间文件同步、备份的工具，centos�
       
         
           
-          ##Sqoop常用参命令
-
+          Sqoop常用参命令
 
 
 序号
@@ -2147,7 +2135,7 @@ ExportTool
 
 3
 codegen
-CodeGenT
+CodeGenTool
           ...
 
           <div class="post-more-link text-center">
@@ -2262,9 +2250,8 @@ CodeGenT
       
         
           
-          ###作为开发者，在大数据时代我们到底需要会什么？
-大数据到底是什么？它是为了解决海量数据的存储和计算所出现的技术，包括结构化和非结构化数据以及，存储数据的成本。
-只会搭搭集群，写写map-reduce不是我们的核心竞争力所在，即使现在靠这个能混口饭吃，但是能够想象到，这种类型的人才是可以批量生产的
+          作为开发者，在大数据时代我们到底需要会什么？大数据到底是什么？它是为了解决海量数据的存储和计算所出现的技术，包括结构化和非结构化数据以及，存储数据的成本。
+只会搭搭集群，写写map-reduce不是我们的核心竞争力所在，即使现在靠这个能混口饭吃，但是能够想象到，这种类型的人才是可以批量生产的！因为这
           ...
 
           <div class="post-more-link text-center">
@@ -2612,8 +2599,7 @@ CodeGenT
       
         
           
-          ##1、cgroup
-即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟
+          1、cgroup即controller group，其重要概念是子系统，首先挂载子系统，然后才有control group。例如cpu子系统，挂载至系统之后，创建一个cgroup节点，之后将要限制的进行id写入，然后写入限制的cpu资源描述，完成对该进程cpu资源的控制。在很多领域可以代替虚拟化技术
           ...
 
           <div class="post-more-link text-center">

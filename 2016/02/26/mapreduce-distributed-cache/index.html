@@ -84,31 +84,25 @@
 
 
 
-<meta name="description" content="##简介
-DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
-##符号链接
-可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
+<meta name="description" content="简介DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
+符号链接可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
 这样在MapReduce程序中可以直接通通过：
-1File file =">
+1File file = new F">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MapReduce中的DistributedCache">
 <meta property="og:url" content="http://xiaohei.info/2016/02/26/mapreduce-distributed-cache/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="##简介
-DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
-##符号链接
-可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
+<meta property="og:description" content="简介DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
+符号链接可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
 这样在MapReduce程序中可以直接通通过：
-1File file =">
-<meta property="og:updated_time" content="2016-07-14T03:26:02.000Z">
+1File file = new F">
+<meta property="og:updated_time" content="2016-07-17T02:27:55.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MapReduce中的DistributedCache">
-<meta name="twitter:description" content="##简介
-DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
-##符号链接
-可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
+<meta name="twitter:description" content="简介DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。
+符号链接可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    
 这样在MapReduce程序中可以直接通通过：
-1File file =">
+1File file = new F">
 
 
 
@@ -337,21 +331,16 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
       
 
       
-        <p>##<strong>简介</strong></p>
-<p>DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。</p>
-<p>##<strong>符号链接</strong></p>
-<p>可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    </p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2><p>DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制，它会将需要缓存的文件分发到各个执行任务的子节点的机器中，各个节点可以自行读取本地文件系统上的数据进行处理。</p>
+<h2 id="符号链接"><a href="#符号链接" class="headerlink" title="符号链接"></a><strong>符号链接</strong></h2><p>可以同在原本HDFS文件路径上+”#somename”来设置符号连接（相当于一个快捷方式）    </p>
 <p>这样在MapReduce程序中可以直接通通过：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">File file = new File(&quot;somename&quot;);</div></pre></td></tr></table></figure>
 <p>来获得这个文件</p>
-<p>##<strong>缓存在本地的目录设置</strong></p>
-<p>以下为默认值：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">  &lt;name&gt;mapred.local.dir&lt;/name&gt;</div><div class="line">  &lt;value&gt;$&#123;hadoop.tmp.dir&#125;/mapred/localdir/filecache&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line"> </div><div class="line">&lt;property&gt;</div><div class="line">  &lt;name&gt;local.cache.size&lt;/name&gt;</div><div class="line">  &lt;value&gt;10737418240&lt;/value&gt; </div><div class="line">&lt;/property&gt;</div></pre></td></tr></table></figure></p>
-<p>##<strong>应用场景</strong></p>
-<blockquote>
+<h2 id="缓存在本地的目录设置"><a href="#缓存在本地的目录设置" class="headerlink" title="缓存在本地的目录设置"></a><strong>缓存在本地的目录设置</strong></h2><p>以下为默认值：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&lt;property&gt;</div><div class="line">  &lt;name&gt;mapred.local.dir&lt;/name&gt;</div><div class="line">  &lt;value&gt;$&#123;hadoop.tmp.dir&#125;/mapred/localdir/filecache&lt;/value&gt;</div><div class="line">&lt;/property&gt;</div><div class="line"> </div><div class="line">&lt;property&gt;</div><div class="line">  &lt;name&gt;local.cache.size&lt;/name&gt;</div><div class="line">  &lt;value&gt;10737418240&lt;/value&gt; </div><div class="line">&lt;/property&gt;</div></pre></td></tr></table></figure></p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a><strong>应用场景</strong></h2><blockquote>
 <p>1.分发第三方库(jar,so等)<br>2.共享一些可以装载进内存的文件<br>3.进行类似join连接时，小表的分发</p>
 </blockquote>
-<p>##<strong>使用方式</strong></p>
-<p>旧版本的DistributedCache已经被注解为过时，以下为Hadoop-2.2.0以上的新API接口，测试的Hadoop版本为2.7.2。</p>
+<h2 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a><strong>使用方式</strong></h2><p>旧版本的DistributedCache已经被注解为过时，以下为Hadoop-2.2.0以上的新API接口，测试的Hadoop版本为2.7.2。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Job job = Job.getInstance(conf);</div><div class="line">//将hdfs上的文件加入分布式缓存</div><div class="line">job.addCacheFile(new URI(&quot;hdfs://url:port/filename#symlink&quot;));</div></pre></td></tr></table></figure>
 <p>由于新版API中已经默认创建符号连接，所以不需要再调用setSymlink(true)方法了，可以通过</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">System.out.println(context.getSymlink());</div></pre></td></tr></table></figure>
@@ -362,8 +351,7 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
 <p>这里的getLocalCacheFiles方法也被注解为过时了，只能使用context.getCacheFiles方法，和getLocalCacheFiles不同的是，getCacheFiles得到的路径是HDFS上的文件路径，如果使用这个方法，那么程序中读取的就不再试缓存在各个节点上的数据了，相当于共同访问HDFS上的同一个文件。    </p>
 <p>可以直接通过符号连接来跳过getLocalCacheFiles获得本地的文件。</p>
 <p><strong>单机安装的hadoop没有通过，提示找不到该文件，待在集群上进行测试。</strong></p>
-<p>##<strong>注意事项</strong></p>
-<blockquote>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a><strong>注意事项</strong></h2><blockquote>
 <p>1.需要分发的文件必须是存储在HDFS上了<br>2.文件只读<br>3.不缓存太大的文件，执行task之前对进行文件的分发，影响task的启动速度    </p>
 </blockquote>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
@@ -567,7 +555,7 @@ DistributedCache是Hadoop为MapReduce框架提供的一种分布式缓存机制�
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#符号链接"><span class="nav-number">2.</span> <span class="nav-text">符号链接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存在本地的目录设置"><span class="nav-number">3.</span> <span class="nav-text">缓存在本地的目录设置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用场景"><span class="nav-number">4.</span> <span class="nav-text">应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用方式"><span class="nav-number">5.</span> <span class="nav-text">使用方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注意事项"><span class="nav-number">6.</span> <span class="nav-text">注意事项</span></a></li></ol></div>
             
           </div>
         </section>

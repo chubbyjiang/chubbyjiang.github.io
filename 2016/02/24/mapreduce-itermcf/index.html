@@ -84,37 +84,34 @@
 
 
 
-<meta name="description" content="##ItermCF的基本思想
-基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+<meta name="description" content="ItermCF的基本思想基于物品相似度的协同过滤推荐的思想大致可分为两部分：
 
 1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
 
 通俗的来讲就是：
 对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
-##ItermCF">
+ItermCF的算法实现">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ItermCF的MR并行实现">
 <meta property="og:url" content="http://xiaohei.info/2016/02/24/mapreduce-itermcf/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="##ItermCF的基本思想
-基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+<meta property="og:description" content="ItermCF的基本思想基于物品相似度的协同过滤推荐的思想大致可分为两部分：
 
 1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
 
 通俗的来讲就是：
 对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
-##ItermCF">
-<meta property="og:updated_time" content="2016-07-14T03:27:01.000Z">
+ItermCF的算法实现">
+<meta property="og:updated_time" content="2016-07-17T02:28:23.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ItermCF的MR并行实现">
-<meta name="twitter:description" content="##ItermCF的基本思想
-基于物品相似度的协同过滤推荐的思想大致可分为两部分：
+<meta name="twitter:description" content="ItermCF的基本思想基于物品相似度的协同过滤推荐的思想大致可分为两部分：
 
 1.计算物与物之前的相似度2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐
 
 通俗的来讲就是：
 对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。
-##ItermCF">
+ItermCF的算法实现">
 
 
 
@@ -343,21 +340,18 @@
       
 
       
-        <p>##<strong>ItermCF的基本思想</strong></p>
-<p>基于物品相似度的协同过滤推荐的思想大致可分为两部分：</p>
+        <h2 id="ItermCF的基本思想"><a href="#ItermCF的基本思想" class="headerlink" title="ItermCF的基本思想"></a><strong>ItermCF的基本思想</strong></h2><p>基于物品相似度的协同过滤推荐的思想大致可分为两部分：</p>
 <blockquote>
 <p>1.计算物与物之前的相似度<br>2.根据用户的行为历史，给出和历史列表中的物品相似度最高的推荐</p>
 </blockquote>
 <p><strong>通俗的来讲就是：</strong></p>
 <p>对于物品 A,根据所有用户的历史偏好,喜欢物品 A 的用户都 喜欢物品 C,得出物品 A 和物品 C 比较相似,而用户 C 喜欢物品 A,那么可以推断出 用户 C 可能也喜欢物品 C。</p>
-<p>##<strong>ItermCF的算法实现思路</strong></p>
-<p>对于以下的数据集：<br>|UserId|ItermId|Preference|<br>|—|—|—|<br>|1|    101|    5|<br>|1|    102|    3|<br>|1|    103|    2.5<br>|2|    101|    2|<br>|2|    102|    2.5|<br>|2|    103|    5|<br>|2|    104|    2|<br>|3|    101|    2|<br>|3|    104|    4|<br>|3|    105|    4.5|<br>|3|    107|    5|<br>|4|    101|    5|<br>|4|    103|    3|<br>|4|    104|    4.5|<br>|4|    106|    4|<br>|5|    101|    4|<br>|5|    102|    3|<br>|5|    103|    2|<br>|5|    104|    4|<br>|5|    105|    3.5|<br>|5|    106|    4|<br>|6|    102|    4|<br>|6|    103|    2|<br>|6|    105|    3.5|<br>|6|    107|    4|</p>
-<p>###<strong>用户评分矩阵</strong></p>
-<p>首先可以建立用户对物品的评分矩阵，大概长这个样子：</p>
+<h2 id="ItermCF的算法实现思路"><a href="#ItermCF的算法实现思路" class="headerlink" title="ItermCF的算法实现思路"></a><strong>ItermCF的算法实现思路</strong></h2><p>对于以下的数据集：<br>|UserId|ItermId|Preference|<br>|—|—|—|<br>|1|    101|    5|<br>|1|    102|    3|<br>|1|    103|    2.5<br>|2|    101|    2|<br>|2|    102|    2.5|<br>|2|    103|    5|<br>|2|    104|    2|<br>|3|    101|    2|<br>|3|    104|    4|<br>|3|    105|    4.5|<br>|3|    107|    5|<br>|4|    101|    5|<br>|4|    103|    3|<br>|4|    104|    4.5|<br>|4|    106|    4|<br>|5|    101|    4|<br>|5|    102|    3|<br>|5|    103|    2|<br>|5|    104|    4|<br>|5|    105|    3.5|<br>|5|    106|    4|<br>|6|    102|    4|<br>|6|    103|    2|<br>|6|    105|    3.5|<br>|6|    107|    4|</p>
+<h3 id="用户评分矩阵"><a href="#用户评分矩阵" class="headerlink" title="用户评分矩阵"></a><strong>用户评分矩阵</strong></h3><p>首先可以建立用户对物品的评分矩阵，大概长这个样子：</p>
 <p>$$<br>  \begin{matrix}<br>   &amp; 1 &amp; 2 &amp; 3 &amp; 4 &amp; 5\<br>   101 &amp; 5 &amp; 2 &amp; 2 &amp; 5 &amp; 4\<br>   102 &amp; 3 &amp; 2.5 &amp; 0 &amp; 0 &amp; 3 \<br>   103 &amp; 2.5 &amp; 5 &amp; 0 &amp; 3 &amp; 2\<br>   104 &amp; 0 &amp; 2 &amp; 4 &amp; 4.5 &amp; 4\<br>   105 &amp; 0 &amp; 0 &amp; 4.5 &amp; 0 &amp; 3\<br>   106 &amp; 0 &amp; 0 &amp; 0 &amp; 4 &amp; 4\<br>   107 &amp; 0 &amp; 0 &amp; 5 &amp; 4 &amp; 0\<br>  \end{matrix}<br>$$</p>
 <p>列为UserId，行为ItermId，矩阵中的值代表该用户对该物品的评分。   </p>
-<p>从列的方向看，该矩阵的每一个列在mr程序中可以用一行简单的字符串来表示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">1	101:5,102:3,103:2.5 ...   </div><div class="line">```   </div><div class="line">这样一来，上面的矩阵5个列就可以由5行类似的字符串来构成。   </div><div class="line">那么第一个mr任务的功能就是一个简单的数据转换过程：</div><div class="line"></div><div class="line">&gt; 1.输入的key为行偏移量，value为每行内容，形如：1,101,5.0</div><div class="line">&gt; 2.在map阶段，分割每行内容，输出的key为1，value为101:5.0</div><div class="line">&gt; 3.在reduce阶段，将UserId相同的所有评分记录进行汇总拼接，输出的key仍然为1，value形如：101:5,102:3,103:2.5 ...</div><div class="line"></div><div class="line">如此一来通过第一个mr任务得到了用户的评分矩阵。</div><div class="line"></div><div class="line">###**物品同现矩阵**</div><div class="line"></div><div class="line">该矩阵大概长这个样子：</div><div class="line"></div><div class="line">矩阵的值表示，两个物品同时被用户喜欢（评过分）的次数，例如：101和102这个组合被1，2，5三个用户喜欢过，那么在矩阵中101和102对应的值就是3。   </div><div class="line"></div><div class="line">这个矩阵的意义就是**各个物品之间的相似度**，为什么可以这么说？   </div><div class="line">如果两个物品经常同时被很多用户喜欢，那么可以说这两个物品是相似的，**同时被越多的用户喜欢（即为通同现度，上面矩阵中的值），这两个物品的相似度就越高**。   </div><div class="line">其实观察可以发现，行和列上相同的（比如101和101）相比其他值（比如101和102，101和103）都是最大的，**因为101和101就是同一个物品，相似度肯定是最大的**。   </div><div class="line"></div><div class="line">从列的方向上看，这个同现矩阵的每一列在mr程序中可以通过下面简单的字符串来表示：</div></pre></td></tr></table></figure></p>
-<p>101:101    5<br>101:102    3<br>101:103    4<br>…<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">m*n的同现矩阵就由m个以上的字符串（n行）组成。   </div><div class="line"></div><div class="line">那么第二个mr任务的功能就是在第一个mr任务的输出结果上得到物品同现矩阵：</div><div class="line"></div><div class="line">&gt; 1.输入的key为偏移量，输入的value为UserId+制表符+ItermId1:Perference1,ItermId2:Perference2...</div><div class="line">&gt; 2.输入的value中，UserId和Perference是不需要关心的，观察物品的同现矩阵，map阶段的工作就是将每行包含的ItermId都解析出来，**全排列组合作为key输出**，每个key的value记为1。</div><div class="line">&gt; 3.在reduce阶段所做的就是根据key对value进行累加输出。</div><div class="line"></div><div class="line">如此一来便能够得到物品的同现矩阵。   </div><div class="line"></div><div class="line">###**物品同现矩阵和用户评分矩阵的相乘**</div><div class="line"></div><div class="line">物品同现矩阵*用户评分矩阵=推荐结果：</div><div class="line"></div><div class="line">为什么两个矩阵相乘可以得到推荐结果？   </div><div class="line">**物品1和各个物品的同现度*用户对各个物品的喜好度，反应出用户对物品1的喜好度。**   </div><div class="line"></div><div class="line">例如，要预测用户3对103物品的喜好度，我们需要找到和103相似的物品，比如101物品，和103的同现度为4，**是很类似的物品，用户3对101的评分为2，那么一定程度上可以反映出用户对103的喜好度**，101和103的相似度（即同现度）*用户3对101的评分可以得到**用户3对103的喜好度权重**，将用户3对各个物品的权重相加，可以**反映出用户3对103的喜好度**。   </div><div class="line"></div><div class="line">了解矩阵相乘的意义之后，第三个mr任务的功能就是实现两个矩阵的相乘，并将结果输出。</div><div class="line"></div><div class="line">在这个mr任务中，这两个矩阵的相乘可以这样来计算：</div><div class="line"></div><div class="line">将同现矩阵存入一个Map中，形如：</div></pre></td></tr></table></figure></p>
+<p>从列的方向看，该矩阵的每一个列在mr程序中可以用一行简单的字符串来表示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">1	101:5,102:3,103:2.5 ...   </div><div class="line">```   </div><div class="line">这样一来，上面的矩阵5个列就可以由5行类似的字符串来构成。   </div><div class="line">那么第一个mr任务的功能就是一个简单的数据转换过程：</div><div class="line"></div><div class="line">&gt; 1.输入的key为行偏移量，value为每行内容，形如：1,101,5.0</div><div class="line">&gt; 2.在map阶段，分割每行内容，输出的key为1，value为101:5.0</div><div class="line">&gt; 3.在reduce阶段，将UserId相同的所有评分记录进行汇总拼接，输出的key仍然为1，value形如：101:5,102:3,103:2.5 ...</div><div class="line"></div><div class="line">如此一来通过第一个mr任务得到了用户的评分矩阵。</div><div class="line"></div><div class="line">### **物品同现矩阵**</div><div class="line"></div><div class="line">该矩阵大概长这个样子：</div><div class="line"></div><div class="line">矩阵的值表示，两个物品同时被用户喜欢（评过分）的次数，例如：101和102这个组合被1，2，5三个用户喜欢过，那么在矩阵中101和102对应的值就是3。   </div><div class="line"></div><div class="line">这个矩阵的意义就是**各个物品之间的相似度**，为什么可以这么说？   </div><div class="line">如果两个物品经常同时被很多用户喜欢，那么可以说这两个物品是相似的，**同时被越多的用户喜欢（即为通同现度，上面矩阵中的值），这两个物品的相似度就越高**。   </div><div class="line">其实观察可以发现，行和列上相同的（比如101和101）相比其他值（比如101和102，101和103）都是最大的，**因为101和101就是同一个物品，相似度肯定是最大的**。   </div><div class="line"></div><div class="line">从列的方向上看，这个同现矩阵的每一列在mr程序中可以通过下面简单的字符串来表示：</div></pre></td></tr></table></figure></p>
+<p>101:101    5<br>101:102    3<br>101:103    4<br>…<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">m*n的同现矩阵就由m个以上的字符串（n行）组成。   </div><div class="line"></div><div class="line">那么第二个mr任务的功能就是在第一个mr任务的输出结果上得到物品同现矩阵：</div><div class="line"></div><div class="line">&gt; 1.输入的key为偏移量，输入的value为UserId+制表符+ItermId1:Perference1,ItermId2:Perference2...</div><div class="line">&gt; 2.输入的value中，UserId和Perference是不需要关心的，观察物品的同现矩阵，map阶段的工作就是将每行包含的ItermId都解析出来，**全排列组合作为key输出**，每个key的value记为1。</div><div class="line">&gt; 3.在reduce阶段所做的就是根据key对value进行累加输出。</div><div class="line"></div><div class="line">如此一来便能够得到物品的同现矩阵。   </div><div class="line"></div><div class="line">### **物品同现矩阵和用户评分矩阵的相乘**</div><div class="line"></div><div class="line">物品同现矩阵*用户评分矩阵=推荐结果：</div><div class="line"></div><div class="line">为什么两个矩阵相乘可以得到推荐结果？   </div><div class="line">**物品1和各个物品的同现度*用户对各个物品的喜好度，反应出用户对物品1的喜好度。**   </div><div class="line"></div><div class="line">例如，要预测用户3对103物品的喜好度，我们需要找到和103相似的物品，比如101物品，和103的同现度为4，**是很类似的物品，用户3对101的评分为2，那么一定程度上可以反映出用户对103的喜好度**，101和103的相似度（即同现度）*用户3对101的评分可以得到**用户3对103的喜好度权重**，将用户3对各个物品的权重相加，可以**反映出用户3对103的喜好度**。   </div><div class="line"></div><div class="line">了解矩阵相乘的意义之后，第三个mr任务的功能就是实现两个矩阵的相乘，并将结果输出。</div><div class="line"></div><div class="line">在这个mr任务中，这两个矩阵的相乘可以这样来计算：</div><div class="line"></div><div class="line">将同现矩阵存入一个Map中，形如：</div></pre></td></tr></table></figure></p>
 <p>Map<string, map<string,="" double="">&gt; colItermOccurrenceMap = new HashMap<string, map<string,="" double="">&gt;();<br>```</string,></string,></p>
 <p>同现矩阵中的每一行就是大Map中的一条记录，每行对应的每列都在该记录的小Map中。</p>
 <p>在map阶段的开始的时候初始化这个Map，输入的value形如101:101 5,101:102 3，将101作为大Map的key，value为小Map，小Map的key为101/102，value为5/3。</p>
@@ -365,8 +359,7 @@
 <p>关于Hadoop的分布式缓存机制请看：<br><a href="http://blog.csdn.net/qq1010885678/article/details/50751007" target="_blank" rel="external">Hadoop的DistributedCache机制</a></p>
 <p>初始化同现矩阵之后，读取评分矩阵的每一行，输入的value为1    101:5,102:3,103:2.5 …<br>将每行的itermIds和对应的评分数提取出来，遍历itermId，根据itermId到itermOccurrenceMap中找到对应的List集合，找到每个itermId在该集合中对应的itermId2记录，将评分数*同现度，之后进行累加，以UserId:ItermID作为key，累加值作为value输出。</p>
 <p>reduce的工作就很简单了，根据key对value进行累加输出即可。</p>
-<p>###<strong>项目代码</strong></p>
-<p><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">源码Github地址</a></p>
+<h3 id="项目代码"><a href="#项目代码" class="headerlink" title="项目代码"></a><strong>项目代码</strong></h3><p><a href="https://github.com/chubbyjiang/MapReduce" target="_blank" rel="external">源码Github地址</a></p>
 <p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
       
@@ -568,7 +561,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ItermCF的基本思想"><span class="nav-number">1.</span> <span class="nav-text">ItermCF的基本思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ItermCF的算法实现思路"><span class="nav-number">2.</span> <span class="nav-text">ItermCF的算法实现思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#用户评分矩阵"><span class="nav-number">2.1.</span> <span class="nav-text">用户评分矩阵</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#项目代码"><span class="nav-number">2.2.</span> <span class="nav-text">项目代码</span></a></li></ol></li></ol></div>
             
           </div>
         </section>

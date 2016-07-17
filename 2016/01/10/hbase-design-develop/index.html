@@ -84,43 +84,37 @@
 
 
 
-<meta name="description" content="###适合HBase应用的场景
-
+<meta name="description" content="适合HBase应用的场景
 
 成熟的数据分析主题，查询模式已经确定且不会轻易改变。
 传统数据库无法承受负载。
 简单的查询模式。
 
 
-###基本概念
-行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个regio">
+基本概念行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个region记录着行健的起">
 <meta property="og:type" content="article">
 <meta property="og:title" content="HBase设计与开发">
 <meta property="og:url" content="http://xiaohei.info/2016/01/10/hbase-design-develop/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="###适合HBase应用的场景
-
+<meta property="og:description" content="适合HBase应用的场景
 
 成熟的数据分析主题，查询模式已经确定且不会轻易改变。
 传统数据库无法承受负载。
 简单的查询模式。
 
 
-###基本概念
-行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个regio">
-<meta property="og:updated_time" content="2016-07-14T03:37:07.000Z">
+基本概念行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个region记录着行健的起">
+<meta property="og:updated_time" content="2016-07-17T02:25:06.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase设计与开发">
-<meta name="twitter:description" content="###适合HBase应用的场景
-
+<meta name="twitter:description" content="适合HBase应用的场景
 
 成熟的数据分析主题，查询模式已经确定且不会轻易改变。
 传统数据库无法承受负载。
 简单的查询模式。
 
 
-###基本概念
-行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个regio">
+基本概念行健：是hbase表自带的，每个行健对应一条数据。列族：是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。物理模型：整个hbase表会拆分为多个region，每个region记录着行健的起">
 
 
 
@@ -349,20 +343,17 @@
       
 
       
-        <p>###<strong>适合HBase应用的场景</strong></p>
-<blockquote>
+        <h3 id="适合HBase应用的场景"><a href="#适合HBase应用的场景" class="headerlink" title="适合HBase应用的场景"></a><strong>适合HBase应用的场景</strong></h3><blockquote>
 <ul>
 <li><strong>成熟的数据分析主题，查询模式已经确定且不会轻易改变。</strong></li>
 <li>传统数据库无法承受负载。</li>
 <li>简单的查询模式。</li>
 </ul>
 </blockquote>
-<p>###<strong>基本概念</strong></p>
-<p><strong>行健：</strong>是hbase表自带的，每个行健对应一条数据。<br><strong>列族：</strong>是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。<br><strong>物理模型：</strong>整个hbase表会拆分为多个region，每个region记录着行健的起始点保存在不同的节点上，查询时就是对各个节点的并行查询，当region很大时使用.META表存储各个region的起始点，-ROOT又可以存储.META的起始点。</p>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a><strong>基本概念</strong></h3><p><strong>行健：</strong>是hbase表自带的，每个行健对应一条数据。<br><strong>列族：</strong>是创建表时指定的，为列的集合，每个列族作为一个文件单独存储，存储的数据都是字节数组，其中的数据可以有很多，通过时间戳来区分。<br><strong>物理模型：</strong>整个hbase表会拆分为多个region，每个region记录着行健的起始点保存在不同的节点上，查询时就是对各个节点的并行查询，当region很大时使用.META表存储各个region的起始点，-ROOT又可以存储.META的起始点。</p>
 <p><strong>rowkey的设计原则：</strong>长度原则、相邻原则，<strong>各个列簇数据平衡</strong>，创建表的时候设置表放入regionserver缓存中，<strong>避免自动增长和时间</strong>，使用字节数组代替string，最大长度64kb，最好16字节以内。<br><strong>列族的设计原则：</strong>尽可能少（按照列族进行存储，按照region进行读取，不必要的io操作），经常和不经常使用的两类数据放入不同列族中，列族名字尽可能短，注意列族的数量级，<strong>避免数据倾斜</strong>。</p>
 <p>rowkey设计可以参考：<a href="http://blog.chedushi.com/archives/9720" target="_blank" rel="external">http://blog.chedushi.com/archives/9720</a></p>
-<p>###<strong>HBase开发</strong></p>
-<p><strong>写入HBase</strong></p>
+<h3 id="HBase开发"><a href="#HBase开发" class="headerlink" title="HBase开发"></a><strong>HBase开发</strong></h3><p><strong>写入HBase</strong></p>
 <p>maper程序不需要改动，还是继承Mapper类读取文件。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">//reducer要extends Tablereducer，使用方式和reducer一样，泛型的最后一个参数是输出的key类型，value类型固定为Put</div><div class="line">public class ExtractReducer extends TableReducer&lt;Text, Text, ImmutableBytesWritable&gt; &#123;</div><div class="line">    @Override</div><div class="line">    protected void reduce(Text key, Iterable&lt;Text&gt; values, Context context) &#123;</div><div class="line">    	//Put对象new的时候参数为Bytes.toBytes(行健的值)，一个put就是一行</div><div class="line">        Put put = new Put(key.getBytes());</div><div class="line">        for (Text v : values) &#123;</div><div class="line">            String[] vs = v.toString().split(&quot;\t&quot;);</div><div class="line">            for (int i = 1; i &lt; vs.length; i++) &#123;</div><div class="line">            	//put.add(Bytes.toBytes(列簇),Bytes.toBytes(列),Bytes.toBytes(值));</div><div class="line">                put.add(Bytes.toBytes(&quot;trade&quot;), Bytes.toBytes(&quot;&quot;), Bytes.toBytes(vs[i]));</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        try &#123;</div><div class="line">            context.write(new ImmutableBytesWritable(key.getBytes()), put);</div><div class="line">        &#125; catch (IOException | InterruptedException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>提交mr程序的main方法和普通的mr程序差不多，只是conf中要多加几个hbase的设置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">conf.set(&quot;hbase.rootdir&quot;,&quot;/hbase&quot;);</div><div class="line">conf.set(&quot;hbase.zookeeper.quorum&quot;,&quot;zookeeper地址&quot;);</div><div class="line">conf.set(&quot;dfs.socket.timeout&quot;, &quot;18000&quot;);</div></pre></td></tr></table></figure></p>
@@ -376,8 +367,7 @@
 <p><strong>读写hbase示例</strong></p>
 <p>此处代码来自<a href="http://blog.csdn.net/woshiwanxin102213/article/details/17914083" target="_blank" rel="external">CSDN</a></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div></pre></td><td class="code"><pre><div class="line">public class ExampleTotalMapReduce&#123;  </div><div class="line">    public static void main(String[] args) &#123;  </div><div class="line">        try&#123;  </div><div class="line">            Configuration config = HBaseConfiguration.create();  </div><div class="line">            Job job = new Job(config,&quot;ExampleSummary&quot;);  </div><div class="line">            job.setJarByClass(ExampleTotalMapReduce.class);     // class that contains mapper and reducer  </div><div class="line">  </div><div class="line">            Scan scan = new Scan();  </div><div class="line">            scan.setCaching(500);        // 1 is the default in Scan, which will be bad for MapReduce jobs  </div><div class="line">            scan.setCacheBlocks(false);  // don&apos;t set to true for MR jobs  </div><div class="line">            // set other scan attrs  </div><div class="line">            //scan.addColumn(family, qualifier);  </div><div class="line">            TableMapReduceUtil.initTableMapperJob(  </div><div class="line">                    &quot;access-log&quot;,        // input table  </div><div class="line">                    scan,               // Scan instance to control CF and attribute selection  </div><div class="line">                    MyMapper.class,     // mapper class  </div><div class="line">                    Text.class,         // mapper output key  </div><div class="line">                    IntWritable.class,  // mapper output value  </div><div class="line">                    job);  </div><div class="line">            TableMapReduceUtil.initTableReducerJob(  </div><div class="line">                    &quot;total-access&quot;,        // output table  </div><div class="line">                    MyTableReducer.class,    // reducer class  </div><div class="line">                    job);  </div><div class="line">            job.setNumReduceTasks(1);   // at least one, adjust as required  </div><div class="line">  </div><div class="line">            boolean b = job.waitForCompletion(true);  </div><div class="line">            if (!b) &#123;  </div><div class="line">                throw new IOException(&quot;error with job!&quot;);  </div><div class="line">            &#125;   </div><div class="line">        &#125; catch(Exception e)&#123;  </div><div class="line">            e.printStackTrace();  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">  </div><div class="line">    public static class MyMapper extends TableMapper&lt;Text, IntWritable&gt;  &#123;  </div><div class="line">  </div><div class="line">        private final IntWritable ONE = new IntWritable(1);  </div><div class="line">        private Text text = new Text();  </div><div class="line">  </div><div class="line">        public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException, InterruptedException &#123;  </div><div class="line">            String ip = Bytes.toString(row.get()).split(&quot;-&quot;)[0];  </div><div class="line">            String url = new String(value.getValue(Bytes.toBytes(&quot;info&quot;), Bytes.toBytes(&quot;url&quot;)));  </div><div class="line">            text.set(ip+&quot;&amp;&quot;+url);  </div><div class="line">            context.write(text, ONE);  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">  </div><div class="line">    public static class MyTableReducer extends TableReducer&lt;Text, IntWritable, ImmutableBytesWritable&gt;  &#123;  </div><div class="line">        public void reduce(Text key, Iterable&lt;IntWritable&gt; values, Context context) throws IOException, InterruptedException &#123;  </div><div class="line">            int sum = 0;  </div><div class="line">            for (IntWritable val : values) &#123;  </div><div class="line">                sum += val.get();  </div><div class="line">            &#125;  </div><div class="line">  </div><div class="line">            Put put = new Put(key.getBytes());  </div><div class="line">            put.add(Bytes.toBytes(&quot;info&quot;), Bytes.toBytes(&quot;count&quot;), Bytes.toBytes(String.valueOf(sum)));  </div><div class="line">  </div><div class="line">            context.write(null, put);  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>###<strong>操作HBase过程中遇到的异常信息</strong></p>
-<p><strong>1、hbase测试程序运行失败，情况一。</strong><br>     <strong>症状：</strong>提示zookeeper无法连接。<br>     <strong>问题所在：</strong>zk地址错误。<br>     <strong>解决方法：</strong>使用正确的zk地址。</p>
+<h3 id="操作HBase过程中遇到的异常信息"><a href="#操作HBase过程中遇到的异常信息" class="headerlink" title="操作HBase过程中遇到的异常信息"></a><strong>操作HBase过程中遇到的异常信息</strong></h3><p><strong>1、hbase测试程序运行失败，情况一。</strong><br>     <strong>症状：</strong>提示zookeeper无法连接。<br>     <strong>问题所在：</strong>zk地址错误。<br>     <strong>解决方法：</strong>使用正确的zk地址。</p>
 <p><strong>2、hbase测试程序运行失败，情况二</strong><br>     <strong>症状：</strong>java程序访问hbase 卡住不动 不报异常。<br>     <strong>问题插排：</strong>使用shell创建表失败，转异常3。<br>     <strong>解决方式：</strong>异常3解决之后即可正常运行。</p>
 <p><strong>3、使用hbase shell创建表失败。</strong><br>     <strong>症状：</strong>提示ERROR: java.io.IOException: Table Namespace Manager not ready yet, try again later。<br>     <strong>问题插排：</strong>hbase集群没有启动，转异常4。<br>     <strong>解决方式：</strong>异常4解决之后正常启动集群即可。</p>
 <p><strong>4、hbase集群无法正常启动。</strong><br>     <strong>症状：</strong>hbase无法正常启动，子节点进程自动退出。<br>     <strong>问题插排：</strong>查看节点日志发现异常，集群时间没有同步，待解决。<br>     <strong>日志如下：</strong> org.apache.hadoop.hbase.ClockOutOfSyncException: org.apache.hadoop.hbase.ClockOutOfSyncException: Server zx-hadoop-210-27,60020,1451550407914 has been rejected; Reported time is too far out of sync with master.  Time difference of 158391ms &gt; max allowed of 30000ms<br>     <strong>解决方式：</strong>同步集群时间。</p>
@@ -580,7 +570,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#适合HBase应用的场景"><span class="nav-number">1.</span> <span class="nav-text">适合HBase应用的场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基本概念"><span class="nav-number">2.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HBase开发"><span class="nav-number">3.</span> <span class="nav-text">HBase开发</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#操作HBase过程中遇到的异常信息"><span class="nav-number">4.</span> <span class="nav-text">操作HBase过程中遇到的异常信息</span></a></li></ol></div>
             
           </div>
         </section>

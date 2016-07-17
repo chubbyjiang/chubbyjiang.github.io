@@ -84,31 +84,25 @@
 
 
 
-<meta name="description" content="##安装hive
-hive的安装十分简单，只需要在一台服务器上部署即可。
+<meta name="description" content="安装hivehive的安装十分简单，只需要在一台服务器上部署即可。
 上传hive安装包，解压缩，将其配入环境变量。
-###mysql的设置
-在要作为元数据库的mysql服务器上建立hive数据库：
-12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
+mysql的设置在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;root&amp;apos">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Hive配置与操作实践">
 <meta property="og:url" content="http://xiaohei.info/2016/01/25/hive-conf-opt-real/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="##安装hive
-hive的安装十分简单，只需要在一台服务器上部署即可。
+<meta property="og:description" content="安装hivehive的安装十分简单，只需要在一台服务器上部署即可。
 上传hive安装包，解压缩，将其配入环境变量。
-###mysql的设置
-在要作为元数据库的mysql服务器上建立hive数据库：
-12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
-<meta property="og:updated_time" content="2016-07-14T03:29:07.000Z">
+mysql的设置在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;root&amp;apos">
+<meta property="og:updated_time" content="2016-07-17T02:26:33.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hive配置与操作实践">
-<meta name="twitter:description" content="##安装hive
-hive的安装十分简单，只需要在一台服务器上部署即可。
+<meta name="twitter:description" content="安装hivehive的安装十分简单，只需要在一台服务器上部署即可。
 上传hive安装包，解压缩，将其配入环境变量。
-###mysql的设置
-在要作为元数据库的mysql服务器上建立hive数据库：
-12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;ro">
+mysql的设置在要作为元数据库的mysql服务器上建立hive数据库：
+12345678#建立数据库create database if not exists hive;#设置远程登录的权限GRANT ALL PRIVILEGES ON *.* TO &amp;apos;root&amp;apos">
 
 
 
@@ -337,17 +331,14 @@ hive的安装十分简单，只需要在一台服务器上部署即可。
       
 
       
-        <p>##<strong>安装hive</strong></p>
-<p>hive的安装十分简单，只需要在一台服务器上部署即可。</p>
+        <h2 id="安装hive"><a href="#安装hive" class="headerlink" title="安装hive"></a><strong>安装hive</strong></h2><p>hive的安装十分简单，只需要在一台服务器上部署即可。</p>
 <p>上传hive安装包，解压缩，将其配入环境变量。</p>
-<p>###<strong>mysql的设置</strong></p>
-<p>在要作为元数据库的mysql服务器上建立hive数据库：</p>
+<h3 id="mysql的设置"><a href="#mysql的设置" class="headerlink" title="mysql的设置"></a><strong>mysql的设置</strong></h3><p>在要作为元数据库的mysql服务器上建立hive数据库：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#建立数据库</div><div class="line">create database if not exists hive;</div><div class="line"></div><div class="line">#设置远程登录的权限</div><div class="line">GRANT ALL PRIVILEGES ON *.* TO &apos;root&apos;@&apos;%&apos; IDENTIFIED BY &apos;root&apos; WITH GRANT OPTION;</div><div class="line"></div><div class="line">#刷新配置</div><div class="line">FLUSH PRIVILEGES;</div></pre></td></tr></table></figure>
 <p>或者创建专门访问hive的用户：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">CREATE USER &apos;hive&apos;@&apos;localhost&apos; IDENTIFIED BY &apos;hive&apos;;</div><div class="line">create database hive;</div><div class="line">grant all on hive.* to hive@&apos;%&apos;  identified by &apos;hive&apos;;</div><div class="line">grant all on hive.* to hive@&apos;localhost&apos;  identified by &apos;hive&apos;;</div><div class="line">flush privileges;</div></pre></td></tr></table></figure>
 <p>并将mysql jdbc驱动放入hive/lib目录下。</p>
-<p>###<strong>配置文件修改</strong></p>
-<p>进入conf目录，修改配置文件：</p>
+<h3 id="配置文件修改"><a href="#配置文件修改" class="headerlink" title="配置文件修改"></a><strong>配置文件修改</strong></h3><p>进入conf目录，修改配置文件：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cp hive-env.sh.template hive-env.sh</div><div class="line">cp hive-default.xml.template hive-default.xml</div><div class="line">cp hive-log4j.properties.template hive-log4j.properties</div><div class="line">cp hive-exec-log4j.properties.template hive-exec-log4j.properties</div></pre></td></tr></table></figure>
 <p>在hive-env.sh文件中配置hadoop的home目录。</p>
 <p>新建hive-site.xml文件</p>
@@ -359,11 +350,9 @@ hive的安装十分简单，只需要在一台服务器上部署即可。
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#修改默认的日志存在路径</div><div class="line">hive.log.dir=</div></pre></td></tr></table></figure>
 <p><strong>hive-exec-log4j.properties：</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">#修改默认的日志存在路径</div><div class="line">hive.log.dir=</div></pre></td></tr></table></figure>
-<p>###<strong>错误与异常记录</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask. java.lang.RuntimeException: Unable to instantiate org.apache.hadoop.hive.metastore.HiveMetaStoreClient</div></pre></td></tr></table></figure>
+<h3 id="错误与异常记录"><a href="#错误与异常记录" class="headerlink" title="错误与异常记录"></a><strong>错误与异常记录</strong></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask. java.lang.RuntimeException: Unable to instantiate org.apache.hadoop.hive.metastore.HiveMetaStoreClient</div></pre></td></tr></table></figure>
 <p>一般是没执行hive –service metastore，重新执行即可。</p>
-<p>##<strong>常用命令</strong></p>
-<p><strong>建表(默认是内部表)</strong></p>
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a><strong>常用命令</strong></h2><p><strong>建表(默认是内部表)</strong></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">create table trade_detail(id bigint, account string, income double, expenses double, </div><div class="line">time string) row format delimited fields terminated by &apos;\t&apos;;</div></pre></td></tr></table></figure>
 <p>建表时要指定字段之间的分隔符。</p>
 <p><strong>建分区表</strong></p>
@@ -397,15 +386,12 @@ hive的安装十分简单，只需要在一台服务器上部署即可。
 <li>调用<br>hive&gt; select id, name, getNation(nation) from beauty;</li>
 <li>将查询结果保存到HDFS中<br>create table result row format delimited fields terminated by ‘\t’ as select id, getNation<br>(nation) from beauties;</li>
 </ol>
-<p>##<strong>基本数据类型</strong></p>
-<p>基本的数据类型参考：<br><a href="http://blog.csdn.net/chenxingzhen001/article/details/20901045" target="_blank" rel="external">http://blog.csdn.net/chenxingzhen001/article/details/20901045</a></p>
-<p>##<strong>1.27更新</strong></p>
-<p>配置hive1.2.1版本的时候出现一个问题，如下：</p>
+<h2 id="基本数据类型"><a href="#基本数据类型" class="headerlink" title="基本数据类型"></a><strong>基本数据类型</strong></h2><p>基本的数据类型参考：<br><a href="http://blog.csdn.net/chenxingzhen001/article/details/20901045" target="_blank" rel="external">http://blog.csdn.net/chenxingzhen001/article/details/20901045</a></p>
+<h2 id="1-27更新"><a href="#1-27更新" class="headerlink" title="1.27更新"></a><strong>1.27更新</strong></h2><p>配置hive1.2.1版本的时候出现一个问题，如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">Exception in thread &quot;main&quot;java.lang.RuntimeException: java.lang.IllegalArgumentException:java.net.URISyntaxException: Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.start(SessionState.java:444)</div><div class="line">        atorg.apache.hadoop.hive.cli.CliDriver.run(CliDriver.java:672)</div><div class="line">        atorg.apache.hadoop.hive.cli.CliDriver.main(CliDriver.java:616)</div><div class="line">        atsun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)</div><div class="line">        atsun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)</div><div class="line">        atsun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)</div><div class="line">        atjava.lang.reflect.Method.invoke(Method.java:606)</div><div class="line">        atorg.apache.hadoop.util.RunJar.main(RunJar.java:160)</div><div class="line">Caused by: java.lang.IllegalArgumentException:java.net.URISyntaxException: Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atorg.apache.hadoop.fs.Path.initialize(Path.java:148)</div><div class="line">        atorg.apache.hadoop.fs.Path.&lt;init&gt;(Path.java:126)</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.createSessionDirs(SessionState.java:487)</div><div class="line">        atorg.apache.hadoop.hive.ql.session.SessionState.start(SessionState.java:430)</div><div class="line">        ... 7more</div><div class="line">Caused by: java.net.URISyntaxException:Relative path in absolute URI:$&#123;system:java.io.tmpdir%7D/$%7Bsystem:user.name%7D</div><div class="line">        atjava.net.URI.checkPath(URI.java:1804)</div><div class="line">        atjava.net.URI.&lt;init&gt;(URI.java:752)</div><div class="line">        atorg.apache.hadoop.fs.Path.initialize(Path.java:145)</div><div class="line">        ... 10more</div></pre></td></tr></table></figure>
 <p><strong>解决方式：</strong></p>
 <p>在HIVE_HOME目录下新建一个iotmp文件夹，<br>在hive-site.xml文件中，搜索所有包含system:java.io.tmpdir的配置项，将其value属性改为iotmp的路径保存即可。</p>
-<p>###<strong>hive无法读取配置文件的问题</strong></p>
-<p>hive部署之后，hive-site.xml中配置的是连接到远程的mysql数据库。</p>
+<h3 id="hive无法读取配置文件的问题"><a href="#hive无法读取配置文件的问题" class="headerlink" title="hive无法读取配置文件的问题"></a><strong>hive无法读取配置文件的问题</strong></h3><p>hive部署之后，hive-site.xml中配置的是连接到远程的mysql数据库。</p>
 <p>HIVE_HOME已配置到.bash_profile文件中，但是直接执行hive命令的时候发现，同一个人在不同路径下执行竟然看到的表数据是不一样的！</p>
 <p>于是开始排查异常，切换各个不同的目录执行hive命令，但是看到的数据都不一样，而且发现<strong>每个目录下都会生成derby元数据库的文件信息</strong>，于是猜想hive连接的是本地的derby数据库，但是配置文件里面明明设置的是连接远程mysql数据库。</p>
 <p>进入conf目录再次执行hive命令，一切正常，将hive-site.xml文件复制到任意目录，再次执行hive，一切正常。</p>
@@ -613,7 +599,7 @@ hive的安装十分简单，只需要在一台服务器上部署即可。
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装hive"><span class="nav-number">1.</span> <span class="nav-text">安装hive</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mysql的设置"><span class="nav-number">1.1.</span> <span class="nav-text">mysql的设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置文件修改"><span class="nav-number">1.2.</span> <span class="nav-text">配置文件修改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#错误与异常记录"><span class="nav-number">1.3.</span> <span class="nav-text">错误与异常记录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常用命令"><span class="nav-number">2.</span> <span class="nav-text">常用命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本数据类型"><span class="nav-number">3.</span> <span class="nav-text">基本数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-27更新"><span class="nav-number">4.</span> <span class="nav-text">1.27更新</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#hive无法读取配置文件的问题"><span class="nav-number">4.1.</span> <span class="nav-text">hive无法读取配置文件的问题</span></a></li></ol></li></ol></div>
             
           </div>
         </section>
