@@ -1,0 +1,878 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="HBase," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="垃圾回收优化当region服务器处理大量的写入负载时，繁重的任务会迫使JRE默认的内存分配策略无法保证程序的稳定性所以我们可能需要对region服务器的垃圾回收机制进行一些参数调整（因为master并不处理实际任务，所以没有优化的必要）
+首先来了解JAVA内存中的几个概念
+在HBase构架中我们可以知道数据会被写入到memstore内存中直到达到一个阈值之后刷写持久化到磁盘但是由于数据是客户端在不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HBase性能优化指南">
+<meta property="og:url" content="http://xiaohei.info/2016/07/19/hbase-tuning/index.html">
+<meta property="og:site_name" content="小黑的博客">
+<meta property="og:description" content="垃圾回收优化当region服务器处理大量的写入负载时，繁重的任务会迫使JRE默认的内存分配策略无法保证程序的稳定性所以我们可能需要对region服务器的垃圾回收机制进行一些参数调整（因为master并不处理实际任务，所以没有优化的必要）
+首先来了解JAVA内存中的几个概念
+在HBase构架中我们可以知道数据会被写入到memstore内存中直到达到一个阈值之后刷写持久化到磁盘但是由于数据是客户端在不">
+<meta property="og:updated_time" content="2016-07-19T08:51:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HBase性能优化指南">
+<meta name="twitter:description" content="垃圾回收优化当region服务器处理大量的写入负载时，繁重的任务会迫使JRE默认的内存分配策略无法保证程序的稳定性所以我们可能需要对region服务器的垃圾回收机制进行一些参数调整（因为master并不处理实际任务，所以没有优化的必要）
+首先来了解JAVA内存中的几个概念
+在HBase构架中我们可以知道数据会被写入到memstore内存中直到达到一个阈值之后刷写持久化到磁盘但是由于数据是客户端在不">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://xiaohei.info/2016/07/19/hbase-tuning/"/>
+
+  <title> HBase性能优化指南 | 小黑的博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?077978704bc099796a03e532724e1e70";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">小黑的博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">大数据研发和云计算技术</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                HBase性能优化指南
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-19T14:41:17+08:00" content="2016-07-19">
+              2016-07-19
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/07/19/hbase-tuning/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/07/19/hbase-tuning/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/07/19/hbase-tuning/" class="leancloud_visitors" data-flag-title="HBase性能优化指南">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="垃圾回收优化"><a href="#垃圾回收优化" class="headerlink" title="垃圾回收优化"></a>垃圾回收优化</h2><p>当region服务器处理大量的写入负载时，繁重的任务会迫使JRE默认的内存分配策略无法保证程序的稳定性<br>所以我们可能需要对region服务器的垃圾回收机制进行一些参数调整（因为master并不处理实际任务，所以没有优化的必要）</p>
+<p>首先来了解JAVA内存中的几个概念</p>
+<p>在<a href="http://www.xiaohei.info/2016/07/10/hbase-framework/" target="_blank" rel="external">HBase构架</a>中我们可以知道<br>数据会被写入到memstore内存中直到达到一个阈值之后刷写持久化到磁盘<br>但是由于数据是客户端在不同时间写入的，这些数据占据的JAVA内存中的堆空间很可能是不连续的，所以JAVA虚拟机的内存会出现“孔洞”</p>
+<p>在JAVA的内存空间中，数据在内存停留的时间决定了该数据在内存中的位置分配<br>被快速插入并刷写到磁盘的数据会被分配到<strong>年轻代</strong>的堆中，<strong>这种空间可以被迅速回收，对内存管理没有太大影响，年轻代通常只占用128-512M的内存空间</strong><br>在内存中国停留时间过长（例如向一个列族中插入数据过慢的时候），该数据有可能被放在<strong>老生代</strong>的堆中，<strong>老生代会占用几乎可以占用的内存空间，通常是好几个G</strong></p>
+<p>region服务器的默认配置中，年轻代的空间大小对于大多数负载来说都太小<br>所以可以将其适当的调大，如果使用默认值的话，<strong>频繁的从年轻代中收集对象对消耗大量CPU</strong>，所以某些情况下用户可能会发现服务器CPU的使用量会急剧上升<br>用户可以通过hbase-env.sh中的HBASE_REGIONSERVER_OPT选项设置为-Xmn128m来修改默认的配置，一般来说128M可以满足需求，具体的配置还需要参考实际的JVM指标</p>
+<p>所谓的垃圾回收指的是：<strong>为了重复使用由于数据刷写到磁盘产生的内存孔洞，JRE将压缩内存碎片使其再次被使用，同时将符合条件的年轻代数据提升到老生代等过程</strong><br>推荐的垃圾回收策略是：<strong>-XX:+UseParNewGC -XX:UseConcMarkSweepGC</strong></p>
+<p>-XX:+UseParNewGC：<br>该选项设置年轻代使用Parallel New Conllector垃圾回收策略<br>效果是，清空年轻代堆的时候将停止运行的JAVA进程<br>难道停止进程不会对集群有影响吗？<br>对于年轻代来说基本是不会的，因为年轻代很小，这个过程花费的时间很短，通常只需要几百毫秒的时间<br>但是对于老生代来说就不是这么回事了，如果在回收老生代空间的时候停止了JAVA进程<br><strong>一旦清理的时间超出了ZK的会话超时限制，当这个region回过神来的时候就会发现已经被master抛弃了，然后自行关闭。。</strong><br>基于这个情况，<strong>年轻代的堆大小也不能设置得太大，以免垃圾回收的时候影响服务器的延迟</strong></p>
+<p>所以对于老生代来说应该使用第二个选项的配置<br>-XX:UseConcMarkSweepGC：<br>该策略会视图在不停止运行JAVA进程的情况下尽可能的异步并行完成垃圾回收的工作，避免因为垃圾回收造成的region停顿<br>但是缺点是将会增加CPU的负担</p>
+<p>基于以上几点和gc日志相关，可以使用以下列内容作为集群的初始配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">export HBASE_REGIONSERVER_OPT=&quot;-Xmx8g -Xms8g -Xmn128m -XX:+UseParNewGC -XX:UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -verbose:gc -XX:+printGCDetails -XX:+PrintGCTimeStamps -Xloggc:$&#123;HBASE_HOME&#125;/logs/gc-$&#123;hostname&#125;-hbase.log&quot;</div></pre></td></tr></table></figure>
+<h2 id="使用压缩"><a href="#使用压缩" class="headerlink" title="使用压缩"></a>使用压缩</h2><p>HBase支持大量的压缩算法，可以从嫘祖级别上进行压缩<br>因为CPU压缩和解压缩消耗的时间往往比从磁盘读取和写入数据要快得多<br>所以使用压缩通常会带来很可观的性能提升</p>
+<h3 id="可用的编解码器"><a href="#可用的编解码器" class="headerlink" title="可用的编解码器"></a>可用的编解码器</h3><p>几个压缩算法的比较：</p>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>压缩比%</th>
+<th>压缩MB/s</th>
+<th>解压MB/s</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GZIP</td>
+<td>13.4</td>
+<td>21</td>
+<td>118</td>
+</tr>
+<tr>
+<td>LZO</td>
+<td>20.5</td>
+<td>135</td>
+<td>410</td>
+</tr>
+<tr>
+<td>Zippy/Snappy</td>
+<td>22.2</td>
+<td>172</td>
+<td>409</td>
+</tr>
+</tbody>
+</table>
+<p>关于压缩算法在HBase中的集成安装请Google之~</p>
+<h3 id="验证安装"><a href="#验证安装" class="headerlink" title="验证安装"></a>验证安装</h3><p>安装完压缩算法之后我们可以使用一些工具对算法进行测试</p>
+<p><strong>压缩测试工具</strong></p>
+<p>HBase包含一个能够测试压缩设置是否正常的工具，我们可以输入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/hbase org.apache.hadoop.hbase.util.CompresstionTest</div></pre></td></tr></table></figure>
+<p>用户需要制定一个测试文件和压缩算法，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./bin/hbase org.apache.hadoop.hbase.util.CompresstionTest /user-home/test.gz gz</div></pre></td></tr></table></figure>
+<p>对于成功的安装，将会返回success信息<br>反之则会得到一个异常</p>
+<h3 id="启用检查"><a href="#启用检查" class="headerlink" title="启用检查"></a>启用检查</h3><p>及时测试工具报告成功了，由于JNI需要先安装好本地库，如果缺失这一步将会在添加新服务器的时候出现问题<br>导致新的服务器使用本地库打开含有压缩列族的region失败</p>
+<p>我们可以在服务器启动的时候检查压缩库是否已经正确安装，如果没有则不会启动服务器：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.codecs<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">value</span>&gt;</span>snappy,lzo<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>这样一来region服务器在启动的时候将会检查Snappy和LZO压缩库是否已经正确安装</p>
+<h3 id="启用压缩"><a href="#启用压缩" class="headerlink" title="启用压缩"></a>启用压缩</h3><p>我们可以通过shell创建表的时候指定列族的压缩格式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">create &apos;testtable&apos;,&#123;NAME =&gt; &apos;colfam1&apos;,COMPRESSION =&gt; &apos;GZ&apos;&#125;</div></pre></td></tr></table></figure>
+<p>需要注意的是，如果用户要更改一个已经存在的表的压缩格式，要先将该表disable才能修改之后再enable重新上线<br>并且<strong>更改后的region只有在刷写存储文件的时候才会使用新的压缩格式，没有刷写之前保持原样</strong><br>用户可以通过shell的major_compact <tablename>来强制格式重写，但是此操作会占用大量资源</tablename></p>
+<h2 id="优化拆分和合并"><a href="#优化拆分和合并" class="headerlink" title="优化拆分和合并"></a>优化拆分和合并</h2><p>默认的拆分和合并机制是合理的，但是在某些情况下我们仍然可以根据需求对这部分功能过呢进行优化以获得额外的性能</p>
+<h3 id="管理拆分"><a href="#管理拆分" class="headerlink" title="管理拆分"></a>管理拆分</h3><p>通常HBase是自动处理region拆分的：一旦它们增长到了既定的阈值region将被拆分为两个<br>之后它们可以接受新的数据并继续增长</p>
+<p>但是有没有这样一种情况：<strong>拆分之后的两个子region都已恒定的速率增大，导致在同一时刻进行拆分</strong><br>这种情况是很有可能出现的对吧，但是两个region同时拆分会怎么样吗？<br>只有两个的话确实不会有什么影响，但是如果两个region拆分之后继续以恒定的速率增长导致子子region又一起拆分，甚至子子子region，无限循环…</p>
+<p>这样一来问题就大条了吧，这种情况被称为<strong>拆分/合并风暴</strong>，这将导致磁盘IO的飙升</p>
+<p>这种情况下，与其依赖HBase的自动拆分，用户不如手动使用split和major_compact命令来管理<br>因为手动管理的话可以<strong>将这些region的拆分/合并时机分割开来，尽量分散IO负载</strong><br>碰到这种情况的时候不要忘记把配置文件中的<strong>hbase.hregion.max.filesize</strong>设置为非常大（例如100G？但是触发的时候回导致一小时的major合并…）<br>来防止自定拆分/合并的发生</p>
+<h3 id="region热点问题"><a href="#region热点问题" class="headerlink" title="region热点问题"></a>region热点问题</h3><p>在<a href="http://www.xiaohei.info/2016/07/14/hbase-advenced-usage/" target="_blank" rel="external">HBase高级用法</a>中我们提到过行健的设计避免数据热点问题的产生<br>但是在生产环境中，即使使用了随机行健，某一台的机器负载仍然要大于其他机器<br>对于很多region表来说，<strong>大部分region分布并不均匀，即大多数region位于同一服务器上</strong></p>
+<p>唯一可以缓解这种现象的途径是<strong>手动将热点region按特定的便捷拆分出一个或者多个新region并负载分布到多个region服务器上</strong><br>用户可以为region指定一个拆分行健，即region被拆分为两部分的位置<br>这个行健可以任意指定，可以生成大小完全不同的region</p>
+<h3 id="预拆分region"><a href="#预拆分region" class="headerlink" title="预拆分region"></a>预拆分region</h3><p>HBase建表时默认只在一个HRegionServer上建一个HRegion，写数据全部往该HRegion写<br>当这个HRegion达到一定大小的时候进行水平切割为多个HRegion，自动进行负载均衡   </p>
+<p>在这个环节，我们可以通过预先创建一个空的HRegion，并规定好每个HRegion存储的Rowkey范围<br>这样一来，<strong>指定范围内的数据就会被写入到指定的HRegion中，可以省略很多IO操作</strong>   </p>
+<p><strong>通过对数据的特性进行分析预先创建分区可以有效的解决HBase中的数据倾斜问题</strong></p>
+<p>以存储日志访问的记录为例<br>根据数据量和每个HRegion的大小，预先创建空的HRegion，每个HRegion都设定了其RowKey的范围，插入数据时直接写入指定的HRegion中<br>或者根据数据的访问特性（28原则，进行抽样调查，得到数据频繁的情况），将经常访问的ip断分割为几个HRegion，其他为一个或者几个HRegion<br>根据具体需求确定预分区是预估还是抽样，预分区的时候尽可能的想到各种各样的情况</p>
+<p>用户可以通过HBase提供的工具在创建表的时候指定region的个数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/bin/hbase org.apache.hadoop.hbase.util.RegionSplitter</div></pre></td></tr></table></figure>
+<p>关于预拆分region的数量，可以先按照每个服务器10个region并随着时间的推移观察数据的增长情况<br>先设置较少的region在稍后滚动拆分是一种很好的方式，因为一开始就设置很多region的话会影响集群的性能</p>
+<h2 id="执行负载均衡"><a href="#执行负载均衡" class="headerlink" title="执行负载均衡"></a>执行负载均衡</h2><p>master中有一个内置的负载均衡器，默认每五分钟执行一次（通过<strong>hbase.balancer.period</strong>属性控制）<br>其功能是<strong>均匀分配region到所有region服务器</strong></p>
+<p>其实这个自动的均衡器所起到的效果和之前的手动管理region拆分是一样的<br>都是为了将region的负载平衡到整个集群中</p>
+<p>当用户想控制某张表特定region的确切位置的时候使用手动管理的方式是比较方便的<br>我们可以通过HBase的balancer命令来显示的启动均衡器，或者通过balance_switch开启和关闭均衡器</p>
+<h2 id="合并region"><a href="#合并region" class="headerlink" title="合并region"></a>合并region</h2><p>在某些特殊的情况下，用户可能需要对服务器上的region进行合并（比如删除大量数据并且想减少服务器region数量的情况下？）<br>HBase集成了一个工具能够让用户在集群没有工作的时候合并两个相邻的region：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/bin/hbase org.apache.hadoop.hbase.util.Merge</div></pre></td></tr></table></figure>
+<p>参数分别是表名要合并的两个region名，region的信息可以在WebUI中得到，也可以从scan .META表中获得</p>
+<h2 id="客户端API优化"><a href="#客户端API优化" class="headerlink" title="客户端API优化"></a>客户端API优化</h2><p>写代码使用HBase客户端访问HBase的时候是有很大优化空间的<br>下面给出一个列表参考：</p>
+<h3 id="禁用自动刷写"><a href="#禁用自动刷写" class="headerlink" title="禁用自动刷写"></a>禁用自动刷写</h3><p>当有大量的写入操作时，使用setAutoFlush(false)关闭自动刷写特性<br>这样一来，数据将会被写入缓存中达到指定值的时候一起发送到服务器<br>也可以通过flushCommits()来强制刷写<br>调用HTable的close方法会隐式的调用flushCommits()</p>
+<h3 id="使用扫描缓存"><a href="#使用扫描缓存" class="headerlink" title="使用扫描缓存"></a>使用扫描缓存</h3><p>如果HBase作为一个MapReduce作业的而输入源，最好将MapReduce作业的输入扫描器实例的缓存用setCaching()设置为比1大的多的值<br>例如设置为500的时候则一次可以传送500行数据到客户端进行处理</p>
+<h3 id="限定扫描范围"><a href="#限定扫描范围" class="headerlink" title="限定扫描范围"></a>限定扫描范围</h3><p>如果只处理少数列，则应当只有这些列被添加到Scan的输入中<br>因为如果没有做筛选，则会扫描其他的数据存储文件</p>
+<h3 id="关闭ResultScanner"><a href="#关闭ResultScanner" class="headerlink" title="关闭ResultScanner"></a>关闭ResultScanner</h3><p>这不会带来性能提升，但是会避免一些性能问题<br>所以一定要在try/catch中关闭ResultScanner</p>
+<h3 id="关闭Put的WAL"><a href="#关闭Put的WAL" class="headerlink" title="关闭Put的WAL"></a>关闭Put的WAL</h3><p>使用Put的writeToWAL(false)关闭WAL可以提高吞吐量<br>但是带来的影响是在服务器故障的时候将会丢失数据<br>而且关闭日志所带来的性能提升也不是很明显，所以不推荐使用</p>
+<h2 id="配置优化"><a href="#配置优化" class="headerlink" title="配置优化"></a>配置优化</h2><p>启动集群的时候，配置文件中同样有很多可以优化的选项</p>
+<h3 id="减少Zookeeper超时的发生"><a href="#减少Zookeeper超时的发生" class="headerlink" title="减少Zookeeper超时的发生"></a>减少Zookeeper超时的发生</h3><p>默认region服务器和ZK的通信超时时间是3分钟<br>这意味着<strong>当服务器出现故障的时候，master会在3分钟之后发现并进行处理</strong></p>
+<p>可以通过<strong>zookeeper.session.timeout</strong>将这个值设置为1分钟或者其他情况<br>如此一来服务器当掉的时候master可以尽早发现</p>
+<p>但是要注意的是：之前我们提到过，<strong>在垃圾回收的时候JAVA进程将会被停止一段时间</strong><br>如果这个值太小的话有可能造成ZK的误判</p>
+<h3 id="增加处理线程"><a href="#增加处理线程" class="headerlink" title="增加处理线程"></a>增加处理线程</h3><p>默认情况下HBase响应外部用户访问数据表请求的线程数为10<br>设置的有点小了，这是为了防止用户在客户端高并发使用较大写缓冲区的情况使得服务器过载</p>
+<p>我们可以通过<strong>hbase.regionserver.handler.count</strong>属性将这个值设置为最大客户端数目<br>但是也不宜太大，因为并发的写请求涉及到的数据累加起来之后可能会对一个region服务器的内存造成压力</p>
+<h3 id="增加堆大小"><a href="#增加堆大小" class="headerlink" title="增加堆大小"></a>增加堆大小</h3><p>HBase使用默认一组合理并且保守的配置以满足大多数不同机型的测试<br>如果用户有更好的服务器则可以分配给HBase8G甚至更大的空间</p>
+<p>可以通过hbase-env.sh中的HBASE_HEAPSIZE来进行全局的设置<br>如果只想更改region服务器的内存，则可以单独设置HBASE_REGIONSERVER_OPTS选项，master将会以默认的1G继续运行</p>
+<h3 id="增加region大小"><a href="#增加region大小" class="headerlink" title="增加region大小"></a>增加region大小</h3><p>更大的region可以减少集群总的region数量，一般来说<strong>管理较少的region可以让集群更加平稳的运行</strong><br>默认情况下region的大小是256MB，我们可以配置1GB或者更大的region<br>region的大小也是需要评估的，因为<strong>太大的region也以为这在高负载的情况下合并的停顿时间更长</strong></p>
+<p>更多的配置调优可以参考《HBase权威指南》中性能优化的配置小节</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/uploads/gzh.jpg" alt="小黑 wechat" style="width: 200px; max-width: 100%;"/>
+    <div>Warning：能不用微信扫就不用微信扫</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>Out Of Memory Error：千万别点！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/images/weixin.png" alt="小黑 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+        <div id="alipay" style="display: inline-block">
+          <img id="alipay_qr" src="/images/alipay.jpg" alt="小黑 Alipay"/>
+          <p>支付宝打赏</p>
+        </div>
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/HBase/" rel="tag">#HBase</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/07/14/hbase-advenced-usage/" rel="next" title="HBase高级用法">
+                <i class="fa fa-chevron-left"></i> HBase高级用法
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/07/19/hbase-tuning/"
+           data-title="HBase性能优化指南" data-url="http://xiaohei.info/2016/07/19/hbase-tuning/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="小黑" />
+          <p class="site-author-name" itemprop="name">小黑</p>
+          <p class="site-description motion-element" itemprop="description">臭打字的</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">86</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/chubbyjiang" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xiaoheiinfo" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#垃圾回收优化"><span class="nav-number">1.</span> <span class="nav-text">垃圾回收优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用压缩"><span class="nav-number">2.</span> <span class="nav-text">使用压缩</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#可用的编解码器"><span class="nav-number">2.1.</span> <span class="nav-text">可用的编解码器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#验证安装"><span class="nav-number">2.2.</span> <span class="nav-text">验证安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启用检查"><span class="nav-number">2.3.</span> <span class="nav-text">启用检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启用压缩"><span class="nav-number">2.4.</span> <span class="nav-text">启用压缩</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化拆分和合并"><span class="nav-number">3.</span> <span class="nav-text">优化拆分和合并</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#管理拆分"><span class="nav-number">3.1.</span> <span class="nav-text">管理拆分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#region热点问题"><span class="nav-number">3.2.</span> <span class="nav-text">region热点问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预拆分region"><span class="nav-number">3.3.</span> <span class="nav-text">预拆分region</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行负载均衡"><span class="nav-number">4.</span> <span class="nav-text">执行负载均衡</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#合并region"><span class="nav-number">5.</span> <span class="nav-text">合并region</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#客户端API优化"><span class="nav-number">6.</span> <span class="nav-text">客户端API优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#禁用自动刷写"><span class="nav-number">6.1.</span> <span class="nav-text">禁用自动刷写</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用扫描缓存"><span class="nav-number">6.2.</span> <span class="nav-text">使用扫描缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#限定扫描范围"><span class="nav-number">6.3.</span> <span class="nav-text">限定扫描范围</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关闭ResultScanner"><span class="nav-number">6.4.</span> <span class="nav-text">关闭ResultScanner</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关闭Put的WAL"><span class="nav-number">6.5.</span> <span class="nav-text">关闭Put的WAL</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置优化"><span class="nav-number">7.</span> <span class="nav-text">配置优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#减少Zookeeper超时的发生"><span class="nav-number">7.1.</span> <span class="nav-text">减少Zookeeper超时的发生</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增加处理线程"><span class="nav-number">7.2.</span> <span class="nav-text">增加处理线程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增加堆大小"><span class="nav-number">7.3.</span> <span class="nav-text">增加堆大小</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增加region大小"><span class="nav-number">7.4.</span> <span class="nav-text">增加region大小</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2014 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">小黑</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"xiaoheiinfo"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("OoGPuTjuKRn43jP9DILK5sqs-gzGzoHsz", "KDn8G4yvtw7FA7WKGQjYK0RR");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
