@@ -84,16 +84,22 @@
 
 
 
-<meta name="description" content="运维任务减少节点滚动重启新增节点数据任务导入和导出CopyTable工具批量导入复制额外的任务集群共存端口要求改变日志级别故障处理HBase Fsck日志分析常见问题作者：@小黑">
+<meta name="description" content="通过之前文章的描述，我们已经有能力设计并部署搭建HBase集群了当我们的HBase集群开始运行的时候，新的挑战又来了例如，我们可能会遇到在集群运行的时候添加或者删除节点又或者需要拷贝/备份整个集群的数据等等如何在集群运行的时候以最小的代价来执行这些操作呢？   
+下面总结一下HBase集群的相关运维和管理知识点
+运维任务添加/删除节点在HBase中动态添加/删除节点非常简单，只需要一些命令操作即可">
 <meta property="og:type" content="article">
 <meta property="og:title" content="HBase集群管理">
 <meta property="og:url" content="http://xiaohei.info/2016/07/20/hbase-cluter-manage/index.html">
 <meta property="og:site_name" content="小黑的博客">
-<meta property="og:description" content="运维任务减少节点滚动重启新增节点数据任务导入和导出CopyTable工具批量导入复制额外的任务集群共存端口要求改变日志级别故障处理HBase Fsck日志分析常见问题作者：@小黑">
-<meta property="og:updated_time" content="2016-07-20T05:53:38.000Z">
+<meta property="og:description" content="通过之前文章的描述，我们已经有能力设计并部署搭建HBase集群了当我们的HBase集群开始运行的时候，新的挑战又来了例如，我们可能会遇到在集群运行的时候添加或者删除节点又或者需要拷贝/备份整个集群的数据等等如何在集群运行的时候以最小的代价来执行这些操作呢？   
+下面总结一下HBase集群的相关运维和管理知识点
+运维任务添加/删除节点在HBase中动态添加/删除节点非常简单，只需要一些命令操作即可">
+<meta property="og:updated_time" content="2016-07-20T11:01:28.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HBase集群管理">
-<meta name="twitter:description" content="运维任务减少节点滚动重启新增节点数据任务导入和导出CopyTable工具批量导入复制额外的任务集群共存端口要求改变日志级别故障处理HBase Fsck日志分析常见问题作者：@小黑">
+<meta name="twitter:description" content="通过之前文章的描述，我们已经有能力设计并部署搭建HBase集群了当我们的HBase集群开始运行的时候，新的挑战又来了例如，我们可能会遇到在集群运行的时候添加或者删除节点又或者需要拷贝/备份整个集群的数据等等如何在集群运行的时候以最小的代价来执行这些操作呢？   
+下面总结一下HBase集群的相关运维和管理知识点
+运维任务添加/删除节点在HBase中动态添加/删除节点非常简单，只需要一些命令操作即可">
 
 
 
@@ -322,7 +328,169 @@
       
 
       
-        <h2 id="运维任务"><a href="#运维任务" class="headerlink" title="运维任务"></a>运维任务</h2><h3 id="减少节点"><a href="#减少节点" class="headerlink" title="减少节点"></a>减少节点</h3><h3 id="滚动重启"><a href="#滚动重启" class="headerlink" title="滚动重启"></a>滚动重启</h3><h3 id="新增节点"><a href="#新增节点" class="headerlink" title="新增节点"></a>新增节点</h3><h2 id="数据任务"><a href="#数据任务" class="headerlink" title="数据任务"></a>数据任务</h2><h3 id="导入和导出"><a href="#导入和导出" class="headerlink" title="导入和导出"></a>导入和导出</h3><h3 id="CopyTable工具"><a href="#CopyTable工具" class="headerlink" title="CopyTable工具"></a>CopyTable工具</h3><h3 id="批量导入"><a href="#批量导入" class="headerlink" title="批量导入"></a>批量导入</h3><h3 id="复制"><a href="#复制" class="headerlink" title="复制"></a>复制</h3><h2 id="额外的任务"><a href="#额外的任务" class="headerlink" title="额外的任务"></a>额外的任务</h2><h3 id="集群共存"><a href="#集群共存" class="headerlink" title="集群共存"></a>集群共存</h3><h3 id="端口要求"><a href="#端口要求" class="headerlink" title="端口要求"></a>端口要求</h3><h2 id="改变日志级别"><a href="#改变日志级别" class="headerlink" title="改变日志级别"></a>改变日志级别</h2><h2 id="故障处理"><a href="#故障处理" class="headerlink" title="故障处理"></a>故障处理</h2><h3 id="HBase-Fsck"><a href="#HBase-Fsck" class="headerlink" title="HBase Fsck"></a>HBase Fsck</h3><h3 id="日志分析"><a href="#日志分析" class="headerlink" title="日志分析"></a>日志分析</h3><h3 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h3><p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
+        <p>通过之前文章的描述，我们已经有能力设计并部署搭建HBase集群了<br>当我们的HBase集群开始运行的时候，新的挑战又来了<br>例如，我们可能会遇到在集群运行的时候添加或者删除节点<br>又或者需要拷贝/备份整个集群的数据等等<br>如何在集群运行的时候以最小的代价来执行这些操作呢？   </p>
+<p>下面总结一下HBase集群的相关运维和管理知识点</p>
+<h2 id="运维任务"><a href="#运维任务" class="headerlink" title="运维任务"></a>运维任务</h2><h3 id="添加-删除节点"><a href="#添加-删除节点" class="headerlink" title="添加/删除节点"></a>添加/删除节点</h3><p>在HBase中动态添加/删除节点非常简单，只需要一些命令操作即可，HBase会自动帮你处理节点上下线需要做的事情</p>
+<p><strong>添加节点</strong></p>
+<blockquote>
+<p>1.修改conf目录下的regionservers文件，将新节点的主机名另起一行添加进去<br>2.复制该文件到集群中的所有机器<br>3.启动该机器完成节点的添加</p>
+</blockquote>
+<p>节点启动之后会在ZK上注册创建对应的znode，<strong>然后它会加入集群被分配region等</strong><br>启动该节点的方式有两种：</p>
+<blockquote>
+<ul>
+<li>master节点上执行start-hbase.sh脚本，其会检查regionservers文件并跳过已经启动的子节点，将其中未启动的节点启动   </li>
+<li>对应的子节点上执行hbase-daemon.sh start regionserver命令，随后该机器上的RegionServer服务启动</li>
+</ul>
+</blockquote>
+<p><strong>删除节点</strong></p>
+<p>首先到需要停止运行的机器上执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hbase-daemon.sh stop regionserver</div></pre></td></tr></table></figure>
+<p>随后该节点关闭所有region，停止进程<br>ZK中的znode临时节点将会过期，master会注意到该region服务器停止了，<strong>并按照故障处理的流程将该机器上的所有region重新分配到其他机器上</strong>   </p>
+<p>下线节点需要注意两点：</p>
+<blockquote>
+<p>1.如果负载均衡进程正在执行，请先停止，因为其可能会和master转移region产生竞争<br>2.如果该节点上的数据量很大，移动region的过程可能很漫长</p>
+</blockquote>
+<p>另外，在HBase0.90.2以上的版本中可以使用graceful_stop.sh hostname来下线节点<br>顾名思义，该脚本可以让节点的下线过程变得“优雅”起来：将region从对应的服务器上一个个移动出来以减少扰动</p>
+<h3 id="添加备份master节点"><a href="#添加备份master节点" class="headerlink" title="添加备份master节点"></a>添加备份master节点</h3><p>由于HBase本身并没有自动提供像HDFS那样的Namenode双节点方案，所以一个潜在的风险就是单点故障问题<br>但是HBase允许我们手动启动一个备份的master节点来避免这个问题</p>
+<p>多个master节点存在的情况下，它们会竞争ZK中专用的znode，第一个竞争到的master来提供服务<br><strong>其余的master进程只是轮询检查这个znode，当它消失时再次竞争</strong></p>
+<p>我们可以在集群中的另外一台配置一样的机器上启动备用master：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hbase-daemon.sh start master</div></pre></td></tr></table></figure>
+<p>从0.90.x版本开始，也可以在conf目录下的backup-master文件来执行备用服务器<br>编辑方式和regionservers一样<br>该文件中的master会在集群中的主master和regionserver都启动之后才会启动</p>
+<p>由于master只被设计为集群运行时的协调者，并不占用太多资源<br>所以启动多个备用master并没有什么影响，反而启动太少可能会留下隐患<br>建议启动两到三个备用master比较合适   </p>
+<h2 id="数据迁移任务"><a href="#数据迁移任务" class="headerlink" title="数据迁移任务"></a>数据迁移任务</h2><h3 id="导入和导出"><a href="#导入和导出" class="headerlink" title="导入和导出"></a>导入和导出</h3><p>HBase的jar包中包含了两个以MapReduce作业形式来导入导出数据的工具<br>使用方式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar $&#123;hbase.jar&#125; export $&#123;tablename&#125; $&#123;outputdir&#125;</div></pre></td></tr></table></figure>
+<p>该工具其余的参数可以做到增量导出、控制导出的数据版本等功能，具体使用请看jar包的帮助信息<br>导出的数据将会存储在HDFS指定的目录上，之后可以使用hadoop distcp命令拷贝到其他集群上，并在该集群上进行导入操作<br>需要注意的是，导出的表和导入的表需要有相同的表模式</p>
+<p>将export导出的文件数据导入到hbase中，使用方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar import -D &lt;property=value&gt;* 表名 生成文件路径</div></pre></td></tr></table></figure>
+<p>其中-D后面的参数包括但不限于为以下几个</p>
+<blockquote>
+<ul>
+<li>HBASE_IMPORTER_RENAME_CFS：重命名列族，格式为”旧列族名:新列族名”   </li>
+<li>import.filter.class：指定过滤器类型，在数据写入前进行过滤   </li>
+<li>import.filter.args：指定过滤器之后提供的参数   </li>
+<li>import.bulk.output：指定了该参数之后不会直接写入数据，而是生成hfile文件用于bulkload</li>
+</ul>
+</blockquote>
+<p>可能会有人注意到，其实我们是可以直接使用hadoop distcp命令将HDFS上的hbase根目录整个拷贝到其他集群中<br>但是这个做法并不推荐，<strong>因为这个操作会忽略文件的状态和内存中还没有被刷写的数据</strong></p>
+<h3 id="CopyTable工具"><a href="#CopyTable工具" class="headerlink" title="CopyTable工具"></a>CopyTable工具</h3><p>另一个导出HBase表数据的工具是CopyTable，该工具的使用方式很简单，参考帮助信息中的例子即可操作</p>
+<p>其是通过mr程序将数据逐条put到目标表中的（TableInputFormat和TableOutputFormat）</p>
+<p>使用方式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar copytable -D &lt;property=value&gt;*</div></pre></td></tr></table></figure>
+<p>-D的参数涵括但不限于以下几个</p>
+<blockquote>
+<ul>
+<li>–startrow=起始Rowkey</li>
+<li>–stoprow=终止Rowkey</li>
+<li>–starttime=起始时间戳</li>
+<li>–endtime=终止时间戳</li>
+<li>–versions=保留的版本数</li>
+<li>–all.cells=是否拷贝删除标记的数据</li>
+<li>–new.name=目标表名</li>
+<li>–peer.adr=目标zk-ip:zk-port:hbase在zk中的根目录，<strong>必须指定</strong></li>
+<li>–families=旧列族名:新列族名，如果一致则指定一个即可</li>
+<li>表名</li>
+</ul>
+</blockquote>
+<h3 id="批量导入"><a href="#批量导入" class="headerlink" title="批量导入"></a>批量导入</h3><p>批量导入可以有多种不同的形式，常见的是使用MapReduce和普通的客户端API<br>但是这两种方式都不高效，这里推荐另外一种做法：blukload</p>
+<p>blukload是一种将数据文件（可能是普通的文本文件）导入到hbase中的一种工具<br>其运作流程是：</p>
+<blockquote>
+<p>1.读取数据文件，格式为Rowkey+\t+col1数据+\t+col2数据…<br>2.将数据文件转换为hfile文件<br>3.读取hfile文件导入hbase</p>
+</blockquote>
+<p><strong>使用方式1</strong></p>
+<p>数据文件可以是由程序生成的</p>
+<p>使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar importtsv 列名参数 表名 数据文件位置</div></pre></td></tr></table></figure>
+<p>直接将数据文件导入hbase，其中列名参数具体为<strong>-Dimporttsv.columns=HBASE_ROW_KEY,”列族名:列名”…</strong></p>
+<p><strong>使用方式2</strong></p>
+<p>编写mr程序读源hbase库，生成hfile文件，OutputFormat要设置为HFileOutputFormat类</p>
+<p>之后使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hadoop jar hbase-server-*.jar completebulkload mr结果文件目录 表名</div></pre></td></tr></table></figure>
+<p>将hfile文件导入目标hbase数据库<br>注意，该mr程序可以只有mapper过程，输出的<key,value>类型为ImmutableBytesWritable和KeyValue</key,value></p>
+<h3 id="复制"><a href="#复制" class="headerlink" title="复制"></a>复制</h3><p>hbase中的replication相当于mysql中的主从同步技术，RegionServer会在后台启动一个进程不断put或者delete到同步的集群上<br><strong>比较适合小集群的热备</strong></p>
+<p>使用replication需要在hbase-site.xml文件中配置以下选项：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>值</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hbase.replication</td>
+<td>true</td>
+<td>开启hbase replication功能，从集群中也要开启</td>
+</tr>
+<tr>
+<td>replication.source.nb.capacity</td>
+<td>5000</td>
+<td>主机群每次向从集群发送entry的最大个数，如果slave较多，可以适当调大</td>
+</tr>
+<tr>
+<td>replication.source.size.capacity</td>
+<td>4194304</td>
+<td>每次发送entry包的最大大小，不推荐太大</td>
+</tr>
+<tr>
+<td>replication.source.ratio</td>
+<td>1</td>
+<td>主机群中使用slave服务器的百分比</td>
+</tr>
+<tr>
+<td>hbase.regionserver.wal.enablecompression</td>
+<td>false</td>
+<td>主机群关闭hlog压缩</td>
+</tr>
+<tr>
+<td>replication.sleep.before.failover</td>
+<td>5000</td>
+<td>主机群RegionServer在当机后多少毫秒开启failover</td>
+</tr>
+</tbody>
+</table>
+<p>配置完毕之后在hbase shell中设置replication的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">add_peer &apos;1&apos;,&apos;目标zk-ip:zk-port:hbase在zk中的根目录&apos;</div></pre></td></tr></table></figure>
+<p>之后可以通过list_peer命令查看设置的replication</p>
+<h3 id="集群迁移方法对比"><a href="#集群迁移方法对比" class="headerlink" title="集群迁移方法对比"></a>集群迁移方法对比</h3><table>
+<thead>
+<tr>
+<th>方式</th>
+<th>使用场景</th>
+<th>注意事项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bulkload</td>
+<td>从异构数据库中导入/程序生成的数据文件导入</td>
+<td></td>
+</tr>
+<tr>
+<td>distcp</td>
+<td>整库导入</td>
+<td>原库需要停止写入，两边版本需要一致</td>
+</tr>
+<tr>
+<td>export+import</td>
+<td>不同版本之间导入/只迁移部分数据/导入导出分时段进行</td>
+<td>会占用较多磁盘空间，export受数据写入的影响，import会造成局部热点</td>
+</tr>
+<tr>
+<td>copytable</td>
+<td>导入导出同时进行，比上面一条少了一次文件读写</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>replication</td>
+<td>主从同步/主主同步</td>
+<td>短暂延迟，目标表必须存在</td>
+</tr>
+</tbody>
+</table>
+<h2 id="改变日志级别"><a href="#改变日志级别" class="headerlink" title="改变日志级别"></a>改变日志级别</h2><p>默认HBase的日志是DEBUG级别的，这在安装和设计阶段比较有用<br>它可以让用户在系统出现问题的时候在日志文件中搜寻到比较多的信息</p>
+<p>生产环境中用户可以根据需要修改日志的级别为INFO或者WARN<br>修改方式如下：<br>编辑conf目录下的log4j.properties文件<br>将log4j.logger.org.apache.hadoop.hbase=INFO</p>
+<p>作者：<a href="http://www.xiaohei.info" target="_blank" rel="external">@小黑</a></p>
 
       
     </div>
@@ -458,7 +626,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">87</span>
+              <span class="site-state-item-count">86</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -517,7 +685,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#运维任务"><span class="nav-number">1.</span> <span class="nav-text">运维任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#减少节点"><span class="nav-number">1.1.</span> <span class="nav-text">减少节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#滚动重启"><span class="nav-number">1.2.</span> <span class="nav-text">滚动重启</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新增节点"><span class="nav-number">1.3.</span> <span class="nav-text">新增节点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据任务"><span class="nav-number">2.</span> <span class="nav-text">数据任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#导入和导出"><span class="nav-number">2.1.</span> <span class="nav-text">导入和导出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CopyTable工具"><span class="nav-number">2.2.</span> <span class="nav-text">CopyTable工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#批量导入"><span class="nav-number">2.3.</span> <span class="nav-text">批量导入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复制"><span class="nav-number">2.4.</span> <span class="nav-text">复制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#额外的任务"><span class="nav-number">3.</span> <span class="nav-text">额外的任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#集群共存"><span class="nav-number">3.1.</span> <span class="nav-text">集群共存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#端口要求"><span class="nav-number">3.2.</span> <span class="nav-text">端口要求</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#改变日志级别"><span class="nav-number">4.</span> <span class="nav-text">改变日志级别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#故障处理"><span class="nav-number">5.</span> <span class="nav-text">故障处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HBase-Fsck"><span class="nav-number">5.1.</span> <span class="nav-text">HBase Fsck</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#日志分析"><span class="nav-number">5.2.</span> <span class="nav-text">日志分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常见问题"><span class="nav-number">5.3.</span> <span class="nav-text">常见问题</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#运维任务"><span class="nav-number">1.</span> <span class="nav-text">运维任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加-删除节点"><span class="nav-number">1.1.</span> <span class="nav-text">添加/删除节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加备份master节点"><span class="nav-number">1.2.</span> <span class="nav-text">添加备份master节点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据迁移任务"><span class="nav-number">2.</span> <span class="nav-text">数据迁移任务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#导入和导出"><span class="nav-number">2.1.</span> <span class="nav-text">导入和导出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CopyTable工具"><span class="nav-number">2.2.</span> <span class="nav-text">CopyTable工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#批量导入"><span class="nav-number">2.3.</span> <span class="nav-text">批量导入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复制"><span class="nav-number">2.4.</span> <span class="nav-text">复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群迁移方法对比"><span class="nav-number">2.5.</span> <span class="nav-text">集群迁移方法对比</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#改变日志级别"><span class="nav-number">3.</span> <span class="nav-text">改变日志级别</span></a></li></ol></div>
             
           </div>
         </section>
