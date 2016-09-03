@@ -105,7 +105,7 @@ Map Side1.从磁盘读取数据并分片
 map输出的数据并不是直接写入磁盘的，而是会先存储在一个预定义的buffer中
 4">
 <meta property="og:image" content="http://xiaohei.info/images/mr-shuffle.jpg">
-<meta property="og:updated_time" content="2016-07-14T03:22:50.000Z">
+<meta property="og:updated_time" content="2016-08-07T03:29:28.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MapReduce性能调优记录">
 <meta name="twitter:description" content="MapReduce原理要知道怎么对MapReduce作业进行调优前提条件是需要对Map-Reduce的过程了然于胸。Map-Reduce运行原理图：
@@ -403,10 +403,7 @@ map输出的数据并不是直接写入磁盘的，而是会先存储在一个�
 <p>使用示例：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">LzopCodec c = <span class="keyword">new</span> LzopCodec();</div><div class="line">c.setConf(conf);</div><div class="line">OutputStream os = c.createOutputStream(fs.create(<span class="keyword">new</span> Path(“file.txt”))); </div><div class="line">InputStream is = c.createInputStream(fs.open(<span class="keyword">new</span> Path(“in.lzo”)));</div></pre></td></tr></table></figure>
 <p>在core-site.xml中需要添加压缩选项的支持:</p>
-<p>```xml</p>
-<p><property></property></p>
-<p><name>io.compression.codecs</name> </p>
-<p><value>org.apache.hadoop.io.compress.GzipCodec,<br>com.hadoop.compression.lzo.LzoCodec,com.hadoop.compression.lzo.LzopCodec,org.apache.hadoop.io.com press.SnappyCodec<br></value><br><br>```x</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>io.compression.codecs<span class="tag">&lt;/<span class="name">name</span>&gt;</span> </div><div class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.io.compress.GzipCodec,</div><div class="line">com.hadoop.compression.lzo.LzoCodec,com.hadoop.compression.lzo.LzopCodec,org.apache.hadoop.io.com press.SnappyCodec</div><div class="line"><span class="tag">&lt;/<span class="name">value</span>&gt;</span> </div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
 <h3 id="Map-side-tuning总结"><a href="#Map-side-tuning总结" class="headerlink" title="Map side tuning总结"></a>Map side tuning总结</h3><p>从上面提到的几点可以看到，map端的性能瓶颈都是频繁的IO操作造成的，所有的优化也都是针对IO进行的，而优化的瓶颈又很大程度上被机器的配置等外部因素所限制</p>
 <p>map端调优的相关参数：</p>
 <table>
@@ -719,7 +716,7 @@ map输出的数据并不是直接写入磁盘的，而是会先存储在一个�
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">85</span>
+              <span class="site-state-item-count">87</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -729,7 +726,7 @@ map输出的数据并不是直接写入磁盘的，而是会先存储在一个�
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-count">17</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
